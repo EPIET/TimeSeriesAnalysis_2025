@@ -1,0 +1,360 @@
+# Practical Session 10 {-}
+
+## Assessing the impact of interventions using surveillance data {-#title-10}
+
+
+```{r, knitr-global-chunk-10t, include=FALSE, cache=FALSE}
+source("_common.R")
+```
+
+
+## Expected learning outcomes {-#learn-10}
+
+By the end of the case study, participants will be able to:
+
+- assess and interpret the effect of an intervention on trends
+and periodicity in surveillance data
+
+Rotavirus is a very common and potentially serious infection of the
+large bowel, mainly affecting young babies. Nearly every child will have
+at least one episode of rotavirus gastroenteritis by five years of age.
+People of any age can be affected, but the illness is more severe in
+young infants. The rotavirus immunisation programme was introduced in
+the UK on 1 July 2013 (week 27) with the objective of preventing a
+significant number of young infants from developing rotavirus infection.
+It may also provide some additional protection to the wider population
+through herd immunity. The aim of the rotavirus immunisation programme
+is to provide two doses of vaccine to infants from six weeks of age and
+before 24 weeks of age. The first dose of vaccine is offered at approximately 
+eight weeks of age and the second dose at least four weeks after the first dose.
+
+High coverage was rapidly achieved for the first cohort of children
+offered rotavirus vaccine routinely in England and this has been
+maintained throughout the first fourteen months of the routine
+programme. Over this period, rotavirus vaccine coverage for children in
+the routine cohort averaged 93.3% for one dose and 88.3% for two doses.^[Rotavirus infant immunisation programme 2014/15: Vaccine uptake report for England (Published: June 2015; PHE publications gateway number: 2015141)]
+
+
+## Task 10.1 {-#task-10-1}
+
+You have been given a dataset for notified Rotavirus infections in England and
+Wales from week 23/2009 up to week 42/2018 (`rotavirus.dta`). Assess the impact
+of the introduction of the vaccination scheme in England and Wales for the whole
+population. Has the vaccine introduction had an effect on trend or periodicity
+patterns? Has the vaccine introduction affected the timing of the yearly
+outbreaks? 
+
+
+## Task 10.2 (Optional) {-#task-10-2}
+
+Discuss with colleagues how you can determine the number of cases prevented as
+a result of the introduction of the vaccine (No help provided).
+
+
+## Help for Task 10.1 {-#solution-10-1}
+
+Required source code.
+
+```{r, task-10-1-source-Rscript}
+source("src/tidyverse/session_10.R")
+```
+
+
+Open the **rotavirus** dataset, which is a line list of all notified
+rotavirus infections in the UK between June 2009 and December 2014.
+Prepare your data and test if the introduction of the vaccine has had an impact
+on the notified number of cases of rotavirus infections in the UK. Has the trend
+changed? Has the periodicity changed?
+
+Prepare the **rotavirus.dta** for time-series analysis. You need to manipulate
+the dataset before being able to use it for time series analysis.
+
+```{r, task-10-1-import-dataset}
+rota <- haven::read_dta("data/rotavirus.dta")
+
+rota
+```
+
+As the data in `rota` shows above, this dataset is structured in a "wide" format.
+You can see two variables representing dates, and all other variables containing
+case counts are organised horizontally. Alternatively, we can store the same
+information by converting the first dataset to a "long" format, where one variable
+contains the different age group categories of cases (`cases_cat`), and another displays
+the corresponding case counts (`n`) for each age group and year-week.
+
+In order to use ggplot2, remember that the data should be organised in a long
+format.
+
+```{r, task-10-1-rota}
+## convert to long format
+rota_lg <-
+    pivot_longer(
+        data = rota,
+        cols = -c(year, week),
+        names_to = "cases_cat",
+        values_to = "n"
+    )
+
+## recode
+rota_lg <-
+    rota_lg %>%
+    mutate(cases_cat = case_when(
+        cases_cat == "case1" ~ "Cases <1 year",
+        cases_cat == "case2" ~ "Cases 1 to 4 years",
+        cases_cat == "case3" ~ "Cases 5 to 14 years",
+        cases_cat == "case4" ~ "Cases 15 to 64 years",
+        cases_cat == "case5" ~ "Cases 65+ years",
+        cases_cat == "cases" ~ "Total cases",
+        TRUE ~ NA_character_
+    ))
+
+str(rota_lg)
+
+rota_lg <-
+    rota_lg %>%
+    mutate(date_index = make_yearweek(year = year, week = week)) %>%
+    as_tsibble(index = date_index, key = cases_cat)
+```
+
+
+Plot the total number of cases and the total number of cases by age
+group against time.
+
+```{r, task-10-1-rota-plot-tidy}
+ggplot(data = rota_lg) +
+    geom_point(mapping = aes(x = date_index, y = n), alpha = 0.3) +
+    facet_wrap(facets = vars(cases_cat), scales = "free_y") +
+    scale_y_continuous(limits = c(0, NA)) +
+    scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
+    labs(
+        x = "Year", y = "Weekly case counts",
+        title = "Rotavirus cases\n(note differing y scales)"
+    ) +
+    tsa_theme()
+```
+
+
+Note that you can get line breaks in labels using `\n`.
+
+State in your dataset when the vaccine was available.
+
+```{r, task-10-1-rota-vacc-interv}
+rotaz <-
+    rota_lg %>%
+    mutate(
+        vaccine = case_when(
+            year >= 2014 ~ 1,
+            year <= 2012 ~ 0,
+            year == 2013 & week >= 27 ~ 1,
+            year == 2013 & week < 27 ~ 0,
+            TRUE ~ NA_real_
+        ),
+        Date = rep(
+            x = seq.int(from = 1, to = length(unique(.data$date_index)), by = 1),
+            times = length(unique(.data$cases_cat))
+        ),
+        sin52 = sin(2 * pi * Date / 52),
+        cos52 = cos(2 * pi * Date / 52)
+    )
+
+## subset to total cases
+rotaz <-
+    rotaz %>%
+    filter(cases_cat == "Total cases")
+```
+
+
+Here we are adding some variables to the `rotaz` time series.
+
+`rotaz$vaccine` will be 0 for weeks before week 27 2013, and 1 thereafter. We use
+the `window` command to set the `vaccine` variable to 1 for the period after the 
+production of the vaccine.
+
+`rotaz$Date` will be the number of weeks since week 23 2009.
+
+We have also created sine and cosine variables so that we can model annual seasonality as before. 
+
+Run a separate model for the time before and after the introduction of the vaccine
+in England and Wales for all population. Can you detect any change in trend?
+
+```{r, task-10-1-rota-vacc-interv-model1}
+rotamodel1 <- glm(n ~ Date,
+    data = rotaz %>% filter(vaccine == 0),
+    family = "poisson"
+)
+
+# Model results
+glmtidy(rotamodel1, "Rotavirus model 1")
+
+# Check the goodness of fit statistics.
+glmstats(rotamodel1)
+```
+
+
+```{r, task-10-1-rota-vacc-interv-model2}
+rotamodel2 <- glm(n ~ Date,
+    data = rotaz %>% filter(vaccine == 1),
+    family = "poisson"
+)
+
+# Model results
+glmtidy(rotamodel2, "Rotavirus model 2")
+
+# Check the goodness of fit statistics.
+glmstats(rotamodel2)
+```
+
+
+We show the models together for comparison below. 
+
+```{r, task-10-1-rota-vacc-interv-rotamodel1and2-echo, eval=FALSE, echo=TRUE, purl=TRUE, results='asis'}
+memisc::mtable(
+    "Rotavirus model 1" = rotamodel1,
+    "Rotavirus model 2" = rotamodel2,
+    getSummary = getSummary_expcoef,
+    summary.stats = c("AIC", "BIC", "N")
+)
+```
+
+
+```{r, task-10-1-rota-vacc-interv-rotamodel1and2-html, eval=knitr::is_html_output(), echo=FALSE, purl=FALSE}
+memisc::mtable(
+    "Rotavirus model 1" = rotamodel1,
+    "Rotavirus model 2" = rotamodel2,
+    getSummary = getSummary_expcoef,
+    summary.stats = c("AIC", "BIC", "N")
+)
+```
+
+
+```{r, task-10-1-rota-vacc-interv-rotamodel1and2-pdf, eval=knitr::is_latex_output(), echo=FALSE, purl=FALSE}
+toLatex(
+    memisc::mtable(
+        "Rotavirus model 1" = rotamodel1,
+        "Rotavirus model 2" = rotamodel2,
+        getSummary = getSummary_expcoef,
+        summary.stats = c("AIC", "BIC", "N")
+    ),
+    caption = "Rotavirus models 1 and 2: estimate (SE)"
+)
+```
+
+
+Here we are fitting Poisson regression models using the `glm` (generalised linear
+models) command. We fit a separate model for each period.
+
+As `glm` can do various different types of regression, we specify that we want
+Poisson regression by `family = 'poisson'`. Otherwise we specify the model as we
+did for linear regression.
+
+Variable names in R should really only consist of letters, numbers and the dot
+or underline character and should normally begin with a letter. However if you
+do have column names which are not valid variable names, you can refer to them
+by surrounding the names with backticks, as we have done here.
+
+If the `summary` command is used for a `glm` Poisson model, the log rate ratios
+are reported by default. The `glmtidy` function converts these to rate ratios. 
+
+Note that the confidence intervals reported by R are "profile confidence
+intervals", so may differ slightly from those in Stata.
+
+We can detect a numerical change in trend for infants <1 year of age, but the
+two models cannot be compared.
+
+Run one single model for both periods (before/after the introduction of the vaccine),
+this time including seasonality.
+
+```{r, task-10-1-rota-vacc-interv-model3}
+rotamodel3 <- glm(n ~ Date + sin52 + cos52 + vaccine,
+    data = rotaz,
+    family = "poisson"
+)
+
+# Model results
+glmtidy(rotamodel3, "Rotavirus model 3")
+
+# Check the goodness of fit statistics.
+glmstats(rotamodel3)
+```
+
+
+```{r, task-10-1-rota-vacc-interv-model3-plot-tidy}
+rotaz <-
+    bind_cols(rotaz, fitted_m3 = fitted(rotamodel3))
+
+ggplot(data = rotaz) +
+    geom_point(mapping = aes(x = date_index, y = n), alpha = 0.3) +
+    geom_line(mapping = aes(x = date_index, y = fitted_m3), alpha = 0.7, colour = "green") +
+    scale_y_continuous(limits = c(0, NA)) +
+    scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
+    labs(
+        x = "Year", y = "Weekly case counts",
+        title = "Rotavirus cases: model 3"
+    ) +
+    tsa_theme()
+```
+
+
+To be able to comment on any change in trend after the introduction of the vaccine, 
+we need to include an interaction term in the model. 
+
+<!-- Should use ## not # for interactions in Stata code to get matching results -->
+
+```{r, task-10-1-rota-vacc-interv-model4}
+rotamodel4 <- glm(n ~ Date * vaccine + sin52 + cos52,
+    data = rotaz,
+    family = "poisson"
+)
+
+# Model results
+glmtidy(rotamodel4, "Rotavirus model 4")
+
+# Check the goodness of fit statistics.
+glmstats(rotamodel4)
+```
+
+
+Have there been any changes in seasonality, too? 
+
+```{r, task-10-1-rota-vacc-interv-model5}
+rotamodel5 <- glm(n ~ vaccine * (sin52 + cos52 + Date),
+    data = rotaz,
+    family = "poisson"
+)
+
+# Model results
+glmtidy(rotamodel5, "Rotavirus model 5")
+
+# Check the goodness of fit statistics.
+glmstats(rotamodel5)
+```
+
+
+```{r, task-10-1-rota-vacc-interv-model5-plot-tidy}
+rotaz <-
+    bind_cols(rotaz, fitted_m5 = fitted(rotamodel5))
+
+ggplot(data = rotaz) +
+    geom_point(mapping = aes(x = date_index, y = n), alpha = 0.3) +
+    geom_line(mapping = aes(x = date_index, y = fitted_m5), alpha = 0.7, colour = "green") +
+    scale_y_continuous(limits = c(0, NA)) +
+    scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
+    labs(
+        x = "Year", y = "Weekly case counts",
+        title = "Rotavirus cases: model 5"
+    ) +
+    tsa_theme()
+```
+
+
+Note how we can use brackets to introduce interaction terms for several variables. 
+
+```{r}
+car::linearHypothesis(
+    rotamodel5,
+    c("vaccine:sin52", "vaccine:cos52")
+)
+```
+
+We use the `linearHypothesis` command from the `car` package to test the
+hypothesis that the estimates for two of the interaction terms are both zero.

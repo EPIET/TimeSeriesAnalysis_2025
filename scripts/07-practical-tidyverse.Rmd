@@ -1,0 +1,240 @@
+# Practical Session 7 {-}
+
+## Forecasting {-#title-7}
+
+
+```{r, knitr-global-chunk-7t, include=FALSE, cache=FALSE}
+source("_common.R")
+```
+
+
+## Expected learning outcomes {-#learn-7}
+
+By the end of this session, participants should be able to:
+-	understand the use of forecasting in public health surveillance data
+-	forecast the expected number of cases of a disease into the future
+
+
+## Task 7.1 {-#task-7-1}
+
+Your boss received a phone call from the Department of Health. She is part of
+a committee that has the task to set the alert levels for mortality in Spain for
+the next year (2010). Before doing so, she gives you the task to forecast the
+expected number of deaths for 2010 based on the historical data up to and
+including 2009. 
+
+
+## Task 7.2 (Optional) {-#task-7-2}
+
+A committee member is interested to get a better understanding of when there
+were periods of unusually high excess mortality and asks you to provide an
+analysis that highlights the time when these occurred.
+
+
+## Task 7.3 (Optional) {-#task-7-3}
+
+Your boss is now worried that the analysis you produced in Task 7.1 isn’t right
+as it doesn’t account for previously observed excess mortality. She thus asks
+you to forecast the expected number of deaths accounting for previous excess
+in mortality. 
+
+
+
+## Help for Task 7.1 {-#solution-7-1}
+
+Required source code.
+
+```{r, task-7-1-source-Rscript}
+source("src/tidyverse/session_7.R")
+```
+
+
+The dataset has records up to 2009-W52, and you would like to project the data
+(forecast) into 2010.
+
+First, create a new time series object for 2010.
+
+```{r, task-7-1-dataset}
+pred.df <-
+    tibble(
+        Date = 521:572,
+        sin52 = sin(2 * pi * Date / 52),
+        cos52 = cos(2 * pi * Date / 52),
+        sin26 = sin(2 * pi * Date / 26),
+        cos26 = cos(2 * pi * Date / 26)
+    )
+
+pred.zoo <-
+    pred.df %>%
+    mutate(date_index = make_yearweek(year = 2010L, week = Date - 520L)) %>%
+    as_tsibble(index = date_index)
+
+pred.zoo
+```
+
+
+Calculate the expected values and 95% prediction intervals for each week of 2010
+assuming that a simple linear regression model based on the previous years is
+appropriate.
+
+```{r, task-7-1-prediction-interval}
+prediction <- predict(sine2cos2trendmodel,
+    pred.zoo,
+    interval = "pred"
+)
+
+pred.zoo <- bind_cols(
+    pred.zoo,
+    prediction
+)
+
+head(pred.zoo, 5)
+```
+
+
+Predict and plot the expected cases for 2010 with prediction intervals:
+
+```{r, task-7-1-prediction-interval-plot-tidy}
+ggplot(data = pred.zoo) +
+    geom_line(
+        mapping = aes(x = date_index, y = fit),
+        colour = "red",
+        alpha = 0.7
+    ) +
+    geom_ribbon(
+        mapping = aes(x = date_index, ymin = lwr, ymax = upr),
+        fill = "red",
+        alpha = 0.1
+    ) +
+    scale_y_continuous(limits = c(0, NA)) +
+    scale_x_yearweek(date_labels = "%W", date_breaks = "4 weeks") +
+    labs(x = "Week", y = "Expected weekly cases") +
+    tsa_theme()
+```
+
+
+## Help for Task 7.2 {-#solution-7-2}
+
+Using expected values from the previous regression model, you can calculate the
+cumulative sum of the differences between the weekly observed and expected
+numbers of deaths:
+
+```{r, task-7-2-diff-exp-obs}
+fitted <- predict(sine2cos2trendmodel)
+
+mortz_fit <- bind_cols(mortz,
+    fit = fitted
+)
+
+mortz_fit <-
+    mortz_fit %>%
+    mutate(
+        difference = cases - fit,
+        cusum = cumsum(difference)
+    )
+
+mortz_fit
+```
+
+
+Plot this cumulative sum of the residuals.
+
+```{r, task-7-2-diff-exp-obs-plot-tidy}
+ggplot(data = mortz_fit) +
+    geom_line(
+        mapping = aes(x = date_index, y = cusum),
+        colour = "orange",
+        alpha = 0.7,
+        lwd = 2
+    ) +
+    scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
+    labs(x = "Year", y = "Cumulative Sum") +
+    tsa_theme()
+```
+
+
+CUSUM (cumulative sum) is a graphical method that can be used to determine when
+there is a change in a process (all-cause mortality in this example). In TSA it
+can also be used to decide whether there is a need to revise the model
+e.g. include a covariate.
+
+
+## Help for Task 7.3 {-#solution-7-3}
+
+Using the method developed by Farrington et al. shown in Task 7.3 (optional),
+include a weight in the regression model, predict the number of cases and the
+residuals and plot the expected cases for 2010 with prediction intervals. The
+solution provided will incorporate the seasonality into the model directly and
+not use the `predintplot` function of Task 7. 
+
+```{r, task-7-3-residual-weights}
+res.std <- rstandard(sine2cos2trendmodel)
+
+weights <- ifelse(test = res.std > 2,
+    yes = 1 / res.std^2,
+    no = 1
+)
+```
+
+
+```{r, task-7-3-weighted-model}
+sine2cos2trendmodelweighted <- lm(cases ~ sin52 + cos52 + sin26 + cos26 + Date,
+    data = mortz,
+    weights = weights
+)
+```
+
+
+```{r, task-7-3-weighted-model-prediction}
+sd <- sqrt(mean(residuals(sine2cos2trendmodelweighted)^2))
+
+se <- predict(sine2cos2trendmodelweighted,
+    pred.zoo,
+    se.fit = TRUE
+)$se.fit
+
+fitw <- predict(sine2cos2trendmodelweighted,
+    pred.zoo,
+    weights  =  1
+)
+
+predictionw <- bind_cols(
+    fitw = fitw,
+    lwrw = fitw - 1.96 * sqrt(se^2 + sd^2),
+    uprw = fitw + 1.96 * sqrt(se^2 + sd^2)
+)
+
+pred.zoo <- bind_cols(
+    pred.zoo,
+    predictionw
+)
+```
+
+
+```{r, task-7-3-weighted-model-prediction-plot-tidy}
+ggplot(data = pred.zoo) +
+    geom_line(
+        mapping = aes(x = date_index, y = fit),
+        colour = "red",
+        alpha = 0.7
+    ) +
+    geom_ribbon(
+        mapping = aes(x = date_index, ymin = lwr, ymax = upr),
+        fill = "red",
+        alpha = 0.1
+    ) +
+    geom_line(
+        mapping = aes(x = date_index, y = fitw),
+        colour = "blue",
+        alpha = 0.7
+    ) +
+    geom_ribbon(
+        mapping = aes(x = date_index, ymin = lwrw, ymax = uprw),
+        fill = "blue",
+        alpha = 0.1
+    ) +
+    scale_y_continuous(limits = c(0, NA)) +
+    scale_x_yearweek(date_labels = "%W", date_breaks = "4 weeks") +
+    labs(x = "Week", y = "Expected weekly cases") +
+    tsa_theme()
+```
