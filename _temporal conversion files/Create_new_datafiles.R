@@ -29,5 +29,11 @@ mortagg <-
     cases_f = sum(cases_f, na.rm = T)
   )
 
-
 write_csv2(mortagg, here("data", "mortagg.csv"))
+
+
+# Practical 5
+
+
+
+

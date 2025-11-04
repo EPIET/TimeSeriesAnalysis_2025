@@ -1,0 +1,273 @@
+---
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# Practical Session 5 {.unnumbered}
+
+## Periodicity {#title-5 .unnumbered}
+
+```{r, knitr-global-chunk-05t, include=FALSE, cache=FALSE}
+# Install pacman if not installed already, and activate it
+if (!require("pacman")) install.packages("pacman")
+
+# Install, update and activate libraries
+pacman::p_load(
+  here, 
+  rio, 
+  skimr,
+  tsibble,
+  TSA,
+  tidyverse
+)
+```
+
+## Expected learning outcomes {#learn-5 .unnumbered}
+
+By the end of this session, participants should be able to:
+
+-   assess the existence of periodicity in surveillance data
+
+-   fit and interpret models containing a trend and one or several sine
+    and cosine curves on surveillance data to model both trend and
+    periodicity
+
+## Task 5.1 {#task-5-1 .unnumbered}
+
+Using `mortagg.csv`, visually assess the existence of any
+periodicity in the total number of deaths (cyclical patterns). What do
+you think the period is, if any? Discuss your results with your peers.
+
+## Task 5.2 {#task-5-2 .unnumbered}
+
+Using `mortagg.csv`, check statistically for the existence of
+periodicity. Then, fit a model on the data for the relevant period(s).
+How many different periods are you including in your model? Test
+statistically if the inclusion of more than one period contributes to
+the fit of the model. Discuss your results. When is mortality highest?
+When is it lowest? What do you think might be the reason and how would
+you test for that statistically?
+
+## Task 5.4 (Optional) {#task-5-4 .unnumbered}
+
+Assess the existence of periodicity in the `dis1` dataset.
+
+## Help for Task 5.1 {#solution-5-1 .unnumbered}
+
+Required source code.
+
+```{r, task-5-1-source-Rscript}
+mortagg <- import(here("data", "mortagg.csv"))
+
+mortz <-
+    mortagg %>%
+    mutate(date_index = make_yearweek(year = year, week = week)) %>%
+    as_tsibble(index = date_index)
+
+mortz$Date <- seq.int(from = 1,
+                      to = nrow(mortz))
+
+# Create tsa_theme from previous exercise
+tsa_theme <- theme_bw() + 
+        theme(
+            plot.title = element_text(face = "bold", 
+                                      size = 12),
+            legend.background = element_rect(fill = "white", 
+                                             size = 4, 
+                                             colour = "white"),
+            # legend.justification = c(0, 1),
+            legend.position = "bottom",
+            panel.grid.minor = element_blank()
+        )
+```
+
+R has a number of functions which produce a *periodogram* - we will use
+the `periodogram` function from the `TSA` package.
+
+```{r, task-5-1-periodogram}
+mortper <- TSA::periodogram(mortz$cases)
+str(mortper)
+```
+
+The `periodogram` function plots the estimated periodogram for a given
+time series and also returns various useful outputs as a list which we
+can use for other analyses.
+
+This type of plot is interpreted by identifying peaks. Convert the
+frequencies at which peaks occur to periods by taking the reciprocal.
+
+```{r, task-5-1-periodogram-freq}
+mortper_recip <-
+    tibble(
+        freq = mortper$freq,
+        spec = mortper$spec
+    ) %>%
+    arrange(desc(spec)) %>% 
+    mutate(reciprocal_freq = 1 / freq)
+
+view(mortper_recip)
+```
+
+The above lines of code extract two variables (`freq` and `spec`) from
+the `mortper` object and place them in a `tibble` data.frame.
+Simultaneously, both columns values are order by descending order of the
+spectral variable.
+
+It allows to find the frequencies with the highest peaks in the
+periodogram and converts those frequencies to periods (which are numbers
+of weeks for this data). The reciprocal values are calculated and stored 
+on the `reciprocal_freq` variable
+
+
+```{r, task-5-1-periodogram-epergram-tidy}
+ggplot(data = mortper_recip, aes(x = reciprocal_freq, y = log(spec))) +
+    geom_line() +
+    scale_x_continuous(limits = c(0, 160)) +
+    labs(x = "Period", 
+         y = "Log(density)") +
+    tsa_theme
+```
+
+Is there any periodicity? If so, what is the period?
+
+## Help for Task 5.2 {#solution-5-2 .unnumbered}
+
+As the periodogram shows periodicity close to 52 weeks, we will use a
+*sine curve* of a 52-week period. Note that periodicity with a *period
+of* *one year is also referred to as seasonality*.
+
+Fit a poisson regression of `cases` with a sine predictor term:
+
+```{r, task-5-2-sin52}
+mortz <- mortz %>%
+  mutate(sin52 = sin(2 * pi * Date / 52))
+
+
+sinemodel <- glm(cases ~ sin52, family = "poisson", data = mortz)
+summary(sinemodel)
+```
+
+Plot the fitted values against the original data and comment.
+
+```{r, task-5-2-sin52-plot-tidy}
+ggplot(data = mortz, aes(x = Date)) +
+    geom_point(aes(y = cases), alpha = 0.4) +
+    geom_line(
+        mapping = aes(y = fitted(sinemodel)),
+        colour = "green"
+    ) +
+    scale_y_continuous(limits = c(0, NA)) +
+    labs(x = "Index", 
+         y = "Mortality", 
+         title = "Regression model: one sine term") +
+    tsa_theme
+```
+
+*Addition of the cosine* - In order to have an appropriate phase in your
+model (you don't have to worry about identifying it; this will happen
+automatically), you need to use *both* a sine and a cosine curve with
+the same period. The sum of these two curves gives the periodicity for
+the specified period and the phase best describing our data.
+
+You can fit a linear model for the cases, using sine and cosine as
+explanatory variables. Plot the fitted values against the data and
+comment:
+
+```{r, task-5-2-sin52-cos52}
+mortz <- mortz %>%
+  mutate(cos52 = cos(2 * pi * Date / 52))
+
+sinecosmodel <- glm(cases ~ sin52 + cos52, family = "poisson", data = mortz)
+summary(sinecosmodel)
+```
+
+```{r, task-5-2-sin52-cos52-plot-tidy}
+ggplot(data = mortz, aes(x = Date)) +
+    geom_point(aes(y = cases), alpha = 0.4) +
+    geom_line(
+        mapping = aes(y = fitted(sinecosmodel)),
+        colour = "green"
+    ) +
+    scale_y_continuous(limits = c(0, NA)) +
+    labs(x = "Index", 
+         y = "Mortality", 
+         title = "Regression model: sine, cosine terms") +
+    tsa_theme
+```
+
+How does the fit look graphically?
+
+Now adjust not only for periodicity, but also for trend:
+
+```{r, task-5-2-sin52-cos52-trend}
+sinecostrendmodel <- glm(cases ~ sin52 + cos52 + Date, family = "poisson", data = mortz)
+summary(sinecostrendmodel)
+```
+
+```{r, task-5-2-sin52-cos52-trend-plot-tidy}
+ggplot(data = mortz, aes(x = Date)) +
+    geom_point(aes(y = cases), alpha = 0.4) +
+    geom_line(
+        mapping = aes(y = fitted(sinecostrendmodel)),
+        colour = "green"
+    ) +
+    scale_y_continuous(limits = c(0, NA)) +
+    labs(x = "Index", 
+         y = "Mortality", 
+         title = "Regression model: trend, sine, cosine terms") +
+    tsa_theme
+```
+
+*A model with a trend plus 2 sine and 2 cosine curves* - To fit the
+model better, we could try to add more sine/cosine curves, of a period
+corresponding to the second strongest peak in the model (26 weeks). This
+will allow for cycles (periods) of not only 52, but also 26 weeks,
+should we think there might be half-yearly cycles which are relevant. In
+this case, for instance, there may be elevated mortality in winter, but
+also in summer during heatwaves.
+
+Generate sine and cosine terms with a period of 26 weeks and name them
+`sin26` and `cos26`. Add these two new terms to the previous model.
+
+Plot the results, compare with the previous model and comment on it.
+
+```{r, task-5-2-sin26-cos26-trend}
+mortz <-
+    mortz %>%
+    mutate(
+        sin26 = sin(2 * pi * Date / 26),
+        cos26 = cos(2 * pi * Date / 26)
+    )
+
+sine2cos2trendmodel <- glm(cases ~ sin52 + cos52 + sin26 + cos26 + Date,
+                           family = "poisson", 
+                           data = mortz)
+summary(sine2cos2trendmodel)
+```
+
+```{r, task-5-2-sin26-cos26-trend-plot-tidy}
+ggplot(data = mortz, aes(x = Date)) +
+    geom_point(aes(y = cases), alpha = 0.4) +
+    geom_line(
+        mapping = aes(y = fitted(sine2cos2trendmodel)),
+        colour = "green"
+    ) +
+    scale_y_continuous(limits = c(0, NA)) +
+    labs(x = "Index", 
+         y = "Mortality", 
+         title = "Regression model with trend plus 2 sine and cosine terms") +
+    tsa_theme
+```
+
+Is the addition of variables `sin26` and `cos26` a statistically
+significant contribution to your model?
+
+```{r, task-5-2-sin26-cos26-trend-drop}
+drop1(sine2cos2trendmodel, test = "F") %>% broom::tidy()
+```
+
+The `drop1` function here shows whether any variables can be dropped
+from the linear regression model. A significant $p$ value suggests that
+a variable is important and should not be dropped.
+
