@@ -2,11 +2,20 @@
 
 ## Forecasting {-#title-7}
 
+```{r, knitr-global-chunk-07, cache=FALSE}
+# Install pacman if not installed already, and activate it
+if (!require("pacman")) install.packages("pacman")
 
-```{r, knitr-global-chunk-7t, include=FALSE, cache=FALSE}
-source("_common.R")
+# Install, update and activate libraries
+pacman::p_load(
+  here, 
+  rio, 
+  skimr,
+  tsibble,
+  TSA,
+  tidyverse
+)
 ```
-
 
 ## Expected learning outcomes {-#learn-7}
 
@@ -45,7 +54,38 @@ in mortality.
 Required source code.
 
 ```{r, task-7-1-source-Rscript}
-source("src/tidyverse/session_7.R")
+# Load raw data
+mortagg <- import(here("data", "mortagg.csv"))
+
+# Prepare ts data
+mortz <-
+    mortagg %>%
+    mutate(date_index = make_yearweek(year = year, week = week),
+           Date = seq.int(from = 1, to = nrow(mortagg)),
+           sin52 = sin(2 * pi * Date / 52), 
+           cos52 = cos(2 * pi * Date / 52),
+           sin26 = sin(2 * pi * Date / 26), 
+           cos26 = cos(2 * pi * Date / 26)) %>%
+    as_tsibble(index = date_index)
+
+# Model with trend and seasonality
+sine2cos2trendmodel <- glm(cases ~ sin52 + cos52 + sin26 + cos26 + Date,
+                           family = "poisson",
+                           data = mortz)
+
+
+# Create tsa_theme from previous exercise
+tsa_theme <- theme_bw() + 
+        theme(
+            plot.title = element_text(face = "bold", 
+                                      size = 12),
+            legend.background = element_rect(fill = "white", 
+                                             size = 4, 
+                                             colour = "white"),
+            # legend.justification = c(0, 1),
+            legend.position = "bottom",
+            panel.grid.minor = element_blank()
+        )
 ```
 
 
@@ -61,7 +101,8 @@ pred.df <-
         sin52 = sin(2 * pi * Date / 52),
         cos52 = cos(2 * pi * Date / 52),
         sin26 = sin(2 * pi * Date / 26),
-        cos26 = cos(2 * pi * Date / 26)
+        cos26 = cos(2 * pi * Date / 26),
+        pob = 46951532                     # Spanish pop in 2010 (1st Jan)
     )
 
 pred.zoo <-
@@ -69,7 +110,7 @@ pred.zoo <-
     mutate(date_index = make_yearweek(year = 2010L, week = Date - 520L)) %>%
     as_tsibble(index = date_index)
 
-pred.zoo
+view(pred.zoo)
 ```
 
 
@@ -78,16 +119,17 @@ assuming that a simple linear regression model based on the previous years is
 appropriate.
 
 ```{r, task-7-1-prediction-interval}
-prediction <- predict(sine2cos2trendmodel,
-    pred.zoo,
-    interval = "pred"
-)
+prediction <- predict(sine2cos2trendmodel, 
+                      pred.zoo,
+                      type = "link", se.fit = TRUE) 
 
-pred.zoo <- bind_cols(
-    pred.zoo,
-    prediction
+pred.zoo <- pred.zoo %>% 
+  mutate(
+    fit = exp(prediction$fit),
+    lwr = exp(prediction$fit - 1.96 * prediction$se.fit),
+    upr = exp(prediction$fit + 1.96 * prediction$se.fit)
 )
-
+  
 head(pred.zoo, 5)
 ```
 
@@ -106,10 +148,10 @@ ggplot(data = pred.zoo) +
         fill = "red",
         alpha = 0.1
     ) +
-    scale_y_continuous(limits = c(0, NA)) +
+    #scale_y_continuous(limits = c(0, NA)) +
     scale_x_yearweek(date_labels = "%W", date_breaks = "4 weeks") +
     labs(x = "Week", y = "Expected weekly cases") +
-    tsa_theme()
+    tsa_theme
 ```
 
 
@@ -149,7 +191,7 @@ ggplot(data = mortz_fit) +
     ) +
     scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
     labs(x = "Year", y = "Cumulative Sum") +
-    tsa_theme()
+    tsa_theme
 ```
 
 

@@ -1,14 +1,8 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
-
 # Practical Session 5 {.unnumbered}
 
 ## Periodicity {#title-5 .unnumbered}
 
-```{r, knitr-global-chunk-05t, include=FALSE, cache=FALSE}
+```{r, knitr-global-chunk-05t, cache=FALSE}
 # Install pacman if not installed already, and activate it
 if (!require("pacman")) install.packages("pacman")
 
