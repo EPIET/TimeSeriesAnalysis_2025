@@ -36,8 +36,8 @@ mortagg <-
 write_csv2(mortagg, here("data", "mortagg.csv"))
 
 
-# Practical 5
+# Practical 10
+rota <- import(here("_temporal conversion files/rotavirus.dta")) 
 
-
-
+write_csv2(rota, here("data", "rotavirus.csv"))
 

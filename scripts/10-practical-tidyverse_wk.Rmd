@@ -4,7 +4,19 @@
 
 
 ```{r, knitr-global-chunk-10t, include=FALSE, cache=FALSE}
-source("_common.R")
+# Install pacman if not installed already, and activate it
+if (!require("pacman")) install.packages("pacman")
+
+# Install, update and activate libraries
+pacman::p_load(
+  here, 
+  rio, 
+  skimr,
+  tsibble,
+  TSA,
+  memisc,
+  tidyverse
+)
 ```
 
 
@@ -38,7 +50,7 @@ the routine cohort averaged 93.3% for one dose and 88.3% for two doses.^[Rotavir
 ## Task 10.1 {-#task-10-1}
 
 You have been given a dataset for notified Rotavirus infections in England and
-Wales from week 23/2009 up to week 42/2018 (`rotavirus.dta`). Assess the impact
+Wales from week 23/2009 up to week 42/2018 (`rotavirus.csv`). Assess the impact
 of the introduction of the vaccination scheme in England and Wales for the whole
 population. Has the vaccine introduction had an effect on trend or periodicity
 patterns? Has the vaccine introduction affected the timing of the yearly
@@ -56,7 +68,34 @@ a result of the introduction of the vaccine (No help provided).
 Required source code.
 
 ```{r, task-10-1-source-Rscript}
-source("src/tidyverse/session_10.R")
+# Function to tidy Poisson regression output
+# The glmtidy function formats R glm regression output more simply
+glmtidy <- function(x, caption = ''){ 
+    pander::pander(broom::tidy(x, 
+                exponentiate = TRUE, 
+                conf.int = TRUE),
+           caption = caption)
+}
+
+
+# Function to tidy Poisson regression statistics
+# The glmstats function tabulates key model-associated statistics
+glmstats <- function(x){
+    pander::pander(broom::glance(x))
+}
+
+# Create tsa_theme from previous exercise
+tsa_theme <- theme_bw() + 
+        theme(
+            plot.title = element_text(face = "bold", 
+                                      size = 12),
+            legend.background = element_rect(fill = "white", 
+                                             size = 4, 
+                                             colour = "white"),
+            # legend.justification = c(0, 1),
+            legend.position = "bottom",
+            panel.grid.minor = element_blank()
+        )
 ```
 
 
@@ -70,9 +109,8 @@ Prepare the **rotavirus.dta** for time-series analysis. You need to manipulate
 the dataset before being able to use it for time series analysis.
 
 ```{r, task-10-1-import-dataset}
-rota <- haven::read_dta("data/rotavirus.dta")
-
-rota
+rota <- import(here("data", "rotavirus.csv")) 
+view(rota)
 ```
 
 As the data in `rota` shows above, this dataset is structured in a "wide" format.
@@ -130,7 +168,7 @@ ggplot(data = rota_lg) +
         x = "Year", y = "Weekly case counts",
         title = "Rotavirus cases\n(note differing y scales)"
     ) +
-    tsa_theme()
+    tsa_theme
 ```
 
 
@@ -291,14 +329,12 @@ ggplot(data = rotaz) +
         x = "Year", y = "Weekly case counts",
         title = "Rotavirus cases: model 3"
     ) +
-    tsa_theme()
+    tsa_theme
 ```
 
 
 To be able to comment on any change in trend after the introduction of the vaccine, 
 we need to include an interaction term in the model. 
-
-<!-- Should use ## not # for interactions in Stata code to get matching results -->
 
 ```{r, task-10-1-rota-vacc-interv-model4}
 rotamodel4 <- glm(n ~ Date * vaccine + sin52 + cos52,
@@ -343,7 +379,7 @@ ggplot(data = rotaz) +
         x = "Year", y = "Weekly case counts",
         title = "Rotavirus cases: model 5"
     ) +
-    tsa_theme()
+    tsa_theme
 ```
 
 
