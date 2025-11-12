@@ -13,7 +13,8 @@ pacman::p_load(
   skimr,
   tsibble,
   TSA,
-  tidyverse
+  tidyverse,
+  glmmTMB
 )
 ```
 
