@@ -53,9 +53,9 @@ Discuss with colleagues how you can determine the number of cases prevented as a
 ## Help for Task 10.1 {-#solution-10-1}
 
 Required source code.
-
+**Comment SC: Do we really want to have the fellows create the functions below?**
 ```{r, task-10-1-source-Rscript}
-# Function to tidy Poisson regression output
+# Function to tidy regression output
 # The glmtidy function formats R glm regression output more simply
 glmtidy <- function(x, caption = ''){ 
     pander::pander(broom::tidy(x, 
@@ -65,7 +65,7 @@ glmtidy <- function(x, caption = ''){
 }
 
 
-# Function to tidy Poisson regression statistics
+# Function to tidy regression statistics
 # The glmstats function tabulates key model-associated statistics
 glmstats <- function(x){
     pander::pander(broom::glance(x))
