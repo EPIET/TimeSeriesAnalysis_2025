@@ -14,7 +14,7 @@ pacman::p_load(
   tsibble,
   TSA,
   tidyverse,
-  glmmTMB
+  ciTools
 )
 ```
 
@@ -43,8 +43,8 @@ analysis that highlights the time when these occurred.
 
 ## Task 7.3 (Optional) {-#task-7-3}
 
-Your boss is now worried that the analysis you produced in Task 7.1 isn’t right
-as it doesn’t account for previously observed excess mortality. She thus asks
+Your boss is now worried that the analysis you produced in Task 7.1 is not right
+as it does not account for previously observed excess mortality. She thus asks
 you to forecast the expected number of deaths accounting for previous excess
 in mortality. 
 
@@ -61,19 +61,24 @@ mortagg <- import(here("data", "mortagg.csv"))
 # Prepare ts data
 mortz <-
     mortagg %>%
-    mutate(date_index = make_yearweek(year = year, week = week),
-           Date = seq.int(from = 1, to = nrow(mortagg)),
-           sin52 = sin(2 * pi * Date / 52), 
-           cos52 = cos(2 * pi * Date / 52),
-           sin26 = sin(2 * pi * Date / 26), 
-           cos26 = cos(2 * pi * Date / 26)) %>%
-    as_tsibble(index = date_index)
+    mutate(year_week = make_yearweek(year = year, week = week),
+           index = seq.int(from = 1, to = nrow(mortagg)),
+           sin52 = sin(2 * pi * week / 52), 
+           cos52 = cos(2 * pi * week / 52),
+           sin26 = sin(2 * pi * week / 26), 
+           cos26 = cos(2 * pi * week / 26)) %>%
+    as_tsibble(index = index)
 
+View(mortz)
+print(summary(mortz))
+    
 # Model with trend and seasonality
-sine2cos2trendmodel <- glm(cases ~ sin52 + cos52 + sin26 + cos26 + Date,
+mort_sine2cos2trendmodel <- glm(cases ~ index + sin52 + cos52 + sin26 + cos26,
                            family = "poisson",
                            data = mortz)
 
+
+summary(mort_sine2cos2trendmodel)
 
 # Create tsa_theme from previous exercise
 tsa_theme <- theme_bw() + 
@@ -89,6 +94,12 @@ tsa_theme <- theme_bw() +
         )
 ```
 
+```{r, task-7-1-explore}
+summary(mortz)
+
+tail(mortz)
+
+```
 
 The dataset has records up to 2009-W52, and you would like to project the data
 (forecast) into 2010.
@@ -98,20 +109,18 @@ First, create a new time series object for 2010.
 ```{r, task-7-1-dataset}
 pred.df <-
     tibble(
-        Date = 521:572,
-        sin52 = sin(2 * pi * Date / 52),
-        cos52 = cos(2 * pi * Date / 52),
-        sin26 = sin(2 * pi * Date / 26),
-        cos26 = cos(2 * pi * Date / 26),
-        pob = 46951532                     # Spanish pop in 2010 (1st Jan)
-    )
+        year=2010,
+        week  = 1:52,
+        index = 521:(521+52-1), # add 52 weeks
+        year_week = make_yearweek(year = year, week = week),
+        sin52 = sin(2 * pi * week / 52),
+        cos52 = cos(2 * pi * week / 52),
+        sin26 = sin(2 * pi * week / 26),
+        cos26 = cos(2 * pi * week / 26),
+        pob = 46951532) %>%                # Spanish pop in 2010 (1st Jan)
+    as_tsibble(index = index)
 
-pred.zoo <-
-    pred.df %>%
-    mutate(date_index = make_yearweek(year = 2010L, week = Date - 520L)) %>%
-    as_tsibble(index = date_index)
-
-view(pred.zoo)
+view(pred.df)
 ```
 
 
@@ -120,39 +129,42 @@ assuming that a simple linear regression model based on the previous years is
 appropriate.
 
 ```{r, task-7-1-prediction-interval}
-prediction <- predict(sine2cos2trendmodel, 
-                      pred.zoo,
-                      type = "link", se.fit = TRUE) 
 
-pred.zoo <- pred.zoo %>% 
-  mutate(
-    fit = exp(prediction$fit),
-    lwr = exp(prediction$fit - 1.96 * prediction$se.fit),
-    upr = exp(prediction$fit + 1.96 * prediction$se.fit)
-)
-  
-head(pred.zoo, 5)
+# apply mort_sine2cos2trendmodel to new data and predict cases with C.I. using bootstrapping.
+
+set.seed(12589)
+pred.mort <- ciTools::add_ci(pred.df,
+                            mort_sine2cos2trendmodel,
+                            names=c("lPI", "uPI"),
+                            yhatName="pred_cases",
+                            response=TRUE,
+                            type="boot",
+                            nSims=1000)
+head(pred.mort, 5)
 ```
 
 
 Predict and plot the expected cases for 2010 with prediction intervals:
 
 ```{r, task-7-1-prediction-interval-plot-tidy}
-ggplot(data = pred.zoo) +
+ggplot(data = pred.mort) +
     geom_line(
-        mapping = aes(x = date_index, y = fit),
+        mapping = aes(x = year_week, y = pred_cases),
         colour = "red",
         alpha = 0.7
     ) +
     geom_ribbon(
-        mapping = aes(x = date_index, ymin = lwr, ymax = upr),
+        mapping = aes(x = year_week, ymin = lPI, ymax = uPI),
         fill = "red",
         alpha = 0.1
     ) +
     #scale_y_continuous(limits = c(0, NA)) +
-    scale_x_yearweek(date_labels = "%W", date_breaks = "4 weeks") +
-    labs(x = "Week", y = "Expected weekly cases") +
-    tsa_theme
+    scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "4 weeks") +
+    #scale_x_yearweek(date_labels = "%W", date_breaks = "4 weeks") +
+    labs(x = "Year Week", y = "Predicted weekly cases") +
+    tsa_theme + 
+    theme(axis.text.x = element_text(angle = 30, hjust = 1)) 
+    
 ```
 
 
@@ -163,35 +175,33 @@ cumulative sum of the differences between the weekly observed and expected
 numbers of deaths:
 
 ```{r, task-7-2-diff-exp-obs}
-fitted <- predict(sine2cos2trendmodel)
 
-mortz_fit <- bind_cols(mortz,
-    fit = fitted
-)
+mortz <- mortz %>%
+            mutate(fit_cases = mort_sine2cos2trendmodel$fit)
 
-mortz_fit <-
-    mortz_fit %>%
+mortz <-
+    mortz %>%
     mutate(
-        difference = cases - fit,
-        cusum = cumsum(difference)
+        difference = cases - fit_cases,
+        cusum_excess = cumsum(difference)
     )
 
-mortz_fit
+mortz
 ```
 
 
 Plot this cumulative sum of the residuals.
 
 ```{r, task-7-2-diff-exp-obs-plot-tidy}
-ggplot(data = mortz_fit) +
+ggplot(data = mortz) +
     geom_line(
-        mapping = aes(x = date_index, y = cusum),
+        mapping = aes(x = year_week, y = cusum_excess),
         colour = "orange",
         alpha = 0.7,
         lwd = 2
     ) +
     scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
-    labs(x = "Year", y = "Cumulative Sum") +
+    labs(x = "Year", y = "Cumulative excess cases") +
     tsa_theme
 ```
 
@@ -206,9 +216,7 @@ e.g. include a covariate.
 
 Using the method developed by Farrington et al. shown in Task 7.3 (optional),
 include a weight in the regression model, predict the number of cases and the
-residuals and plot the expected cases for 2010 with prediction intervals. The
-solution provided will incorporate the seasonality into the model directly and
-not use the `predintplot` function of Task 7. 
+residuals and plot the expected cases for 2010 with prediction intervals. 
 
 ```{r, task-7-3-residual-weights}
 res.std <- rstandard(sine2cos2trendmodel)
