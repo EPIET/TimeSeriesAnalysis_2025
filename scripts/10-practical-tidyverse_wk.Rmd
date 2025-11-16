@@ -15,7 +15,11 @@ pacman::p_load(
   tsibble,
   TSA,
   memisc,
-  tidyverse
+  tidyverse,
+  AER,
+  broom,
+  gtsummary,
+  sjPlot
 )
 ```
 
@@ -46,31 +50,15 @@ outbreaks?
 
 ## Task 10.2 (Optional) {-#task-10-2}
 
-Discuss with colleagues how you can determine the number of cases prevented as a result of the introduction of the vaccine (No help provided).
-**COMMENT FROM SC: WOULD ADD SOME HINTS FOR THIS ONE**
+Discuss with colleagues how you can determine the number of cases prevented as a result of the introduction of the vaccine (Hint: refer to Practical 7!).
+
 
 
 ## Help for Task 10.1 {-#solution-10-1}
 
 Required source code.
-**Comment SC: Do we really want to have the fellows create the functions below?**
+
 ```{r, task-10-1-source-Rscript}
-# Function to tidy regression output
-# The glmtidy function formats R glm regression output more simply
-glmtidy <- function(x, caption = ''){ 
-    pander::pander(broom::tidy(x, 
-                exponentiate = TRUE, 
-                conf.int = TRUE),
-           caption = caption)
-}
-
-
-# Function to tidy regression statistics
-# The glmstats function tabulates key model-associated statistics
-glmstats <- function(x){
-    pander::pander(broom::glance(x))
-}
-
 # Create tsa_theme from previous exercise
 tsa_theme <- theme_bw() + 
         theme(
@@ -132,8 +120,12 @@ str(rota_lg)
 
 rota_lg <-
     rota_lg %>%
-    mutate(date_index = make_yearweek(year = year, week = week)) %>%
-    as_tsibble(index = date_index, key = cases_cat)
+    mutate(year_week = make_yearweek(year = year, week = week)) %>%
+  group_by(cases_cat) %>%
+    mutate(index = seq.int(from = 1, to = length(unique(year_week)))) %>%
+  ungroup() %>%
+    as_tsibble(index = year_week, key = cases_cat)
+ 
 ```
 
 
@@ -141,7 +133,7 @@ Plot the total number of cases and the total number of cases by age group agains
 
 ```{r, task-10-1-rota-plot-tidy}
 ggplot(data = rota_lg) +
-    geom_point(mapping = aes(x = date_index, y = n), alpha = 0.3) +
+    geom_point(mapping = aes(x = year_week, y = n), alpha = 0.3) +
     facet_wrap(facets = vars(cases_cat), scales = "free_y") +
     scale_y_continuous(limits = c(0, NA)) +
     scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
@@ -157,18 +149,17 @@ Note that you can get line breaks in labels using `\n`.
 You can also make all y-axes the same by using `scales = "fixed_y"`
 
 Now we need to state in the dataset when the vaccine was available.
-**Comment from SC: Wondering if the creation of a new Date below won't be confusing??**
 
-For this we are adding some variables to the `rotaz` time series.
+For this we are adding some variables to the `rota_ts` time series.
 
-`rotaz$vaccine` will be 0 for weeks before week 27 2013, and 1 thereafter. 
+`rota_ts$vaccine` will be 0 for weeks before week 27 2013, and 1 thereafter. 
 
-`rotaz$Date` will be the number of weeks since week 23 2009.
+`rota_ts$index` will be the number of weeks since week 23 2009.
 
 We have also created sine and cosine variables so that we can model annual seasonality as before. 
 
 ```{r, task-10-1-rota-vacc-interv}
-rotaz <-
+rota_ts <-
     rota_lg %>%
     mutate(
         vaccine = case_when(
@@ -178,17 +169,13 @@ rotaz <-
             year == 2013 & week < 27 ~ 0,
             TRUE ~ NA_real_
         ),
-        Date = rep(
-            x = seq.int(from = 1, to = length(unique(.data$date_index)), by = 1),
-            times = length(unique(.data$cases_cat))
-        ),
-        sin52 = sin(2 * pi * Date / 52),
-        cos52 = cos(2 * pi * Date / 52)
+        sin52 = sin(2 * pi * index / 52),
+        cos52 = cos(2 * pi * index / 52)
     )
 
 ## subset to total cases
-rotaz <-
-    rotaz %>%
+rota_ts <-
+    rota_ts %>%
     filter(cases_cat == "Total cases")
 ```
 
@@ -198,102 +185,161 @@ Now we want to see if there was a change before and after the introduction of th
 Run first a separate model for the time before and after the introduction of the vaccine
 in England and Wales for all population. Can you detect any change in trend?
 
-```{r, task-10-1-rota-vacc-interv-model1}
-rotamodel1 <- glm(n ~ Date,
-    data = rotaz %>% filter(vaccine == 0),
+```{r, task-10-1-rota-vacc-interv-modelp}
+rotamodel_prevacc_p <- glm(n ~ index,
+    data = rota_ts %>% filter(vaccine == 0),
     family = "poisson"
-)
+) 
 
+#If the `summary` command is used for a `glm` Poisson model, the log rate ratios are reported by 
+#default. They need to be exponentiated 
+
+summary_rotamodel_prevacc_p <- rotamodel_prevacc_p %>% 
+    gtsummary::tbl_regression(exponentiate = TRUE,
+                 pvalue_fun = ~style_pvalue(.x, digits = 3),
+                 estimate_fun = ~style_number(.x, digits = 4)) %>%
+   gtsummary::add_glance_table(include = c(AIC, deviance, df.residual)) %>% 
+   gtsummary::modify_caption("Rotavirus model pre-vaccination - Poisson")
+  
+summary_rotamodel_prevacc_p
+```
+
+Before we have a look at the period post-vaccination: is a Poisson model really the best model to use here? 
+
+```{r, task-10-1-rota-vacc-interv-model_nb}
 #Quick check for overdispersion: if check > 1 then use negative binomial
-check <- summary(rotamodel1)$deviance/summary(rotamodel1)$df.residual
+check <- summary(rotamodel_prevacc_p)$deviance/summary(rotamodel_prevacc_p)$df.residual
+check
 
 #proper check for overdispersion: 
-library(AER)
-dispersiontest(rotamodel1, trafo = NULL, alternative = c("greater"))
+AER::dispersiontest(rotamodel_prevacc_p, trafo = NULL, alternative = c("greater"))
 
 #so best to use a negative binomial here
-rotamodel1 <- glm.nb(n ~ Date,
-    data = rotaz %>% filter(vaccine == 0)
+rotamodel_prevacc_nb <- glm.nb(n ~ index,
+    data = rota_ts %>% filter(vaccine == 0)
+) 
+
+summary_rotamodel_prevacc_nb <- rotamodel_prevacc_nb %>% 
+    gtsummary::tbl_regression(exponentiate = TRUE,
+                 pvalue_fun = ~style_pvalue(.x, digits = 3),
+                 estimate_fun = ~style_number(.x, digits = 4)) %>%
+   gtsummary::add_glance_table(include = c(AIC, deviance, df.residual)) %>% 
+    gtsummary::modify_caption("Rotavirus model pre-vaccination - Negative Binomial")
+  
+summary_rotamodel_prevacc_nb
+```
+
+We can nicely compare the two models in one merged table using the `gtsummary()` package
+
+```{r, task-10-1-rota-vacc-interv-modelcomparisonpnb}
+#let's compare the two models
+comparison_p_nb <- 
+  gtsummary::tbl_merge(
+    tbls = list(summary_rotamodel_prevacc_p, summary_rotamodel_prevacc_nb),
+    tab_spanner = c("Poisson model", "Negative Binomial model")
+  )
+
+comparison_p_nb
+```
+
+Let's use negative binomial models for the rest of the practical.
+
+Now let's look at the period post-introduction of the vaccine.
+
+```{r, task-10-1-rota-vacc-interv-modelpost}
+rotamodel_postvacc <- glm.nb(n ~ index,
+    data = rota_ts %>% filter(vaccine == 1)
 )
 
-# Model results
-glmtidy(rotamodel1, "Rotavirus model 1")
+summary_rotamodel_postvacc <- rotamodel_postvacc %>% 
+    gtsummary::tbl_regression(exponentiate = TRUE,
+                 pvalue_fun = ~style_pvalue(.x, digits = 3),
+                 estimate_fun = ~style_number(.x, digits = 4)) %>%
+   gtsummary::add_glance_table(include = c(AIC, deviance, df.residual)) %>% 
+    gtsummary::modify_caption("Rotavirus model post-vaccination")
 
-# Check the goodness of fit statistics.
-glmstats(rotamodel1)
+summary_rotamodel_postvacc
+
 ```
 
 
-If the `summary` command is used for a `glm` Poisson model, the log rate ratios
-are reported by default. The `glmtidy` function converts these to rate ratios. 
+We show the models pre/post vaccination together below for comparison.
 
+```{r, task-10-1-rota-vacc-interv-rotamodelprepost-echo, eval=FALSE, echo=TRUE, purl=TRUE, results='asis'}
+comparison_pre_post <- 
+  gtsummary::tbl_merge(
+    tbls = list(summary_rotamodel_prevacc_nb, summary_rotamodel_postvacc),
+    tab_spanner = c("Pre-vaccination", "Post-vaccination")
+  )
 
-```{r, task-10-1-rota-vacc-interv-model2}
-rotamodel2 <- glm.nb(n ~ Date,
-    data = rotaz %>% filter(vaccine == 1)
-)
-
-# Model results
-glmtidy(rotamodel2, "Rotavirus model 2")
-
-# Check the goodness of fit statistics.
-glmstats(rotamodel2)
+comparison_pre_post
 ```
 
+We can see a difference in trends but the two models cannot be directly compared.
 
-We show the models together for comparison below. 
+Now we want to run one single model for both periods (before/after the introduction of the vaccine)
 
-```{r, task-10-1-rota-vacc-interv-rotamodel1and2-echo, eval=FALSE, echo=TRUE, purl=TRUE, results='asis'}
-memisc::mtable(
-    "Rotavirus model 1" = rotamodel1,
-    "Rotavirus model 2" = rotamodel2,
-    getSummary = getSummary_expcoef,
-    summary.stats = c("AIC", "BIC", "N")
-)
-```
-
-**SC: Do you need the latex code below?**
-```{r, task-10-1-rota-vacc-interv-rotamodel1and2-pdf, eval=knitr::is_latex_output(), echo=FALSE, purl=FALSE}
-toLatex(
-    memisc::mtable(
-        "Rotavirus model 1" = rotamodel1,
-        "Rotavirus model 2" = rotamodel2,
-        getSummary = getSummary_expcoef,
-        summary.stats = c("AIC", "BIC", "N")
-    ),
-    caption = "Rotavirus models 1 and 2: estimate (SE)"
-)
-```
-
-
-
-We can detect a numerical change in trend for infants <1 year of age, but the
-two models cannot be compared.
-
-Run one single model for both periods (before/after the introduction of the vaccine),
-this time including seasonality.
-**Comment SC: Why don't we have first Date + vaccine only?**
-
-```{r, task-10-1-rota-vacc-interv-model3}
-rotamodel3 <- glm.nb(n ~ Date + sin52 + cos52 + vaccine,
-    data = rotaz
+```{r, task-10-1-rota-vacc-interv-modeltrend}
+rotamodel_trend <- glm.nb(n ~ index + vaccine,
+    data = rota_ts
 )
 
-# Model results
-glmtidy(rotamodel3, "Rotavirus model 3")
+summary_rotamodel_trend <- rotamodel_trend %>% 
+    gtsummary::tbl_regression(exponentiate = TRUE,
+                 pvalue_fun = ~style_pvalue(.x, digits = 3),
+                 estimate_fun = ~style_number(.x, digits = 4)) %>%
+   gtsummary::add_glance_table(include = c(AIC, deviance, df.residual)) %>% 
+    gtsummary::modify_caption("Rotavirus model with trend and vaccine intervention")
 
-# Check the goodness of fit statistics.
-glmstats(rotamodel3)
+summary_rotamodel_trend
 ```
+
 We can plot the model against the raw data. 
 
-```{r, task-10-1-rota-vacc-interv-model3-plot-tidy}
-rotaz <-
-    bind_cols(rotaz, fitted_m3 = fitted(rotamodel3))
+```{r, task-10-1-rota-vacc-interv-modeltrend-plot-tidy}
+rota_ts <-
+    bind_cols(rota_ts, fitted_trend = fitted(rotamodel_trend))
 
-ggplot(data = rotaz) +
-    geom_point(mapping = aes(x = date_index, y = n), alpha = 0.3) +
-    geom_line(mapping = aes(x = date_index, y = fitted_m3), alpha = 0.7, colour = "green") +
+ggplot(data = rota_ts) +
+    geom_point(mapping = aes(x = year_week, y = n), alpha = 0.3) +
+    geom_line(mapping = aes(x = year_week, y = fitted_trend), alpha = 0.7, colour = "green") +
+    scale_y_continuous(limits = c(0, NA)) +
+    scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
+    labs(
+        x = "Year", y = "Weekly case counts",
+        title = "Rotavirus cases: model with trend and intervention"
+    ) +
+    tsa_theme
+```
+
+Now we want to run one single model for both periods (before/after the introduction of the vaccine), this time including seasonality.
+
+```{r, task-10-1-rota-vacc-interv-modelseason}
+rotamodel_seasonality <- glm.nb(n ~ index + sin52 + cos52 + vaccine,
+    data = rota_ts
+)
+
+
+summary_rotamodel_seasonality <- rotamodel_seasonality %>% 
+    gtsummary::tbl_regression(exponentiate = TRUE,
+                 pvalue_fun = ~style_pvalue(.x, digits = 3),
+                 estimate_fun = ~style_number(.x, digits = 4)) %>%
+   gtsummary::add_glance_table(include = c(AIC, deviance, df.residual)) %>% 
+    gtsummary::modify_caption("Rotavirus model with seasonality, trend and vaccine intervention")
+
+summary_rotamodel_seasonality
+
+```
+
+We can plot the model against the raw data again. 
+
+```{r, task-10-1-rota-vacc-interv-modelseason-plot-tidy}
+rota_ts <-
+    bind_cols(rota_ts, fitted_seasonality = fitted(rotamodel_seasonality))
+
+ggplot(data = rota_ts) +
+    geom_point(mapping = aes(x = year_week, y = n), alpha = 0.3) +
+    geom_line(mapping = aes(x = year_week, y = fitted_seasonality), alpha = 0.7, colour = "green") +
     scale_y_continuous(limits = c(0, NA)) +
     scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
     labs(
@@ -308,42 +354,58 @@ To be able to comment on any change in trend after the introduction of the vacci
 we need to either include an interaction term in the model or include a time variable that starts at the introduction of the vaccine. Let's here use an interaction term. 
 
 ```{r, task-10-1-rota-vacc-interv-model4}
-rotamodel4 <- glm.nb(n ~ Date * vaccine + sin52 + cos52,
-    data = rotaz
+rotamodel_winteraction <- glm.nb(n ~ index * vaccine + sin52 + cos52,
+    data = rota_ts
 )
 
-# Model results
-glmtidy(rotamodel4, "Rotavirus model 4")
+summary_rotamodel_trendinteraction <- rotamodel_winteraction %>% 
+    gtsummary::tbl_regression(exponentiate = TRUE,
+                 pvalue_fun = ~style_pvalue(.x, digits = 3),
+                 estimate_fun = ~style_number(.x, digits = 4)) %>%
+   gtsummary::add_glance_table(include = c(AIC, deviance, df.residual)) %>% 
+    gtsummary::modify_caption("Rotavirus model with seasonality, trend, vaccine and interaction between intervention and trend")
 
-# Check the goodness of fit statistics.
-glmstats(rotamodel4)
+summary_rotamodel_trendinteraction
+
 ```
 
+You can visualize the effect of the interaction term using `plot_model()`
+
+```{r, task-10-1-rota-vacc-interv-vizinteraction}
+sjPlot::plot_model(rotamodel_winteraction, type ="int")
+```
 
 Have there been any changes in seasonality, too? 
 
 Note how we can use brackets to introduce interaction terms for several variables. 
 
 ```{r, task-10-1-rota-vacc-interv-model5}
-rotamodel5 <- glm.nb(n ~ vaccine * (sin52 + cos52 + Date),
-    data = rotaz
+rotamodel_full <- glm.nb(n ~ (sin52 + cos52 + index)*vaccine,
+    data = rota_ts
 )
 
-# Model results
-glmtidy(rotamodel5, "Rotavirus model 5")
 
-# Check the goodness of fit statistics.
-glmstats(rotamodel5)
+summary_rotamodel_full <- rotamodel_full %>% 
+    gtsummary::tbl_regression(exponentiate = TRUE,
+                 pvalue_fun = ~style_pvalue(.x, digits = 3),
+                 estimate_fun = ~style_number(.x, digits = 4)) %>%
+   gtsummary::add_glance_table(include = c(AIC, deviance, df.residual)) %>% 
+    gtsummary::modify_caption("Rotavirus model with seasonality, trend, vaccine and interaction term")
+
+summary_rotamodel_full
+
+sjPlot::plot_model(rotamodel_full, type ="int")
 ```
 
+Let's plot the full model estimate.
 
 ```{r, task-10-1-rota-vacc-interv-model5-plot-tidy}
-rotaz <-
-    bind_cols(rotaz, fitted_m5 = fitted(rotamodel5))
+rota_ts <-
+    bind_cols(rota_ts, fitted_full = fitted(rotamodel_full))
 
-ggplot(data = rotaz) +
-    geom_point(mapping = aes(x = date_index, y = n), alpha = 0.3) +
-    geom_line(mapping = aes(x = date_index, y = fitted_m5), alpha = 0.7, colour = "green") +
+ggplot(data = rota_ts) +
+    geom_point(mapping = aes(x = year_week, y = n), alpha = 0.3) +
+    geom_line(mapping = aes(x = year_week, y = fitted_full), alpha = 0.7, colour = "green") +
     scale_y_continuous(limits = c(0, NA)) +
     scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
     labs(
@@ -353,15 +415,18 @@ ggplot(data = rotaz) +
     tsa_theme
 ```
 
+We can now compare all models next to each other:
 
-**SC: I would remove the code below and instead do AIC comparisons + put some hints for the second question**
+```{r, task-10-1-rota-vacc-interv-comparisonall}
+comparison_all <- 
+  gtsummary::tbl_merge(
+    tbls = list(summary_rotamodel_seasonality,summary_rotamodel_trendinteraction,  summary_rotamodel_full),
+    tab_spanner = c("Model without interaction terms", "Interaction with trend only", "Full model")
+  )
 
-```{r}
-car::linearHypothesis(
-    rotamodel5,
-    c("vaccine:sin52", "vaccine:cos52")
-)
+comparison_all
 ```
 
-We use the `linearHypothesis` command from the `car` package to test the
-hypothesis that the estimates for two of the interaction terms are both zero.
+
+What about age? Can you see a difference in impact of vaccination depending on age category?
+
