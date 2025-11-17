@@ -41,3 +41,6 @@ rota <- import(here("_temporal conversion files/rotavirus.dta"))
 
 write_csv2(rota, here("data", "rotavirus.csv"))
 
+# Practical 9
+aragon <- import(here("_temporal conversion files/aragon.dta")) 
+write_csv(aragon, here("data", "aragon.csv"))
