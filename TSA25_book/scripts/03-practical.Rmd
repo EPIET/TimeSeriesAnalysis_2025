@@ -1,0 +1,310 @@
+# Practical Session 3 {.unnumbered}
+
+## Managing date formats and plotting {#title-3 .unnumbered}
+
+## Expected learning outcomes {#learning-3 .unnumbered}
+
+By the end of the session, participants should be able to: - import surveillance data into statistical software - manage surveillance datasets with different date formats - plot surveillance data against time
+
+You have been provided with one MS Excel file (`tsa_practice.xlsx`) with 2 different sheets, one for each of two different diseases (*dis1*, *dis2*); and one csv file called (`tsa_pumala.csv`) about Puumala virus infections in Finland.
+
+## Task 3.1 {#task-3-1 .unnumbered}
+
+Assess visually the reported number of each disease by ISO (epidemiological) week or calendar month for all the data provided ("dis2" is optional).
+
+What diseases do you think they are, judging from their distribution in time?
+
+## Help for Task 3.1 {#solution-3-1 .unnumbered}
+
+Required source code.
+
+```{r task-3-1-source-Rscript, message=FALSE, warning=FALSE}
+# Install pacman if not installed already, and activate it
+if (!require("pacman")) install.packages("pacman")
+
+# Install, update and activate libraries
+pacman::p_load(
+  here, 
+  rio, 
+  skimr,
+  tsibble,
+  ISOweek,
+  tidyverse
+)
+```
+
+A collection of R code stored in a file is called an R script. It will be displayed in your computer as a file with the `.R` or `.r` file extension. You can run R code either by opening the R script file and executing a specific line or lines of code, or by sourcing the R script. The latter will execute all R code contained in a give R script without the need to open the file. This can be performed with the `source` function.
+
+Import your data to R from these Excel files.
+
+```{r, task-3-1-import-xls}
+dis1 <- import(here("data", "tsa_practice.xlsx"), which = "dis1")
+```
+
+The `read_excel` function from the `readxl` package reads data from a specific Excel worksheet into memory. Strictly speaking the `readxl` function reads data into a `tibble`, which is a modified data frame special class to work with other packages. However, this makes little practical difference here.
+
+Run the command `library(help = readxl)` to learn more about the functions in the `readxl` package.
+
+How many functions are in the `readxl` package? Use `?read_excel` to open the help file on the `read_excel` function.
+
+Inspect the data.
+
+```{r, task-3-1-str-dis1}
+str(dis1)
+```
+
+The `str` function is a very useful and powerful base R function. It is well suited to compactly display the internal *structure* of an R object.
+
+Looking at the output of the command above, you can see 4 lines are returned by R.
+
+The first line, `tibble [431 x 3] (S3: tbl_df/tbl/data.frame)`, tells what type of class the object you are checking is, as well as its dimensions. In this case, `dis1` is a `tibble` class object (which is a special type of `data.frame` class), and has 431 rows and 3 columns / variables. (Remember that for tabular data, R follows the standard of indexing rows and columns by this order, \[rows , columns\]).
+
+In the remaining three lines, there is a `$` operator at the beginning, which marks each of the variables in the dataset. After it, you can see the name of the variables, and after their name, a designation of the type of data in each variable. In this case, you can see the term `num`, which means a variable contains numeric data. Remember that R can store data at the most elementary level as numeric (`num`), integer (`int`), text (`chr`) and boolean (`lgl`).
+
+```{r, task-3-1-summary-dis1}
+summary(dis1)
+```
+
+The `summary` function, when provided with a `data.frame` object (`dis1` in this case), will output a quick summary of each variable in the console.
+
+However, the `summary` function provides an overview of the distribution of variables in the dataset, assuming they are numeric.
+
+```{r, task-3-1-skimr-dis1, eval=knitr::is_html_output()}
+skim(dis1) %>% as_tibble()
+```
+
+R has many packages and that can be used for exploratory data analysis. The `skim` function from the `skimr` package is an alternative to `summary`, quickly providing a broad overview of a data frame. It handles data of all types, displaying a different set of summary functions based on the types of columns in the data frame.
+
+```{r, task-3-1-table-dis1}
+table(dis1$year)
+```
+
+The `table` function is also a useful function in R to compute tabulations and inspect categorical data. In the code example above, we are asking R to count the number of times each unique category observation in the year variable of the dis1 dataset occurs. (Remember that the `$` operator is used to index or select a variable of given dataset by its name).
+
+In the output of the command above you can see two lines. The first one displays all unique year observations contained in the year variable. The second line displays, right below the respective year, the number of times it appears in the dataset. So, the year 1981 appears 52 times in the year variable of the dis1 dataset.
+
+```{r, task-3-1-count-dis1}
+dis1 %>% 
+  count(year)
+```
+
+The `count` function from the `dplyr` package can be used as an alternative to `table`. In this instance, it will take the data.frame where the data is stored as the first argument, and the variable name to count upon as the second argument.
+
+```{r, task-3-1-view-dis1, eval=FALSE}
+View(dis1)
+```
+
+The `View` command opens a window to show a specified data set. It can be useful for quick visual inspection of a small dataset or a subset of a bigger `data.frame`. RStudio will limit the initial display by `View` to 50 columns and 1000 rows. These limits can be extended as you scroll the window horizontally or vertically, in case the dataset you are looking at extends those default limits.
+
+You can alternatively use the `head` command to view the first rows of data in the console. The `head` command lists the first values of a variable, or the first rows of a data set. There is also a `tail` command to list the last values or rows.
+
+```{r, task-3-1-head-tail-dis1}
+head(dis1)
+head(dis1, 10)
+
+tail(dis1)
+```
+
+R has a collection of packages for handling time series data.
+
+Some of these packages are part of the `tidyverts` family of packages. Particularly, it includes the `tsibble` package, which intends to create a data infrastructure for easier manipulation and handling of temporal data, and adapts the [principles of the](https://tidyr.tidyverse.org/articles/tidy-data.html)).
+
+According to the help description, a `tsibble` object is defined by
+
+-   an `index`, as a variable with inherent ordering from past to present.
+
+-   a `key`, as a set of variables that define observational units over time.
+
+-   uniquely identified observations by an index and a key.
+
+To convert the original dis1 dataset to a `tsibble` object, we use the `as_tsibble` function and specify the `index`, i.e. the variable specifying the time unit of interest. In our case, this is `year` and `week` variables. Variables that are not used for index or key purposes, such as the `cases` variables, are considered as measured variables.
+
+```{r, task-3-1-tsibble-week-base}
+dis1z <-
+    dis1 %>%
+    mutate(date_index = make_yearweek(year = year, week = week)) %>%
+    as_tsibble(index = date_index)
+
+str(dis1z)
+head(dis1z, 10)
+```
+
+You can see how the number of disease 1 cases is distributed in time using the `ggplot` package.
+
+```{r, task-3-1-plot-tsibble-week-tidy}
+ggplot(data = dis1z) +
+    geom_line(mapping = aes(x = date_index, y = cases)) +
+    scale_x_yearweek(date_labels = "%Y") +
+    labs(x = "Date", y = "Number of Cases", title = "Disease 1 data") +
+    theme_bw() + 
+        theme(
+            plot.title = element_text(face = "bold", 
+                                      size = 12),
+            legend.background = element_rect(fill = "white", 
+                                             size = 4, 
+                                             colour = "white"),
+            # legend.justification = c(0, 1),
+            legend.position = "bottom",
+            panel.grid.minor = element_blank()
+        )
+
+# We can save theme modifications into a single object and then use it in new plots
+tsa_theme <- theme_bw() + 
+        theme(
+            plot.title = element_text(face = "bold", 
+                                      size = 12),
+            legend.background = element_rect(fill = "white", 
+                                             size = 4, 
+                                             colour = "white"),
+            # legend.justification = c(0, 1),
+            legend.position = "bottom",
+            panel.grid.minor = element_blank()
+        )
+```
+
+Note from the plot that there are missing values in the data.
+
+If data points are collected at regular time interval, we can correct missingness by providing a default a default value or interpolating missing values from other data. The `tsibble` package has the `fill_gaps` function, which fills missing values with a pre-specified default value. It is quite common to replaces `NA`s with its previous observation for each origin in time series analysis, which is easily done using `fill` function from `tidyr` package.
+
+A quick overview of implicit missing values with `tsibble` is available on `vignette("implicit-na")`.
+
+As the focus of this training is on understanding principles of time series analysis rather than visualisation of time series, we will mainly use the `ggplot` functions for the remaining exercises.
+
+Our colleagues shared some data with us they produced with Stata. They forgot to save it as a excell or csv. Luckily for us, the function `import` is here to save the day
+
+```{r, task-3-1-dis3-import}
+dis3 <- import(here("data", "tsa_pumala.csv"))
+```
+
+Here you have one variable for the year, one variable for the month and one variable with the complete date in days, but in a text (`chr` class) format.
+
+```{r, task-3-1-dis3-inspect}
+str(dis3)
+head(dis3)
+summary(dis3)
+```
+
+With the complete date, you can generate ISO weeks, but first you need the date variable to be converted from text to something R recognises as a date. The `lubridate` package has a number of convenient functions for converting text strings to dates.
+
+```{r, task-3-1-dis3-date-format-base}
+str(dis3$date_str)
+
+dis3 <- dis3 %>%
+    mutate(my_date = dmy(date_str))
+
+str(dis3$my_date)
+```
+
+As a complementary note, check the help for `strftime` to learn about different date formats in R (`?strftime`).
+
+To convert to ISO week, we can use the `ISOweek` function from the `ISOweek` package, which creates a new variable representing the ISO week. We could then also create a new variable representing the first Monday of each ISO week. Although the popular `lubridate` package has an `isoweek` function (there is also a similar function in the `surveillance` package), we use the `ISOweek` package here as it has the `ISOweek2date` function. If epidemiological weeks are required, use the `EpiWeek` package.
+
+```{r, task-3-1-dis3-isoweek-base}
+dis3 <- dis3 %>%
+    mutate(
+        date_isowk = ISOweek(my_date),
+        isodate = ISOweek2date(paste(date_isowk, "-1", sep = ""))
+    )
+
+head(dis3)
+```
+
+The `paste` command concatenates text.
+
+Here we are adding `"-01"` onto the end of the ISO week variable (which is formatted something like `"1995-W01"`), to indicate that we want the first day of that week, and then supplying that to the `ISOweek2date` function, which converts that to a date.
+
+Have a look at the new variables that have been created. `date_isowk` is the ISO week variable, in string format, and `isodate` is the Monday of each ISO week. Note that the years 1998 and 2004 each have an ISO week 53.
+
+You have several observations in the same week since you have data from different days and one value corresponds to one case. Use the `count` function to aggregate the data.
+
+```{r, task-3-1-dis3-isoweek-aggr-base}
+dis3_v2 <- dis3 %>%
+    count(date_isowk)
+
+head(dis3_v2)
+```
+
+```{r, task-3-1-dis3-isoweek-plot-tidy}
+dis3z <- dis3_v2 %>%
+    mutate(date_index = yearweek(x = date_isowk, week_start = 1L)) %>%
+    as_tsibble(index = date_index)
+
+str(dis3z)
+head(dis3z, 10)
+
+ggplot(data = dis3z) +
+    geom_line(mapping = aes(x = date_index, y = n)) +
+    scale_x_yearweek(date_labels = "%Y") +
+    labs(x = "Date", y = "Number of Cases", title = "Disease 1 data") +
+    tsa_theme
+```
+
+Aggregating cases by month is another possibility.
+
+```{r, task-3-1-dis3-month-plot-tidy}
+dis3_agg <- dis3 %>%
+    count(year, month)
+
+dis3z_v2 <- dis3_agg %>%
+    mutate(date_index = make_yearmonth(year = year, month = month)) %>%
+    as_tsibble(index = date_index)
+
+ggplot(data = dis3z_v2) +
+    geom_line(mapping = aes(x = date_index, y = n)) +
+    scale_x_yearweek(date_labels = "%Y") +
+    labs(x = "Date", y = "Number of Cases", title = "Disease 1 data") +
+    tsa_theme
+```
+
+## Help for Optional Task 3.1.1 {#solution-3-1-1 .unnumbered}
+
+Import your data to R from these Excel files.
+
+```{r, task-3-1-opt-dis2-import}
+dis2 <- import(here("data", "tsa_practice.xlsx"), which = "dis2")
+```
+
+Inspect the data.
+
+```{r, task-3-1-opt-dis2-inspect}
+str(dis2)
+head(dis2)
+summary(dis2)
+```
+
+```{r, task-3-1-opt-dis2-view, eval=FALSE}
+View(dis2)
+```
+
+You have separate columns containing the counts. To plot this data, you need to first reshape your dataset by converting it from the current wide format to a long format.
+
+The function `pivot_longer` can perform such transformation.
+
+```{r, task-3-1-opt-dis2-pivot-longer-tidy}
+dis2l <- dis2 %>%
+  pivot_longer(
+      cols = -year, 
+      names_to = "month", 
+      values_to = "case"
+  ) %>%
+  mutate(month = as_factor(month)) %>%  # as_factor sets levels in the order they appear
+  arrange(year, month)
+
+str(dis2l)
+head(dis2l)
+    
+
+dis2l_agg <- dis2l %>%
+    mutate(date_index = make_yearmonth(year = year, month = month)) %>%
+    as_tsibble(index = date_index)
+
+head(dis2l_agg)
+
+ggplot(data = dis2l_agg) +
+    geom_line(mapping = aes(x = date_index, y = case)) +
+    scale_x_yearweek(date_labels = "%Y") +
+    labs(x = "Date", y = "Number of Cases", title = "Disease 3 data") +
+    tsa_theme
+```
+
+**dis1** corresponds to salmonellosis cases, **dis2** to measles cases in New York.

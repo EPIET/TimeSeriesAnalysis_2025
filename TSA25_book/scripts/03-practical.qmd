@@ -1,0 +1,23 @@
+---
+title: "Practical Session 3"
+---
+
+# Managing date formats and plotting {#title-3 .unnumbered}
+
+## Expected learning outcomes {#learning-3 .unnumbered}
+
+By the end of the session, participants should be able to:
+
+-   Import surveillance data into statistical software
+
+-   Manage surveillance datasets with different date formats
+
+-   Plot surveillance data against time
+
+You have been provided with one MS Excel file (`tsa_practice.xlsx`) containing 2 sheets, one for each of two different diseases (**dis1**, **dis2**); and one csv file called (`tsa_pumala.csv`) about Puumala virus infections in Finland.
+
+## Task 3.1
+
+Visually assess the reported number of each disease by ISO (epidemiological) week or calendar month for all the data provided (optional: "dis2").
+
+What diseases do you think they are, judging from their distribution in time?

@@ -3,7 +3,7 @@ project:
   output-dir: output
 
 book:
-  title: "TSA25_book"
+  title: "Time Series Analysis Module"
   author: "Norah Jones"
   page-navigation: true
   sidebar:                
@@ -12,9 +12,9 @@ book:
   chapters:
     - index.qmd
     - intro.qmd
-    part: "Practical exercises"
-    chapters: 
-      - 
+    - part: "Practical exercises"
+      chapters:
+        - "scripts/03-practical.qmd"
 
 
 

@@ -1,0 +1,55 @@
+[
+  {
+    "objectID": "scripts/03-practical.html",
+    "href": "scripts/03-practical.html",
+    "title": "2  Practical Session 3",
+    "section": "",
+    "text": "Managing date formats and plotting",
+    "crumbs": [
+      "Practical exercises",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Practical Session 3</span>"
+    ]
+  },
+  {
+    "objectID": "scripts/03-practical.html#learning-3",
+    "href": "scripts/03-practical.html#learning-3",
+    "title": "2  Practical Session 3",
+    "section": "Expected learning outcomes",
+    "text": "Expected learning outcomes\nBy the end of the session, participants should be able to:\n\nImport surveillance data into statistical software\nManage surveillance datasets with different date formats\nPlot surveillance data against time\n\nYou have been provided with one MS Excel file (tsa_practice.xlsx) containing 2 sheets, one for each of two different diseases (dis1, dis2); and one csv file called (tsa_pumala.csv) about Puumala virus infections in Finland.",
+    "crumbs": [
+      "Practical exercises",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Practical Session 3</span>"
+    ]
+  },
+  {
+    "objectID": "intro.html",
+    "href": "intro.html",
+    "title": "1  Introduction",
+    "section": "",
+    "text": "This is a book created from markdown and executable code.\nSee @knuth84 for additional discussion of literate programming.\n\n1 + 1\n\n[1] 2",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction</span>"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "TSA25_book",
+    "section": "",
+    "text": "Preface\nThis is a Quarto book.\nTo learn more about Quarto books visit https://quarto.org/docs/books.\n\n1 + 1\n\n[1] 2",
+    "crumbs": [
+      "Preface"
+    ]
+  },
+  {
+    "objectID": "scripts/03-practical.html#task-3.1",
+    "href": "scripts/03-practical.html#task-3.1",
+    "title": "2  Practical Session 3",
+    "section": "2.1 Task 3.1",
+    "text": "2.1 Task 3.1\nVisually assess the reported number of each disease by ISO (epidemiological) week or calendar month for all the data provided (optional: “dis2”).\nWhat diseases do you think they are, judging from their distribution in time?",
+    "crumbs": [
+      "Practical exercises",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Practical Session 3</span>"
+    ]
+  }
+]
