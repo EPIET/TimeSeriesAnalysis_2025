@@ -1,0 +1,43 @@
+project:
+  type: book
+  output-dir: output
+
+book:
+  title: "TSA25_book"
+  author: "Norah Jones"
+  page-navigation: true
+  sidebar:                
+    style: docked
+    
+  chapters:
+    - index.qmd
+    - intro.qmd
+    part: "Practical exercises"
+    chapters: 
+      - 
+
+
+
+format:
+  html:
+    theme: cosmo
+    page-layout: full
+    code-copy: true
+    toc: true
+    toc-depth: 3
+    toc-expand: true
+    number-depth: 2
+    link-external-newwindow: true
+    # embed-resources: true
+    
+grid:
+  body-width: 1500px
+  margin-width: 300px
+  sidebar-width: 300px
+    
+execute: 
+  freeze: auto
+
+
+editor: visual
+
