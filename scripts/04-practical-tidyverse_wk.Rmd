@@ -3,6 +3,7 @@
 ## Smoothing and Trends {-#title-4}
 
 ```{r, knitr-global-chunk-04t}
+rm(list=ls())
 # Install pacman if not installed already, and activate it
 if (!require("pacman")) install.packages("pacman")
 
@@ -14,10 +15,24 @@ pacman::p_load(
   tsibble,
   ISOweek,
   slider,    # for rolling means
-  imputeTS, 
+  imputeTS, #necessary? /skb
   pander,
   tidyverse
 )
+
+
+# Create tsa_theme
+tsa_theme <- theme_bw() + 
+        theme(
+            plot.title = element_text(face = "bold", 
+                                      size = 12),
+            legend.background = element_rect(fill = "white", 
+                                             size = 4, 
+                                             colour = "white"),
+            # legend.justification = c(0, 1),
+            legend.position = "bottom",
+            panel.grid.minor = element_blank()
+        )
 ```
 
 
@@ -42,8 +57,8 @@ Describe, test and fit a trend in surveillance data (simple smoothing and regres
 
 Assess and interpret the significance of trend in surveillance data.
 
-You are provided with a dataset in Stata (`mortality.dta`) which includes variables
-on week, year, total number of deaths (`cases`) as well as number of deaths
+You are provided with a dataset in R (`mortagg.Rdata`) which includes variables
+on week, year, total number of deaths (`cases`), and population, as well as number of deaths and population
 among males and females separately.
 
 
@@ -119,10 +134,12 @@ than linear regression) may be relevant in this example?
 
 ## Help for Task 4.1 {-#solution-4-1}
 
-Import the `mortality.dta` dataset.
+Import the `mortality.Rdata` dataset.
 
 ```{r, task-4-1-import-csv}
-mortagg <- import(here("data", "mortagg.csv"))
+#mortagg <- import(here("data", "mortagg.dat"))
+load(here("data", "mortagg2.Rdata"))
+
 ```
 
 Inspect the data.
@@ -135,7 +152,7 @@ view(mortagg)
 
 
 ```{r, task-4-1-describe-mort}
-skimr::skim(mortagg)
+skimr::skim(mortagg) # does this give any more informaton than summary?
 ```
 
 
@@ -147,23 +164,11 @@ mortz <-
   mutate(date_index = make_yearweek(year = year, week = week)) %>%
   as_tsibble(index = date_index)
 
-# Create tsa_theme from previous exercise
-tsa_theme <- theme_bw() + 
-        theme(
-            plot.title = element_text(face = "bold", 
-                                      size = 12),
-            legend.background = element_rect(fill = "white", 
-                                             size = 4, 
-                                             colour = "white"),
-            # legend.justification = c(0, 1),
-            legend.position = "bottom",
-            panel.grid.minor = element_blank()
-        )
 
 ggplot(data = mortz) +
   geom_line(mapping = aes(x = date_index, y = cases)) +
   scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
-  labs(x = "Date", y = "Number of Deaths", title = "Mortality") +
+  labs(x = "Year Week", y = "Number of Deaths", title = "Mortality") +
   tsa_theme
 ```
 
