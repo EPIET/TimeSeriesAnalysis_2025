@@ -1,0 +1,54 @@
+------------------------------------------------------------------------------------
+ FILE:   gen_mortality_Spain_2010_2025.R
+ STUDY:  TSA module 2025
+ CONTACT: Tanja Charles
+ AFFILIATION: SPM/Fellowship
+ PROJECT: 
+
+ STATISTICIAN: Sharon Kühlmann
+
+ Input : 
+
+ Created:      14-11-2025
+ Updated: 
+
+ What: Read raw file with number of deaths per week in Spain. 
+        Estimación del número de defunciones semanales
+        Downloaded from https://www.ine.es/jaxiT3/Datos.htm?t=35177#_tabs-tabla
+ 
+
+ Input : 
+ Output: HALO-1i_lab_2023.Rdata
+
+ R version:    4.2.2
+
+------------------------------------------------------------------------------------
+
+    cases_m        cases_f         cases            year           week            pop          
+ Min.   :3276   Min.   :2941   Min.   : 6316   Min.   :2010   Min.   : 1.00   Min.   :46418884  
+ 1st Qu.:3648   1st Qu.:3464   1st Qu.: 7106   1st Qu.:2012   1st Qu.:14.00   1st Qu.:46486621  
+ Median :3839   Median :3684   Median : 7510   Median :2015   Median :27.00   Median :46497393  
+ Mean   :3969   Mean   :3819   Mean   : 7788   Mean   :2015   Mean   :26.55   Mean   :46608292  
+ 3rd Qu.:4194   3rd Qu.:4047   3rd Qu.: 8217   3rd Qu.:2017   3rd Qu.:40.00   3rd Qu.:46712650  
+ Max.   :5597   Max.   :5877   Max.   :11471   Max.   :2019   Max.   :53.00   Max.   :46918951  
+     pop_f              pop_m         
+ Min.   :23504349   Min.   :22806445  
+ 1st Qu.:23612439   1st Qu.:22831107  
+ Median :23621034   Median :22889600  
+ Mean   :23669979   Mean   :22938313  
+ 3rd Qu.:23719207   3rd Qu.:23016783  
+ Max.   :23902168   Max.   :23099009  
+    cases_m         cases_f          cases            year           week         pop          
+ Min.   : 3472   Min.   : 3389   Min.   : 6861   Min.   :2020   Min.   : 1   Min.   :47318050  
+ 1st Qu.: 4018   1st Qu.: 3886   1st Qu.: 7971   1st Qu.:2020   1st Qu.:14   1st Qu.:47318050  
+ Median : 4430   Median : 4358   Median : 8615   Median :2020   Median :27   Median :47318050  
+ Mean   : 4774   Mean   : 4664   Mean   : 9438   Mean   :2020   Mean   :27   Mean   :47318050  
+ 3rd Qu.: 4945   3rd Qu.: 4680   3rd Qu.: 9563   3rd Qu.:2020   3rd Qu.:40   3rd Qu.:47318050  
+ Max.   :10551   Max.   :10438   Max.   :20989   Max.   :2020   Max.   :53   Max.   :47318050  
+     pop_f              pop_m         
+ Min.   :24107382   Min.   :23210668  
+ 1st Qu.:24107382   1st Qu.:23210668  
+ Median :24107382   Median :23210668  
+ Mean   :24107382   Mean   :23210668  
+ 3rd Qu.:24107382   3rd Qu.:23210668  
+ Max.   :24107382   Max.   :23210668  
