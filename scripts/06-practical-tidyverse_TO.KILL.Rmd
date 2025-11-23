@@ -310,6 +310,7 @@ What do you see? Is there any interesting pattern in the residuals that we need 
 
 ```{r, task-6-save}
 save(list = ls(pattern = 'mort'), file = here("data", "mortagg2_case_6.RData"))
+
 #load(here("data","mortagg2_case_6.RData"))
 
 ```
