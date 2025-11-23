@@ -384,6 +384,7 @@ better fit with the additional variables.
 
 ```{r, task-5-save}
 save(list = ls(pattern = 'mort'), file = here("data", "mortagg2_case_5.RData"))
+
 #load(here("data","mortagg2_case_5.RData"))
 
 ```
