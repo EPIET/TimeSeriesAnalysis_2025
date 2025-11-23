@@ -78,19 +78,21 @@ Required source code.
 
 ```{r, task-5-1-source-Rscript}
 # Read data
-load(here("data", "mortagg2_case_4.RData"))
-#
-## 
-#mortz <-
-#    mortagg %>%
-#    mutate(date_index = make_yearweek(year = year, week = week)) %>%
-#    as_tsibble(index = date_index)
-#
-## Create an index that goes from 1 to the number of rows in the dataset. This 
-## variable with represent time. 
-#
-#mortz$index <- seq.int(from = 1,
-#                      to = nrow(mortz))
+#mortagg <- import(here("data", "mortagg.csv"))
+load(here("data", "mortagg2.Rdata"))
+
+
+# 
+mortz <-
+    mortagg %>%
+    mutate(date_index = make_yearweek(year = year, week = week)) %>%
+    as_tsibble(index = date_index)
+
+# Create an index that goes from 1 to the number of rows in the dataset. This 
+# variable with represent time. 
+
+mortz$index <- seq.int(from = 1,
+                      to = nrow(mortz))
 
 
 ```
@@ -189,7 +191,7 @@ periodicity does it appear (see reciprocal frequency). Observe that the
 reciprocal frequency is in the same units as the data, in this case is in  
 weeks. 
 
-```{r, task-5-1-periodogram-plot-tidy}
+```{r, task-5-1-periodogram-epergram-tidy}
 # breaks every 13, equivalent to every 3 months approximately.
 
 ggplot(data = mort_period_recip, aes(x = reciprocal_freq, y = 2*spec)) +
@@ -216,7 +218,7 @@ curve* of a 52-week period. Note that periodicity with a *period of* *one
 year is also referred to as seasonality*. 
 
 Fit a poisson regression of `cases` with only sine and cosine predictor term. 
-In order to have an appropriate phase in your model (you do not have to worry 
+In order to have an appropriate phase in your model (you don't have to worry 
 about identifying it; this will happen automatically), you need to use *both* 
 a sine and a cosine curve with the same period. The sum of these two curves 
 gives the periodicity for the specified period and the phase best describing 
@@ -229,11 +231,7 @@ weekly, and we assume that there is one cycle per year since we assume a
 
 
 ```{r, task-5-2-sin52-cos52}
-
-# cosinor() only works with data.frames, not tibble.
-mortz.df <- as.data.frame(mortz)
-
-mort_sincos <-  cosinor(cases ~ 1, date = "week", 
+mort_sincos <-  season::cosinor(cases ~ 1, date = "week", 
                             data = mortz.df, type = "weekly", cycles=1,
                             family = poisson())
 
@@ -278,9 +276,7 @@ terms, what do you observe?
 
 
 
-In the next model include a trend and the seasonality. We will calculate the 
-sinus and cosinus by hand. 
-
+In the next model include a trend and the seasonality.
 
 ```{r, task-5-2-trend-sin52-cos52}
 # calculate the sine and cosine terms.
@@ -290,6 +286,7 @@ mortz <- mortz %>%
          sin52 = sin(2 * pi * index / 52))
 
 mort_trendsincos <- glm(cases ~ index + sin52 + cos52, family = "poisson", data = mortz)
+
 
 summary(mort_trendsincos)
 
@@ -381,9 +378,3 @@ sine and cosine at 26 weeks. If the test results in a significant p-value,
 then the additional variables improve the model significantly, and there is a 
 better fit with the additional variables. 
 
-
-```{r, task-5-save}
-save(list = ls(pattern = 'mort'), file = here("data", "mortagg2_case_5.RData"))
-#load(here("data","mortagg2_case_5.RData"))
-
-```

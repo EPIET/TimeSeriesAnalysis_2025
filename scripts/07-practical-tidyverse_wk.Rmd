@@ -58,6 +58,8 @@ Required source code.
 # Load raw data
 mortagg <- import(here("data", "mortagg.csv"))
 
+mortagg <- read.csv2(file.path("C:/Users/skuhlmannberenzon/OneDrive - ECDC/Documents/GitHub/TimeSeriesAnalysis_2025/data", "mortagg.csv"))
+
 # Prepare ts data
 mortz <-
     mortagg %>%
@@ -213,6 +215,11 @@ e.g. include a covariate.
 
 
 ## Help for Task 7.3 {-#solution-7-3}
+
+
+change to calculating excess mortality.
+
+
 
 Using the method developed by Farrington et al. shown in Task 7.3 (optional),
 include a weight in the regression model, predict the number of cases and the

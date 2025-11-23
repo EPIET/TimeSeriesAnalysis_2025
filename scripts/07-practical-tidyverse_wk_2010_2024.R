@@ -18,42 +18,8 @@ pacman::p_load(
   tidyverse,
   ciTools
 )
-```
-
-## Expected learning outcomes {-#learn-7}
-
-By the end of this session, participants should be able to:
--	understand the use of forecasting in public health surveillance data
--	forecast the expected number of cases of a disease into the future
 
 
-## Task 7.1 {-#task-7-1}
-
-
-January 2020: Your boss received a phone call from the Ministry of Health. She is part of
-a committee that has the task to set the alert levels for mortality in Spain for
-the next year (2020). Before doing so, she gives you the task to forecast the
-expected number of deaths for 2020 based on the historical data up to and
-including 2019. 
-
-
-## Task 7.2 (Optional) {-#task-7-2}
-
-January 2020:  A committee member is interested to get a better understanding of when there
-were periods of unusually high excess mortality and asks you to provide an
-analysis that highlights the time when these occurred.
-
-
-## Task 7.3 (Optional) {-#task-7-3}
-
-January 2021: your boss needs to inform the Ministry of Health about 
-excess deaths so far during the first year of the pandemic. 
-
-
-## Help for Task 7.1 {-#solution-7-1}
-
-Required source code.
-```{r, task-7-1-source-Rscript}
 
 # Create tsa_theme from previous exercise
 tsa_theme <- theme_bw() + 
@@ -61,16 +27,7 @@ tsa_theme <- theme_bw() +
             plot.title = element_text(face = "bold", 
                                       size = 12),
             legend.background = element_rect(fill = "white", 
-                                             size = 4, 
-                                             colour = "white"),
-            # legend.justification = c(0, 1),
-            legend.position = "bottom",
-            panel.grid.minor = element_blank()
-        )
-
-# Load raw data
-#mortagg <- import(here("data", "mortagg.Rdata"))
-load(here("data", "mortagg2.Rdata"))
+                                           load(here("data", "mortagg2_case_6.Rdata"))
 
 # Prepare ts data
 mortz <-
@@ -85,12 +42,60 @@ mortz <-
 
 View(mortz)
 print(summary(mortz))
-    
+  size = 4, 
+                                             colour = "white"),
+            # legend.justification = c(0, 1),
+            legend.position = "bottom",
+            panel.grid.minor = element_blank()
+        )
+
+```
+
+## Expected learning outcomes {-#learn-7}
+
+By the end of this session, participants should be able to:
+-	understand the use of forecasting in public health surveillance data
+-	forecast the expected number of cases of a disease into the future
+
+
+## Task 7.1 {-#task-7-1}
+
+
+January 2020: Your boss received a phone call from the Ministry of Health. She is part of
+a committee that is responsible for setting the alert levels for mortality in Spain for
+the next year (2020). Before doing so, she gives you the task to forecast the total 
+expected number of deaths for 2020 based on the historical data up to and
+including 2019. 
+
+
+## Task 7.2 (Optional) {-#task-7-2}
+
+January 2021:  A committee member is interested to get a better understanding of when there
+were periods of unusually high excess mortality and asks you to provide an
+analysis that highlights the time when these occurred.
+
+
+
+## Task 7.3 (Optional) {-#task-7-3}
+
+January 2021: your boss needs to inform the Ministry of Health about 
+excess deaths so far during the first year of the pandemic. 
+
+
+## Help for Task 7.1 {-#solution-7-1}
+
+Required source code.
+```{r, task-7-1-source-Rscript}
+
+# Load raw data
+#mortagg <- import(here("data", "mortagg.Rdata"))
+
+ADD AUTOCORRELATION? DEPENDS ON CASE 6.
+
 # Model with trend and seasonality
 mort_sine2cos2trendmodel <- glm(cases ~ index + sin52 + cos52 + sin26 + cos26,
                            family = "poisson",
                            data = mortz)
-
 
 summary(mort_sine2cos2trendmodel)
 ```
@@ -100,12 +105,12 @@ ggplot(data = mortz) +
     geom_line(
         mapping = aes(x = year_week, y = cases),
         colour = "black",
-        alpha = 0.7
+        alpha = 1.2
     ) +
     geom_line(
         mapping = aes(x = year_week, y = mort_sine2cos2trendmodel$fitted),
         colour = "red",
-        alpha = 0.7
+        alpha = 1.2
     ) +
     scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "8 weeks") +
     labs(x = "Year Week", y = "Weekly cases") +
@@ -146,6 +151,10 @@ prediction intervals:
 ```{r, task-7-1-prediction-interval}
 
 # apply mort_sine2cos2trendmodel to new data and predict cases with C.I. using bootstrapping.
+# bootstrapping is a statistical method where you draw random samples from your data, 
+# and analyze each of this samples.
+# https://en.wikipedia.org/wiki/Bootstrapping_(statistics)
+
 
 set.seed(12589)
 pred.mort <- ciTools::add_ci(pred.df,
@@ -179,14 +188,38 @@ ggplot(data = pred.mort) +
     theme(axis.text.x = element_text(angle = 30, hjust = 1)) 
     
 ```
-TODO: what is the total number of deaths forecasted for 2020.
+
+Calculate the total number of expected deaths in 2020 in Spain.
+
+```{r, task-7-1-prediction-interval-total-tidy}
+# do not know how to do it in tidy
+#total_pred_mort_2020 <- pred.mort %>%
+#                                total_expected_2020 = sum(pred_cases)
+#                                total_expected_2020_lPI = sum(lPI),
+#                                total_expected_2020_uPI = sum(uPI)
+                            
+
+total_pred_mort_2020 <- apply(pred.mort[, c('pred_cases', 'lPI', 'uPI')], 2, sum)
+
+
+```
+
+
+
 
 
 ## Help for Task 7.2 {-#solution-7-2}
 
+CUSUM (cumulative sum) is a graphical method that can be used to determine when
+there is a change in a process (all-cause mortality in this example). In TSA it
+can also be used to decide whether there is a need to revise the model
+e.g. include a covariate or there have been changes in the seasonality.
+
+
 Using expected values from the previous regression model, you can calculate the
 cumulative sum of the differences between the weekly observed and expected
 numbers of deaths:
+
 
 ```{r, task-7-2-diff-exp-obs}
 
@@ -196,8 +229,11 @@ mortz <- mortz %>%
 mortz <-
     mortz %>%
     mutate(
+        
         difference = cases - fit_cases,
-        cusum_excess = cumsum(difference)
+        cumsum_excess = cumsum(difference),
+        diff_zero = cases - mean(fit_cases),
+        cumsum_zero = cumsum(diff_zero)
     )
 
 mortz
@@ -208,8 +244,14 @@ Plot this cumulative sum of the residuals.
 
 ```{r, task-7-2-diff-exp-obs-plot-tidy}
 ggplot(data = mortz) +
+geom_line(
+        mapping = aes(x = year_week, y = diff_zero),
+        colour = "green",
+        alpha = 0.7,
+        lwd = 2
+    ) +
     geom_line(
-        mapping = aes(x = year_week, y = cusum_excess),
+        mapping = aes(x = year_week, y = cumsum_zero),
         colour = "orange",
         alpha = 0.7,
         lwd = 2
@@ -220,10 +262,7 @@ ggplot(data = mortz) +
 ```
 
 
-CUSUM (cumulative sum) is a graphical method that can be used to determine when
-there is a change in a process (all-cause mortality in this example). In TSA it
-can also be used to decide whether there is a need to revise the model
-e.g. include a covariate.
+
 
 
 ## Help for Task 7.3 {-#solution-7-3}
@@ -297,5 +336,12 @@ ggplot(data = pred.mort) +
     scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "4 weeks") +
     labs(x = "Year", y = "Cumulative excess cases") +
     tsa_theme
+
+```
+
+
+```{r, task-7-save}
+save(list = ls(pattern = 'mort'), file = here("data", "mortagg2_case_7.RData"))
+#load(here("data","mortagg2_case_7.RData"))
 
 ```

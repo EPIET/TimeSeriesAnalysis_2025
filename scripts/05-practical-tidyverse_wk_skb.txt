@@ -19,6 +19,20 @@ pacman::p_load(
   season,
   lmtest
 )
+
+# Create tsa_theme from previous exercise to be used in ggplot.
+tsa_theme <- theme_bw() + 
+        theme(
+            plot.title = element_text(face = "bold", 
+                                      size = 12),
+            legend.background = element_rect(fill = "white", 
+                                             size = 4, 
+                                             colour = "white"),
+            # legend.justification = c(0, 1),
+            legend.position = "bottom",
+            panel.grid.minor = element_blank()
+        )
+
 ```
 
 ## Expected learning outcomes {#learn-5 .unnumbered}
@@ -62,19 +76,6 @@ Assess the existence of periodicity in the `dis1` dataset.
 Required source code.
 
 ```{r, task-5-1-source-Rscript}
-# Create tsa_theme from previous exercise to be used in ggplot.
-tsa_theme <- theme_bw() + 
-        theme(
-            plot.title = element_text(face = "bold", 
-                                      size = 12),
-            legend.background = element_rect(fill = "white", 
-                                             size = 4, 
-                                             colour = "white"),
-            # legend.justification = c(0, 1),
-            legend.position = "bottom",
-            panel.grid.minor = element_blank()
-        )
-
 # Read data
 #mortagg <- import(here("data", "mortagg.csv"))
 load(here("data", "mortagg2.Rdata"))
