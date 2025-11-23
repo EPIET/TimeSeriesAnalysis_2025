@@ -90,7 +90,7 @@ Required source code.
 # Load raw data
 #mortagg <- import(here("data", "mortagg.Rdata"))
 
-ADD AUTOCORRELATION? DEPENDS ON CASE 6.
+ADD AUTOCORRELATION? DEPENDS ON CASE 6. 
 
 # Model with trend and seasonality
 mort_sine2cos2trendmodel <- glm(cases ~ index + sin52 + cos52 + sin26 + cos26,
