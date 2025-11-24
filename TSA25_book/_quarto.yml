@@ -4,19 +4,17 @@ project:
 
 book:
   title: "Time Series Analysis Module"
-  author: "Norah Jones"
+  author: "EPIET Team"
   page-navigation: true
   sidebar:                
     style: docked
-    
   chapters:
     - index.qmd
-    - intro.qmd
-    - part: "Practical exercises"
+    - part: "PRACTICALS"
       chapters:
         - "scripts/03-practical.qmd"
-
-
+        - "scripts/04-practical.qmd"
+        - "scripts/05-practical.qmd"
 
 format:
   html:
@@ -28,7 +26,7 @@ format:
     toc-expand: true
     number-depth: 2
     link-external-newwindow: true
-    # embed-resources: true
+    embed-resources: true
     
 grid:
   body-width: 1500px
@@ -37,6 +35,12 @@ grid:
     
 execute: 
   freeze: auto
+  warning: false
+  message: false
+  
+knitr: 
+  opts_chunk: 
+    out.width: "100%"
 
 
 editor: visual

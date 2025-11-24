@@ -1,6 +1,4 @@
----
-title: "Practical Session 3: Managing date formats and plotting"
----
+# Practical Session 3: Managing date formats and plotting {.unnumbered}
 
 ## Expected learning outcomes {#learning-3 .unnumbered}
 
@@ -67,13 +65,9 @@ table(dis1$year)
 janitor::tabyl(dis1$year)
 ```
 
-```{r, task-3-1-count-dis1}
-tidyverse::count(dis1$year)
-```
-
 Each one provides different outputs and possesses unique capabilities. In general, `tabyl` should be your preferred basic function, thanks to its tidy integration and format output. It also enables some customization and data manipulation.
 
-----------
+------------------------------------------------------------------------
 
 R has a collection of packages for handling time series data.
 

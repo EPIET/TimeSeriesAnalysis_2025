@@ -1,4 +1,4 @@
-# Preface {.unnumbered}
+# Welcome page {.unnumbered}
 
 This is a Quarto book.
 

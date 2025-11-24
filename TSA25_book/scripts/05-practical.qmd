@@ -1,10 +1,4 @@
----
-title: "05-practica"
----
-
-# Practical Session 5 {.unnumbered}
-
-## Periodicity {#title-5 .unnumbered}
+# Practical Session 5: Periodicity {.unnumbered}
 
 ```{r, knitr-global-chunk-05t, cache=FALSE}
 # Install pacman if not installed already, and activate it
@@ -126,6 +120,7 @@ summary(sinemodel)
 Plot the fitted values against the original data and comment.
 
 ```{r, task-5-2-sin52-plot-tidy}
+#| out-width: 100%
 ggplot(data = mortz, aes(x = Date)) +
     geom_point(aes(y = cases), alpha = 0.4) +
     geom_line(
