@@ -15,7 +15,7 @@ pacman::p_load(
   tsibble,
   ISOweek,
   slider,    # for rolling means
-  imputeTS, #necessary? /skb
+  imputeTS,  #necessary? /skb
   pander,
   tidyverse
 )
@@ -199,7 +199,7 @@ ggplot(data = mortz) +
   scale_y_continuous(limits = c(0, NA)) +
   labs(x = "Week", y = "Number of Deaths", title = "Spain: Number of deaths by sex") +
   tsa_theme
-#
+
 ```
 
 
@@ -442,7 +442,6 @@ mort_poissontrend <- glm(
   data = mortz
 )
 
-
 ```
 
 
@@ -474,7 +473,7 @@ Plot the fitted values against the observed ones.
 ```{r, task-4-3-regression-lm-plot-tidy}
 ggplot(data = mortz, mapping = aes(x = index)) +
   geom_point(mapping = aes(y = cases), alpha = 0.5) +
-  geom_line(mapping = aes(y = fitted(mort_poissontrend), colour = "green", lwd=1.1) +
+  geom_line(mapping = aes(y = fitted(mort_poissontrend), colour = "green", lwd=1.1)) +
   scale_y_continuous(limits = c(0, NA)) +
   labs(x = "Week", y = "Number of deaths", title = "Number of deaths per week with fitted trend") +
   tsa_theme
