@@ -97,9 +97,7 @@ load(here("data", "mortagg2_case_4.RData"))
 
 Step 1) 
 
-Explore the time series. The function decompose() decomposes the time series 
-by applying loess to the series; loess is a smoothing method 
-(https://en.wikipedia.org/wiki/Local_regression). 
+Explore the time series. The function decompose() decomposes the time series by applying loess to the series; loess is a smoothing method (https://en.wikipedia.org/wiki/Local_regression). 
 
 
 ```{r, task-5-1-explore}
@@ -116,8 +114,7 @@ Discuss the panels obtained. What features seem to be relevant?
 
 Step 2)
 
-This step has already been done in case study 4. Run the code in order to 
-have at hand the results and be able to compare later with other models. 
+This step has already been done in case study 4. Run the code in order to have at hand the results and be able to compare later with other models. 
 
 We start by inspecting if there is a linear trend in the data.
 
@@ -128,6 +125,7 @@ summary(mort_trend)
 
 # incidence rate ratio per week:
 IRR_week <- exp(coef(mort_trend))
+IRR_week
 ```
 
 ```{r, task-5-2-sin52-cos52-plot-tidy}
@@ -162,12 +160,9 @@ R has a number of functions which produce a *periodogram* - we will use the
 mort_period <- TSA::periodogram(mortz$cases)
 ```
 
-The `periodogram` function plots the estimated periodogram for a given time 
-series and also returns various useful outputs as a list which we can use for 
-other analyses. 
+The `periodogram` function plots the estimated periodogram for a given time series and also returns various useful outputs as a list which we can use for other analyses. 
 
-This type of plot is interpreted by identifying peaks. Convert the 
-frequencies at which peaks occur to periods by taking the reciprocal. 
+This type of plot is interpreted by identifying peaks. Convert the frequencies at which peaks occur to periods by taking the reciprocal. 
 
 ```{r, task-5-1-periodogram-freq}
 mort_period_recip <-

@@ -1,6 +1,4 @@
-
 # Practical Session 4: Smoothing and Trends {.unnumbered}
-
 
 ```{r, knitr-global-chunk-04t}
 # Install pacman if not installed already, and activate it
@@ -44,23 +42,23 @@ Sessions 4-7 and 11 use data from this mortality surveillance system. Session 10
 
 By the end of the session, participants should be able to:
 
-Describe, test and fit a trend in surveillance data (simple smoothing and regression);
+-   Describe, test and fit a trend in surveillance data (simple smoothing and regression);
 
-Assess and interpret the significance of trend in surveillance data.
+-   Assess and interpret the significance of trend in surveillance data.
 
 You are provided with a dataset in R (`mortagg.Rdata`) which includes variables on week, year, total number of deaths (`cases`), and population, as well as number of deaths and population among males and females separately.
 
 ## Task 4.1 {#task-4-1 .unnumbered}
 
-**Assess visually how the total registered number of deaths has been behaving in the years with available data. Save any changes to a new dataset named \``mortagg`.**
+Assess visually how the total registered number of deaths has been behaving in the years with available data. Save any changes to a new dataset named \``mortagg`.
 
-**Discuss your results with your peers.**
+Discuss your results with your peers.
 
-**How would you proceed in analysing your data to further understand how mortality behaves?**
+How would you proceed in analysing your data to further understand how mortality behaves?
 
 ## Task 4.1.1 (Optional) {#task-4-1-1 .unnumbered}
 
-**Would you reach the same conclusions if you were exploring mortality for males and females separately? Discuss with your peers.**
+Would you reach the same conclusions if you were exploring mortality for males and females separately? Discuss with your peers.
 
 ### Moving average and direct statistical modelling of trends {#task-4-1-1a .unnumbered}
 
