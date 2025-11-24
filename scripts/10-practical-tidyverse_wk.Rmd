@@ -1,7 +1,6 @@
-# Practical Session 10 {-}
+# Practical Session 10 {.unnumbered}
 
-## Assessing the impact of interventions using surveillance data {-#title-10}
-
+## Assessing the impact of interventions using surveillance data {#title-10 .unnumbered}
 
 ```{r, knitr-global-chunk-10t, include=FALSE, cache=FALSE}
 # Install pacman if not installed already, and activate it
@@ -23,38 +22,31 @@ pacman::p_load(
 )
 ```
 
-
-## Expected learning outcomes {-#learn-10}
+## Expected learning outcomes {#learn-10 .unnumbered}
 
 By the end of the case study, participants will be able to:
 
-- assess and interpret the effect of an intervention on trends
-and periodicity in surveillance data
+-   assess and interpret the effect of an intervention on trends and periodicity in surveillance data
 
 ## Description of the dataset
 
-Rotavirus is a very common and potentially serious infection of the large bowel, mainly affecting young babies. Nearly every child will have at least one episode of rotavirus gastroenteritis by five years of age.
-People of any age can be affected, but the illness is more severe in young infants. The rotavirus immunisation programme was introduced in the UK on 1 July 2013 (week 27) with the objective of preventing a significant number of young infants from developing rotavirus infection.
-It may also provide some additional protection to the wider population through herd immunity. The aim of the rotavirus immunisation programme is to provide two doses of vaccine to infants from six weeks of age and before 24 weeks of age. The first dose of vaccine is offered at approximately eight weeks of age and the second dose at least four weeks after the first dose.
+Rotavirus is a very common and potentially serious infection of the large bowel, mainly affecting young babies. Nearly every child will have at least one episode of rotavirus gastroenteritis by five years of age. People of any age can be affected, but the illness is more severe in young infants. The rotavirus immunisation programme was introduced in the UK on 1 July 2013 (week 27) with the objective of preventing a significant number of young infants from developing rotavirus infection. It may also provide some additional protection to the wider population through herd immunity. The aim of the rotavirus immunisation programme is to provide two doses of vaccine to infants from six weeks of age and before 24 weeks of age. The first dose of vaccine is offered at approximately eight weeks of age and the second dose at least four weeks after the first dose.
 
-High coverage was rapidly achieved for the first cohort of children offered rotavirus vaccine routinely in England and this has been maintained throughout the first fourteen months of the routine programme. Over this period, rotavirus vaccine coverage for children in the routine cohort averaged 93.3% for one dose and 88.3% for two doses.^[Rotavirus infant immunisation programme 2014/15: Vaccine uptake report for England (Published: June 2015; PHE publications gateway number: 2015141)]
+High coverage was rapidly achieved for the first cohort of children offered rotavirus vaccine routinely in England and this has been maintained throughout the first fourteen months of the routine programme. Over this period, rotavirus vaccine coverage for children in the routine cohort averaged 93.3% for one dose and 88.3% for two doses.[^10-practical-tidyverse_wk-1]
 
+[^10-practical-tidyverse_wk-1]: Rotavirus infant immunisation programme 2014/15: Vaccine uptake report for England (Published: June 2015; PHE publications gateway number: 2015141)
 
-## Task 10.1 {-#task-10-1}
+## Task 10.1 {#task-10-1 .unnumbered}
 
-You have been given a dataset for notified Rotavirus infections in England and Wales from week 23/2009 up to week 42/2018 (`rotavirus.csv`). 
+You have been given a dataset for notified Rotavirus infections in England and Wales from week 23/2009 up to week 42/2018 (`rotavirus.csv`).
 
-Assess the impact of the introduction of the vaccination scheme in England and Wales for the whole population. Has the vaccine introduction had an effect on trend or periodicity patterns? Has the vaccine introduction affected the timing of the yearly
-outbreaks? 
+Assess the impact of the introduction of the vaccination scheme in England and Wales for the whole population. Has the vaccine introduction had an effect on trend or periodicity patterns? Has the vaccine introduction affected the timing of the yearly outbreaks?
 
-
-## Task 10.2 (Optional) {-#task-10-2}
+## Task 10.2 (Optional) {#task-10-2 .unnumbered}
 
 Discuss with colleagues how you can determine the number of cases prevented as a result of the introduction of the vaccine (Hint: refer to Practical 7!).
 
-
-
-## Help for Task 10.1 {-#solution-10-1}
+## Help for Task 10.1 {#solution-10-1 .unnumbered}
 
 Required source code.
 
@@ -74,7 +66,6 @@ tsa_theme <- theme_bw() +
         )
 ```
 
-
 Open the **rotavirus** dataset, which is a line list of all notified rotavirus infections in the UK between June 2009 and December 2014.
 
 Prepare your data and test if the introduction of the vaccine has had an impact on the notified number of cases of rotavirus infections in the UK. Has the trend changed? Has the periodicity changed?
@@ -86,8 +77,7 @@ rota <- import(here("data", "rotavirus.csv"))
 view(rota)
 ```
 
-As the data in `rota` shows above, this dataset is structured in a "wide" format.
-You can see two variables representing dates, and all other variables containing case counts are organised horizontally. Alternatively, we can store the same information by converting the first dataset to a "long" format, where one variable contains the different age group categories of cases (`cases_cat`), and another displays the corresponding case counts (`n`) for each age group and year-week.
+As the data in `rota` shows above, this dataset is structured in a "wide" format. You can see two variables representing dates, and all other variables containing case counts are organised horizontally. Alternatively, we can store the same information by converting the first dataset to a "long" format, where one variable contains the different age group categories of cases (`cases_cat`), and another displays the corresponding case counts (`n`) for each age group and year-week.
 
 In order to use ggplot2, remember that the data should be organised in a long format.
 
@@ -128,7 +118,6 @@ rota_lg <-
  
 ```
 
-
 Plot the total number of cases and the total number of cases by age group against time.
 
 ```{r, task-10-1-rota-plot-tidy}
@@ -144,19 +133,17 @@ ggplot(data = rota_lg) +
       tsa_theme
 ```
 
-
-Note that you can get line breaks in labels using `\n`.
-You can also make all y-axes the same by using `scales = "fixed_y"`
+Note that you can get line breaks in labels using `\n`. You can also make all y-axes the same by using `scales = "fixed_y"`
 
 Now we need to state in the dataset when the vaccine was available.
 
 For this we are adding some variables to the `rota_ts` time series.
 
-`rota_ts$vaccine` will be 0 for weeks before week 27 2013, and 1 thereafter. 
+`rota_ts$vaccine` will be 0 for weeks before week 27 2013, and 1 thereafter.
 
 `rota_ts$index` will be the number of weeks since week 23 2009.
 
-We have also created sine and cosine variables so that we can model annual seasonality as before. 
+We have also created sine and cosine variables so that we can model annual seasonality as before.
 
 ```{r, task-10-1-rota-vacc-interv}
 rota_ts <-
@@ -179,11 +166,9 @@ rota_ts <-
     filter(cases_cat == "Total cases")
 ```
 
-
 Now we want to see if there was a change before and after the introduction of the vaccine.
 
-Run first a separate model for the time before and after the introduction of the vaccine
-in England and Wales for all population. Can you detect any change in trend?
+Run first a separate model for the time before and after the introduction of the vaccine in England and Wales for all population. Can you detect any change in trend?
 
 ```{r, task-10-1-rota-vacc-interv-modelp}
 rotamodel_prevacc_p <- glm(n ~ index,
@@ -204,7 +189,7 @@ summary_rotamodel_prevacc_p <- rotamodel_prevacc_p %>%
 summary_rotamodel_prevacc_p
 ```
 
-Before we have a look at the period post-vaccination: is a Poisson model really the best model to use here? 
+Before we have a look at the period post-vaccination: is a Poisson model really the best model to use here?
 
 ```{r, task-10-1-rota-vacc-interv-model_nb}
 #Quick check for overdispersion: if check > 1 then use negative binomial
@@ -262,7 +247,6 @@ summary_rotamodel_postvacc
 
 ```
 
-
 We show the models pre/post vaccination together below for comparison.
 
 ```{r, task-10-1-rota-vacc-interv-rotamodelprepost-echo, eval=FALSE, echo=TRUE, purl=TRUE, results='asis'}
@@ -294,7 +278,7 @@ summary_rotamodel_trend <- rotamodel_trend %>%
 summary_rotamodel_trend
 ```
 
-We can plot the model against the raw data. 
+We can plot the model against the raw data.
 
 ```{r, task-10-1-rota-vacc-interv-modeltrend-plot-tidy}
 rota_ts <-
@@ -331,7 +315,7 @@ summary_rotamodel_seasonality
 
 ```
 
-We can plot the model against the raw data again. 
+We can plot the model against the raw data again.
 
 ```{r, task-10-1-rota-vacc-interv-modelseason-plot-tidy}
 rota_ts <-
@@ -349,9 +333,7 @@ ggplot(data = rota_ts) +
     tsa_theme
 ```
 
-
-To be able to comment on any change in trend after the introduction of the vaccine, 
-we need to either include an interaction term in the model or include a time variable that starts at the introduction of the vaccine. Let's here use an interaction term. 
+To be able to comment on any change in trend after the introduction of the vaccine, we need to either include an interaction term in the model or include a time variable that starts at the introduction of the vaccine. Let's here use an interaction term.
 
 ```{r, task-10-1-rota-vacc-interv-model4}
 rotamodel_winteraction <- glm.nb(n ~ index * vaccine + sin52 + cos52,
@@ -375,9 +357,9 @@ You can visualize the effect of the interaction term using `plot_model()`
 sjPlot::plot_model(rotamodel_winteraction, type ="int")
 ```
 
-Have there been any changes in seasonality, too? 
+Have there been any changes in seasonality, too?
 
-Note how we can use brackets to introduce interaction terms for several variables. 
+Note how we can use brackets to introduce interaction terms for several variables.
 
 ```{r, task-10-1-rota-vacc-interv-model5}
 rotamodel_full <- glm.nb(n ~ (sin52 + cos52 + index)*vaccine,
@@ -427,6 +409,4 @@ comparison_all <-
 comparison_all
 ```
 
-
 What about age? Can you see a difference in impact of vaccination depending on age category?
-

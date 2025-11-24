@@ -1,0 +1,214 @@
+---
+title: "Practical longitudinal multilevel data analysis"
+date: "05/12/24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+#load  required packages
+
+pacman::p_load(readxl,car,writexl,lme4, lmerTest, ggplot2, plotly, performance, tidyverse, devtools,optimx,redres, install=FALSE)
+```
+
+#CHUNK 1: preparing the database
+
+```{r}
+#this part of the code reads the Excel database into R
+
+COVID_0207_data <- read_excel("COVID_0207_data_OECD.xlsx", 
+col_types = c("text", "numeric", "numeric", "numeric", 
+         "numeric", "numeric","numeric", "numeric","numeric", "numeric", 
+         "numeric", "numeric","date", "date","numeric", 
+     "date","numeric","numeric", "numeric", "numeric","numeric","numeric","numeric","numeric","numeric", 
+         "text","text", "text", "text","text","text","text","text","text","text","text", "text", "text", 
+         "text", "text", "text", 
+         "text", "text","text","text","text","text","text","text",
+     "text","text","text","text","numeric","numeric","text","text","numeric",
+     "numeric","numeric"), na = ".")
+
+#this part of the code subsets the observations to be used in model (as initial time for model is t=0)
+COVID_0207_data_2<-subset(COVID_0207_data,time_w_recoded>=0)
+
+#this part of the code renames and restructures the database to assign correct types of variables
+paper.update.data2 <- data.frame(
+
+"num.id" = COVID_0207_data_2$numid,
+"slope.id" = COVID_0207_data_2$slopeid,
+"country" = factor(COVID_0207_data_2$Country),
+"time.observed" = COVID_0207_data_2$time_w_recoded,
+"adgr.response" = COVID_0207_data_2$ave_daily_gr,
+"strin.index"=COVID_0207_data_2$strin_index,
+"school.closing" = factor(COVID_0207_data_2$SC_11),
+"work.closing" = factor(COVID_0207_data_2$WC_11),
+"public.info" = factor(COVID_0207_data_2$PI_1),
+"public.events" = factor(COVID_0207_data_2$PE_11),
+"public.transport" = factor(COVID_0207_data_2$PT_11),
+"gather.restrict" = factor(COVID_0207_data_2$RG_11),
+"masks" = factor(COVID_0207_data_2$masks),
+"masks.recoded" = factor(COVID_0207_data_2$masks_11),
+"masks.oxford" = factor(COVID_0207_data_2$Masks_ox),
+"domestic.travel" = factor(COVID_0207_data_2$DT_11),
+"inter.travel" = factor(COVID_0207_data_2$IT_1),
+"stay.home" = factor(COVID_0207_data_2$SH_11),
+"contacts.policy" = factor(COVID_0207_data_2$contacts_policy),
+"tests.policy" = factor(COVID_0207_data_2$tests_policy),
+"tests.pthousand" = COVID_0207_data_2$TT_84_pth,
+"temperature"=COVID_0207_data_2$temperature,
+"mobility"=COVID_0207_data_2$mob_index,
+"percent.urban"=COVID_0207_data_2$urban_percent,
+"SDI"=COVID_0207_data_2$SDI,
+"GDP.percapita"=COVID_0207_data_2$GDP_pc_PPP,
+"per.GDP.health"=COVID_0207_data_2$GDP_health,
+"household.size"=COVID_0207_data_2$household,
+"time.delay"=COVID_0207_data_2$timely,
+"initial.cases"=COVID_0207_data_2$cases_start,
+"palma.ratio"=COVID_0207_data_2$palma,
+"democracy.index"=COVID_0207_data_2$dem_index)
+
+#centre tests variable
+paper.update.data2$tests.pth.cent <- paper.update.data2$tests.pthousand - mean(paper.update.data2$tests.pthousand) 
+
+```
+
+
+
+#CHUNK 2: visualise database. Please insert the correct name of the database between the brackets and take a quick look at it
+
+```{r}
+View(_______________)
+```
+
+
+
+
+#CHUNK 3: plot the outcome of interest over time for each country. Insert the mising variables in the code. The part of the code that says "facet_wrap" allows to generate a graph for each country. Insert the missing variable in the brackets and then run the chunk 
+
+
+
+```{r}
+
+
+paper.update.data2 %>%
+     ggplot(aes(x=_____________, y=______________)) + geom_point(color="#993399", size=0.5) + 
+  theme(axis.text.x = element_blank(),axis.ticks=element_blank())+
+      theme(axis.text.y = element_blank(),axis.ticks=element_blank()) + ylim(0,0.15) +
+  
+    xlab("Time (weeks)") +
+  ylab("wADGR") +
+  
+  facet_wrap(~___________)
+```
+
+#CHUNK 4: probit transformation of outcome of interest in order to obtain linear outcomes over time.Please insert the name of the missing variable and then run the chunk
+
+```{r}
+
+paper.update.data2$qgr.response <- qnorm(paper.update.data2$___________)
+```
+
+#Chunk 5: visual check of linearity of the probit transformation of the outcome of interest. Please insert the names of the missing variables and then run the chunk
+
+```{r}
+
+paper.update.data2 %>%
+     ggplot(aes(x=_________, y=_________)) + geom_point(color="#993399", size=0.5) + geom_smooth(method='lm', formula= y~x, size=0.4) +
+  theme(axis.text.x = element_blank(),axis.ticks=element_blank())+
+      theme(axis.text.y = element_blank(),axis.ticks=element_blank()) + ylim(-4,0) +
+  
+    xlab("Time (weeks)") +
+  ylab("probit_ADGR") +
+  
+  facet_wrap(~_________)
+
+
+```
+
+
+#Chunk 6: building the linear longitudinal multilevel model part 1. First we want to check that the probit transformation of the outcome of interest is associated with time. Please insert the names of the missing variables and run the chunk
+
+```{r}
+
+model_UGM <- lmer(__________~___________+(1+time.observed | country), data = paper.update.data2,REML=FALSE, control = lmerControl(optimizer ="Nelder_Mead"))
+
+summary(model_UGM)
+performance(model_UGM)
+```
+
+#Chunk 7: building the linear longitudinal multilevel model part 2. We add the NPI ‘school closing’ to time in the regression model. Please insert the missing variable and run the chunk
+
+```{r}
+model_SC11 <- lmer(qgr.response~time.observed +________________+
+                             (1+time.observed | country), data = paper.update.data2,REML=FALSE, control = lmerControl(optimizer ="Nelder_Mead")) 
+
+summary(model_SC11)
+performance(model_SC11)
+```
+
+#CHUNK 8: running the final multivariate model. Please insert the missing variables and run the chunk
+
+```{r}
+library(lme4)
+library("lmerTest")
+library(performance)
+library(car)
+
+model_F1new <- lmer(____________~______________ + gather.restrict+work.closing+school.closing+masks+tests.pthousand+(1+___________ | _________), data = _____________,REML=FALSE, control = lmerControl(optimizer ="Nelder_Mead")) 
+
+summary(model_F1new)
+#plot(model_F1new,type="diag")
+confint(model_F1new)
+performance(model_F1new)
+
+```
+
+#CHUNK 9: diagnostics of the final multivariate model
+
+```{r}
+
+#calculating the residuals
+rc_resids <- compute_redres(model_F1new)
+pm_resids <- compute_redres(model_F1new, type = "pearson_mar")
+sc_resids <- compute_redres(model_F1new, type = "std_cond")
+resids <- data.frame(paper.update.data2$country, rc_resids, pm_resids, sc_resids)
+
+#Normality in the distribution of residuals
+#The first are qqplots for, respectively, the level-1 residuals, i.e. the residuals across all countries and all occasions of measurement (first graph) and the level-2 residuals, i.e. the residuals in the intercepts and slopes across countries (second graph), i.e. in the between-country intercept and slope residuals. From both figures, the distribution of these residuals can be considered approximately Normal.
+
+
+plot_resqq(model_F1new)
+plot_ranef(model_F1new)
+
+#homoscedasticity in the distribution of residuals
+# The next plots are a mapping of the studentized level-1 residuals against the final model’s fitted values, showing no patterns and an approximately constant variance of these residuals around zero across the predicted values for the outcome. The second graph plots the distribution of these residuals at different time points, showing approximately constant variance across time. 
+
+plot_redres(model_F1new, type = "std_cond")
+plot(paper.update.data2$time.observed, rc_resids,ylim=c(-1,1))
+abline(h=0, col="blue")
+
+#No multicollinearity
+#Now we check for multicolinearity (values of variance inflation factor are near 1, so no multicolinearity - here you need to look at the last column, i.e. the VIF adjusted by degrees of freedom)
+vif(model_F1new)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

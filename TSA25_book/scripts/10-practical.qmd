@@ -1,0 +1,420 @@
+# Practical Session 10: Assessing the impact of interventions using surveillance data {.unnumbered}
+
+```{r, knitr-global-chunk-10t, include=FALSE, cache=FALSE}
+# Install pacman if not installed already, and activate it
+if (!require("pacman")) install.packages("pacman")
+
+# Install, update and activate libraries
+pacman::p_load(
+  here, 
+  rio, 
+  skimr,
+  tsibble,
+  AER,
+  MASS,
+  gtsummary,
+  sjPlot,
+  tidyverse
+)
+
+# Create tsa_theme from previous exercise
+tsa_theme <- theme_bw() + 
+        theme(
+            plot.title = element_text(face = "bold", 
+                                      size = 12),
+            legend.background = element_rect(fill = "white", 
+                                             size = 4, 
+                                             colour = "white"),
+            # legend.justification = c(0, 1),
+            legend.position = "bottom",
+            panel.grid.minor = element_blank(),
+            axis.text.x = element_text(angle = 45, hjust = 1) 
+        )
+```
+
+## Expected learning outcomes {#learn-10 .unnumbered}
+
+By the end of the case study, participants will be able to:
+
+-   Assess and interpret the effect of an intervention on trends and periodicity in surveillance data
+
+## Description of the dataset
+
+Rotavirus is a very common and potentially serious infection of the large bowel, mainly affecting young babies. Nearly every child will have at least one episode of rotavirus gastroenteritis by five years of age. People of any age can be affected, but the illness is more severe in young infants. The rotavirus immunisation programme was introduced in the UK on 1 July 2013 (week 27) with the objective of preventing a significant number of young infants from developing rotavirus infection. It may also provide some additional protection to the wider population through herd immunity. The aim of the rotavirus immunisation programme is to provide two doses of vaccine to infants from six weeks of age and before 24 weeks of age. The first dose of vaccine is offered at approximately eight weeks of age and the second dose at least four weeks after the first dose.
+
+High coverage was rapidly achieved for the first cohort of children offered rotavirus vaccine routinely in England and this has been maintained throughout the first fourteen months of the routine programme. Over this period, rotavirus vaccine coverage for children in the routine cohort averaged 93.3% for one dose and 88.3% for two doses.[^10-practical-1]
+
+[^10-practical-1]: Rotavirus infant immunisation programme 2014/15: Vaccine uptake report for England (Published: June 2015; PHE publications gateway number: 2015141)
+
+## Task 10.1 {#task-10-1 .unnumbered}
+
+You have been given a dataset for notified Rotavirus infections in England and Wales from week 23/2009 up to week 42/2018 (`rotavirus.csv`).
+
+Assess the impact of the introduction of the vaccination scheme in England and Wales for the whole population. Has the vaccine introduction had an effect on trend or periodicity patterns? Has the vaccine introduction affected the timing of the yearly outbreaks?
+
+## Task 10.2 (Optional) {#task-10-2 .unnumbered}
+
+Discuss with colleagues how you can determine the number of cases prevented as a result of the introduction of the vaccine (Hint: refer to Practical 7!).
+
+## Help for Task 10.1 {#solution-10-1 .unnumbered}
+
+Open the **rotavirus** dataset, which is a line list of all notified rotavirus infections in the UK between June 2009 and December 2014. Prepare your data and test if the introduction of the vaccine has had an impact on the notified number of cases of rotavirus infections in the UK. Has the trend changed? Has the periodicity changed?
+
+Prepare the **rotavirus.csv** for time-series analysis. You need to manipulate the dataset before being able to use it for time series analysis.
+
+```{r, task-10-1-import-dataset}
+rota <- import(here("data", "rotavirus.csv")) 
+view(rota)
+```
+
+As the data in `rota` shows above, this dataset is structured in a "wide" format. You can see two variables representing dates, and all other variables containing case counts are organised horizontally. Alternatively, we can store the same information by converting the first dataset to a "long" format, where one variable contains the different age group categories of cases (`cases_cat`), and another displays the corresponding case counts (`n`) for each age group and year-week.
+
+In order to use ggplot2, remember that the data should be organised in a long format.
+
+The function `as_tsibble()` is what indicates to R that the data is a time series. **index** represents the time variable and **key** represents the outcome studied.
+
+```{r, task-10-1-rota}
+## convert to long format
+rota_lg <- rota %>% 
+    pivot_longer(
+      cols = -c(year, week),
+      names_to = "cases_cat",
+      values_to = "n"
+    )
+
+## recode
+rota_lg <- rota_lg %>%
+  mutate(cases_cat = case_when(
+    cases_cat == "case1" ~ "Cases <1 year",
+    cases_cat == "case2" ~ "Cases 1 to 4 years",
+    cases_cat == "case3" ~ "Cases 5 to 14 years",
+    cases_cat == "case4" ~ "Cases 15 to 64 years",
+    cases_cat == "case5" ~ "Cases 65+ years",
+    cases_cat == "cases" ~ "Total cases",
+    TRUE ~ NA_character_
+    ))
+
+## turn into ts format
+rota_lg <- rota_lg %>%
+  mutate(year_week = make_yearweek(year = year, week = week)) %>%
+  group_by(cases_cat) %>%
+  mutate(index = seq.int(from = 1, to = length(unique(year_week)))) %>%
+  ungroup() %>%
+  as_tsibble(index = year_week, key = cases_cat)
+ 
+```
+
+Plot the total number of cases by age group against time. Note that .
+
+```{r, task-10-1-rota-plot-tidy}
+ggplot(data = rota_lg) +
+  geom_point(mapping = aes(x = year_week, y = n), alpha = 0.3) +
+  facet_wrap(facets = vars(cases_cat), 
+             scales = "free_y") +   
+  scale_y_continuous(limits = c(0, NA)) +
+  scale_x_yearweek(date_labels = "%Y-%W", 
+                   date_breaks = "1 year") +
+  labs(
+    x = "Year", 
+    y = "Weekly case counts",
+    title = "Rotavirus cases\n(note differing y scales)"
+  ) +
+  tsa_theme
+
+## Notes: 
+# You can get line breaks in labels using \n
+# You can also make all y-axes the same by using scales = "fixed_y"
+```
+
+We want to see whether the number of cases changed after the introduction of the vaccine.
+
+For that, first we need to state in the dataset when the vaccine was available. Firstly, we are adding one new `vaccine` variable to the `rota_ts` time series. It will be 0 for weeks before week 27 2013, and 1 thereafter.
+
+We have also created sine and cosine variables so that we can model annual seasonality as before.
+
+```{r, task-10-1-rota-vacc-interv}
+rota_ts <- rota_lg %>%
+  mutate(
+    vaccine = case_when(
+      year >= 2014 ~ 1,
+      year <= 2012 ~ 0,
+      year == 2013 & week >= 27 ~ 1,
+      year == 2013 & week < 27 ~ 0,
+      TRUE ~ NA_real_
+      ),
+    sin52 = sin(2 * pi * index / 52),
+    cos52 = cos(2 * pi * index / 52)
+  )
+
+## subset to total cases
+rota_ts <- rota_ts %>% 
+  filter(cases_cat == "Total cases")
+```
+
+Run first a separate model for the time before and after the introduction of the vaccine in England and Wales for all population. Can you detect any change in trend?
+
+```{r, task-10-1-rota-vacc-interv-modelp}
+rotamodel_prevacc_p <- glm(n ~ index,
+    data = rota_ts %>% filter(vaccine == 0),
+    family = "poisson"
+) 
+
+#If the `summary` command is used for a `glm` Poisson model, the log rate ratios are reported by 
+#default. They need to be exponentiated 
+
+summary_rotamodel_prevacc_p <- rotamodel_prevacc_p %>% 
+  gtsummary::tbl_regression(
+    exponentiate = TRUE,
+    pvalue_fun = ~style_pvalue(.x, digits = 3), 
+    estimate_fun = ~style_number(.x, digits = 4)
+    ) %>%
+  gtsummary::add_glance_table(include = c(AIC, deviance, df.residual)) %>% 
+  gtsummary::modify_caption("Rotavirus model pre-vaccination - Poisson")
+  
+summary_rotamodel_prevacc_p
+```
+
+**Is a Poisson model the best option?**
+
+Before we have a look at the period post-vaccination, is a Poisson model really the best model to use here? We need to check whether our data exhibit **overdispersion**.
+
+Overdispersion occurs when the mean of the data is not equal to its variance, violating the fundamental assumption of the Poisson distribution. If this happens, the model underestimates the standard error of the coefficients, biasing results towards narrower confidence intervals and artifically lower p-values.
+
+Let's check for overdispersion. We can calculate an overdispersion parameter from a model as the ratio of the deviance and the residuals degrees of freedom. Also, proper statistical test are availibale, for example using the `AER` library and the `dispersiontest` function
+
+```{r, task-10-1-rota-vacc-interv-model_nb}
+# Quick check for overdispersion: if check > 1 then use negative binomial
+deviance <- summary(rotamodel_prevacc_p)$deviance
+residual.df <- summary(rotamodel_prevacc_p)$df.residual
+
+check <- deviance / residual.df
+check
+
+# Proper check for overdispersion: 
+AER::dispersiontest(rotamodel_prevacc_p, trafo = NULL, alternative = c("greater"))
+```
+
+The overdispersion parameter is fairly greater that 1, and the overdispersion test is significant, so we can safely conclude that a negative binomial model is more appropiate. Let's compute it with the `glm.nb` function, and compare with the previous one
+
+```{r}
+#so best to use a negative binomial here
+rotamodel_prevacc_nb <- glm.nb(n ~ index,
+                               data = rota_ts %>% filter(vaccine == 0)) 
+
+
+# Table with results
+summary_rotamodel_prevacc_nb <- rotamodel_prevacc_nb %>%
+  gtsummary::tbl_regression(
+    exponentiate = TRUE,
+    pvalue_fun = ~style_pvalue(.x, digits = 3),
+    estimate_fun = ~style_number(.x, digits = 4)
+    ) %>%
+  gtsummary::add_glance_table(include = c(AIC, deviance, df.residual)) %>% 
+  gtsummary::modify_caption("Rotavirus model pre-vaccination - Negative Binomial")
+  
+
+# Let's compare the two models
+comparison_p_nb <- gtsummary::tbl_merge(
+  tbls = list(summary_rotamodel_prevacc_p, 
+              summary_rotamodel_prevacc_nb),
+  tab_spanner = c("Poisson model", "Negative Binomial model")
+  )
+
+comparison_p_nb
+```
+
+The AIC comparison proves how the negative binomial model outperforms the Poisson model. Also, realize how the index coefficient shifted from a tiny negative to a tiny positive overal trend, and how the p-value has greatly increased (but it still significant)
+
+Let's use negative binomial models for the rest of the practical.
+
+**Now let's look at the period post-introduction of the vaccine.**
+
+We will fit a model for the post-vaccination period and compare it with the pre-vaccination period
+
+```{r, task-10-1-rota-vacc-interv-modelpost}
+rotamodel_postvacc <- glm.nb(n ~ index,
+                             data = rota_ts %>% filter(vaccine == 1))
+
+# Table with results 
+summary_rotamodel_postvacc <- rotamodel_postvacc %>% 
+  gtsummary::tbl_regression(
+    exponentiate = TRUE,
+    pvalue_fun = ~style_pvalue(.x, digits = 3),
+    estimate_fun = ~style_number(.x, digits = 4)) %>%
+  gtsummary::add_glance_table(include = c(AIC, deviance, df.residual)) %>% 
+  gtsummary::modify_caption("Rotavirus model post-vaccination")
+
+
+# Comparisson between models
+comparison_pre_post <- gtsummary::tbl_merge(
+    tbls = list(summary_rotamodel_prevacc_nb, 
+                summary_rotamodel_postvacc),
+    tab_spanner = c("Pre-vaccination", "Post-vaccination")
+  )
+
+comparison_pre_post
+```
+
+We can see a difference in trends, but the two models cannot be directly compared.
+
+Now we want to run one single model for both periods (before/after the introduction of the vaccine)
+
+```{r, task-10-1-rota-vacc-interv-modeltrend}
+rotamodel_trend <- glm.nb(n ~ index + vaccine,
+                          data = rota_ts)
+
+# Table with results
+summary_rotamodel_trend <- rotamodel_trend %>% 
+  gtsummary::tbl_regression(
+    exponentiate = TRUE,
+    pvalue_fun = ~style_pvalue(.x, digits = 3),
+    estimate_fun = ~style_number(.x, digits = 4)) %>%
+  gtsummary::add_glance_table(include = c(AIC, deviance, df.residual)) %>% 
+  gtsummary::modify_caption("Rotavirus model with trend and vaccine intervention")
+
+summary_rotamodel_trend
+```
+
+How would you interpret these results?
+
+We can plot the model against the raw data.
+
+```{r, task-10-1-rota-vacc-interv-modeltrend-plot-tidy}
+rota_ts <- rota_ts %>% 
+  mutate(fitted_trend = fitted(rotamodel_trend))
+   
+
+ggplot(data = rota_ts) +
+  geom_point(mapping = aes(x = year_week, y = n), alpha = 0.3) +
+  geom_line(mapping = aes(x = year_week, y = fitted_trend), 
+            alpha = 0.7, colour = "green") +
+  scale_y_continuous(limits = c(0, NA)) +
+  scale_x_yearweek(date_labels = "%Y-%W", 
+                   date_breaks = "1 year") +
+  labs(x = "Year", 
+       y = "Weekly case counts",
+       title = "Rotavirus cases: model with trend and intervention"
+  ) +
+  tsa_theme
+```
+
+Now we want to run one single model for both periods (before/after the introduction of the vaccine), this time including seasonality.
+
+```{r, task-10-1-rota-vacc-interv-modelseason}
+rotamodel_seasonality <- glm.nb(n ~ index + sin52 + cos52 + vaccine,
+                                data = rota_ts)
+
+
+summary_rotamodel_seasonality <- rotamodel_seasonality %>% 
+  gtsummary::tbl_regression(
+    exponentiate = TRUE,
+    pvalue_fun = ~style_pvalue(.x, digits = 3),
+    estimate_fun = ~style_number(.x, digits = 4)) %>%
+  gtsummary::add_glance_table(include = c(AIC, deviance, df.residual)) %>% 
+  gtsummary::modify_caption("Rotavirus model with seasonality, trend and vaccine intervention")
+
+summary_rotamodel_seasonality
+```
+
+We can plot the model against the raw data again.
+
+```{r, task-10-1-rota-vacc-interv-modelseason-plot-tidy}
+rota_ts <- rota_ts %>% 
+  mutate(fitted_seasonality = fitted(rotamodel_seasonality))
+ 
+
+ggplot(data = rota_ts) + 
+  geom_point(mapping = aes(x = year_week, y = n), alpha = 0.3) +
+  geom_line(mapping = aes(x = year_week, y = fitted_seasonality), 
+            alpha = 0.7, colour = "green") +
+  scale_y_continuous(limits = c(0, NA)) +
+  scale_x_yearweek(date_labels = "%Y-%W", 
+                   date_breaks = "1 year") +
+  labs(x = "Year", 
+       y = "Weekly case counts",
+       title = "Rotavirus cases: model with trend, seasonality, and intervention"
+    ) +
+  tsa_theme
+```
+
+To be able to comment on any change in trend after the introduction of the vaccine, we need to either include an interaction term in the model or include a time variable that starts at the introduction of the vaccine. Let's here use an interaction term.
+
+```{r, task-10-1-rota-vacc-interv-model4}
+rotamodel_winteraction <- glm.nb(n ~ index * vaccine + sin52 + cos52,
+                                 data = rota_ts)
+
+summary_rotamodel_trendinteraction <- rotamodel_winteraction %>% 
+  gtsummary::tbl_regression(
+    exponentiate = TRUE,
+    pvalue_fun = ~style_pvalue(.x, digits = 3),
+    estimate_fun = ~style_number(.x, digits = 4)) %>%
+  gtsummary::add_glance_table(include = c(AIC, deviance, df.residual)) %>% 
+  gtsummary::modify_caption("Rotavirus model with seasonality, trend, vaccine and interaction between intervention and trend")
+
+summary_rotamodel_trendinteraction
+```
+
+You can visualize the effect of the interaction term using `plot_model()` from the `sjPlot` library
+
+```{r, task-10-1-rota-vacc-interv-vizinteraction}
+sjPlot::plot_model(rotamodel_winteraction, type ="int") 
+```
+
+Have there been any changes in seasonality, too?
+
+Note how we can use brackets to introduce interaction terms for several variables.
+
+```{r, task-10-1-rota-vacc-interv-model5}
+rotamodel_full <- glm.nb(n ~ (sin52 + cos52 + index)*vaccine,
+                         data = rota_ts)
+
+
+summary_rotamodel_full <- rotamodel_full %>% 
+  gtsummary::tbl_regression(
+    exponentiate = TRUE,
+    pvalue_fun = ~style_pvalue(.x, digits = 3),
+    estimate_fun = ~style_number(.x, digits = 4)) %>%
+  gtsummary::add_glance_table(include = c(AIC, deviance, df.residual)) %>% 
+  gtsummary::modify_caption("Rotavirus model with seasonality, trend, vaccine and interaction term")
+
+summary_rotamodel_full
+
+sjPlot::plot_model(rotamodel_full, type ="int")
+```
+
+Let's plot the full model estimate.
+
+```{r, task-10-1-rota-vacc-interv-model5-plot-tidy}
+rota_ts <- rota_ts %>% 
+  mutate(fitted_full = fitted(rotamodel_full))
+
+
+ggplot(data = rota_ts) +
+  geom_point(mapping = aes(x = year_week, y = n), alpha = 0.3) +
+  geom_line(mapping = aes(x = year_week, y = fitted_full), 
+            alpha = 0.7, colour = "green") +
+  scale_y_continuous(limits = c(0, NA)) +
+  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
+  labs(x = "Year",
+       y = "Weekly case counts",
+       title = "Rotavirus cases: model with trend, seasonality, intervention \n and interaction terms"
+  ) +
+  tsa_theme
+```
+
+We can now compare all models next to each other:
+
+```{r, task-10-1-rota-vacc-interv-comparisonall}
+comparison_all <- gtsummary::tbl_merge(
+    tbls = list(summary_rotamodel_seasonality,
+                summary_rotamodel_trendinteraction,  
+                summary_rotamodel_full),
+    tab_spanner = c("Model without interaction terms", 
+                    "Interaction with trend only", 
+                    "Full model")
+  )
+
+comparison_all
+```
+
+What about age? Can you see a difference in impact of vaccination depending on age category?

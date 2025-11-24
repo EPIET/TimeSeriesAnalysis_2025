@@ -16,6 +16,8 @@ book:
         - "scripts/04-practical.qmd"
         - "scripts/05-practical.qmd"
         - "scripts/07-practical.qmd"
+        - "scripts/09-practical.qmd"
+        - "scripts/10-practical.qmd"
 
 format:
   html:
