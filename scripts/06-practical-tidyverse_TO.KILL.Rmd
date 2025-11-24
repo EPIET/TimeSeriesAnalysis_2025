@@ -4,7 +4,32 @@
 
 
 ```{r, knitr-global-chunk-06t, include=FALSE, cache=FALSE}
-source("_common.R")
+rm(list=ls())
+
+#source("_common.R")
+pacman::p_load(
+  here, 
+  rio, 
+  skimr,
+  tsibble,
+  tidyverse,
+  TSA,
+  lmtest
+)
+
+# Create tsa_theme from previous exercise to be used in ggplot.
+tsa_theme <- theme_bw() + 
+        theme(
+            plot.title = element_text(face = "bold", 
+                                      size = 12),
+            legend.background = element_rect(fill = "white", 
+                                             size = 4, 
+                                             colour = "white"),
+            # legend.justification = c(0, 1),
+            legend.position = "bottom",
+            panel.grid.minor = element_blank()
+        )
+
 ```
 
 ## Expected learning outcomes {-#learn-6}
@@ -17,17 +42,15 @@ you have accounted for trend and periodicity
 - detect autocorrelation in the residuals of models on surveillance data
 
 
-## Task 6.1 {-#task-6-1}
-
-Reproduce the last model with two sine and two cosine terms from the previous session. 
 
 
-## Task 6.2 (Optional) {-#task-6-2}
+## Task 6.2 {-#task-6-2}
 
-Assuming you are happy with that linear regression model from the previous
-session, check whether the use of linear regression was appropriate in this
+Assuming you are happy with that Poisson regression model from the previous
+session, check whether this regression model was appropriate in this
 case.
 
+NEED REVISION
 
 ## Task 6.3 (Optional) {-#task-6-3}
 
@@ -44,263 +67,98 @@ Discuss with your peers how you could detect this mistake graphically.
 Required source code.
 
 ```{r, task-6-1-source-Rscript}
-source("src/tidyverse/session_6.R")
+#source("src/tidyverse/session_6.R")
+load(here("data","mortagg2_case_5.RData"))
+ls()
+
 ```
 
 
-Similarly to Task 3.1, run the relevant model, predict the residuals and
-produce a periodogram on the residuals. 
+
+Plot the residuals from the model in case study 5 that included a trend and 52-week periodicity and 26-week periodicity. 
+
 
 
 ## Help for Task 6.2 {-#solution-6-2}
 
 Plot the basic model with two sine and two cosine curves from Session 5:
 
+
+```{r, task-6-2-calculate-residuals}
+
+mortz <-
+    mortz %>%
+    mutate(res=residuals(mort_trendsin2cos2)
+    )
+```
+
 ```{r, task-6-2-repeat-session-3-tidy}
 ggplot(data = mortz) +
-    geom_point(mapping = aes(x = Date, y = cases), alpha = 0.4) +
-    geom_line(
-        mapping = aes(x = Date, y = unname(fitted(sine2cos2trendmodel))),
-        colour = "green"
+    geom_point(
+        mapping = aes(x = index, y = res)
     ) +
-    scale_y_continuous(limits = c(0, NA)) +
     labs(
-        x = "Index",
-        y = "Mortality",
+        x = "Week",
+        y = "Residuals",
         title = "Regression model with trend plus 2 sine and cosine terms"
     ) +
-    tsa_theme()
+    tsa_theme
 ```
 
+Start by examining the residuals against time. Do you see any additional patterns?
 
-To assess whether there is any more periodicity in the data, one can either
-examine the estimated periodogram of the residuals, or plot the residuals
-against time.
 
-```{r, task-6-2-periodogram-residuals}
-periodogram(residuals(sine2cos2trendmodel))
+
+
+To assess whether there is any more periodicity in the data, one can produce a periodogram of the residuals (use code from case study 5).
+
+```{r, task-6-1-periodogram}
+mort_residual_period <- TSA::periodogram(mortz$res)
+
+mort_residual_period_recip <-
+    tibble(
+        freq = mort_residual_period$freq,
+        spec = mort_residual_period$spec
+    ) %>%
+    arrange(desc(spec)) %>% 
+    mutate(reciprocal_freq = 1 / freq)  # here in weeks
+
+view(mort_residual_period_recip)
+
+# breaks every 13, equivalent to every 3 months approximately.
+ggplot(data = mort_residual_period_recip, aes(x = reciprocal_freq, y = 2*spec)) +
+    geom_line() +
+    scale_x_continuous(limits = c(0, 160), breaks=seq(0, 160, 13)) +
+    labs(x = "Period (weeks)", 
+         y = "Spectral density",
+         title="Periodogram residuals of model with trend plus 2 sine and cosine terms.") +
+    tsa_theme
+
 ```
 
+Plot the residuals again, but now using lines. Comment on your findings.
 
-Check the normality of the residuals. Plot a histogram of residuals and also
-plot the normal distribution of the same mean and variance.
 
-```{r, task-6-2-normality-residuals-tidy}
-res <-
-    residuals(sine2cos2trendmodel) %>%
-    enframe(., name = "time_i", value = "residuals") %>%
-    mutate(time_i = as.numeric(time_i))
+```{r, task-6-2-residuals-lines}
+max.index <- max(mortz$index)
 
-ggplot(data = res, mapping = aes(x = residuals)) +
-    geom_histogram(
-        mapping = aes(y = after_stat(density)),
-        colour = "white",
-        bins = 30
+ggplot(data = mortz) +
+    geom_line(
+        mapping = aes(x = index, y = res)
     ) +
-    stat_function(
-        fun = dnorm,
-        args = list(mean = mean(res$residuals), sd = sd(res$residuals)),
-        colour = "green",
-        lwd = 2
-    ) +
-    labs(x = "Residuals", y = "Density") +
-    tsa_theme()
-```
-
-
-To save typing we create the tibble data.frame `res`, which contains the residuals
-from the model and their corresponding time index from.
-
-The `geom_histogram` function plots a histogram using the ggplot2 package. We add
-the `aes(y = after_stat(density))` argument to compute probability density instead of 
-typical counts for histogram.
-
-The `stat_function` function adds a curve line applying the `dnorm` function (normal
-probability distribution) with mean and standard deviation parameters taken from
-the observed residuals.
-
-What does the plot suggest?
-
-Plot the residuals against the quantiles of a normal distribution using `qqnorm`:
-
-```{r, task-6-2-qqnorm-residuals-tidy}
-ggplot(data = res, mapping = aes(sample = residuals)) +
-    geom_qq() +
-    geom_qq_line() +
-    labs(x = "Theoretical Quantiles", y = "Sample Quantiles") +
-    tsa_theme()
-```
-
-
-`geom_qq` plots a quantile-quantile plot. The `geom_qq_line` function adds a line
-to show the expected distribution of points if the data is normally distributed.
-
-The way the points curve upwards from the straight line on the right hand side
-is typical of positive skew, as seen in the histogram. 
-
-<!-- Note that the reference line looks slightly different in Stata -->
-
-
-Compute a normality test for the residuals using the Shapiro-Wilk test:
-
-```{r, task-6-2-shapiro-residuals}
-shapiro.test(res$residuals) %>% broom::tidy()
-```
-
-
-The Shapiro-Wilk test is a test for normality of a continuous variable.
-
-The $p$ value indicates whether to accept the null hypothesis of normality. The result
-should be interpreted in the light of the sample size and the shape of the histogram,
-as negligible deviations from normality may be significant with large sample sizes.
-
-Comment on your findings.
-
-*Checking the homogeneity of the variances* - Plotting the residuals against
-the model (fitted values or predicted values) already gives indication of the
-variations of the variances with the level of the model. In addition we
-can use a mean-variance plot in order to better observe these
-variations. The mean and variance of each subgroup is then computed and plotted.
-To help, the R commands are given for the first plot, made on the raw data,
-to observe obvious variations.
-
-Plot a scatter plot of the residuals against the predicted values. (You can also
-use `plot(sine2cos2trendmodel, which=1)`, which will highlight outliers, or just
-`plot(sine2cos2trendmodel)` if you want all the standard diagnostic plots).
-
-Comment on your findings.
-
-```{r, task-6-2-trend-predicted-residuals-tidy}
-fit <-
-    fitted(sine2cos2trendmodel) %>%
-    enframe(., name = "time_i", value = "fitted") %>%
-    mutate(time_i = as.numeric(time_i))
-
-joined_res_fit <-
-    left_join(x = res, y = fit, by = "time_i")
-
-joined_res_fit
-
-ggplot(data = joined_res_fit) +
-    geom_point(mapping = aes(x = fitted, y = residuals), alpha = 0.3) +
     labs(
-        x = "Predicted values", y = "Residuals",
-        title = "Plot of residuals against predicted values"
+        x = "Week",
+        y = "Residuals",
+        title = "Regression model with trend plus 2 sine and cosine terms"
     ) +
-    tsa_theme()
-
-
-## Full Model Fit Assessment - tidyverse
-# pacman::p_load("ggfortify")
-# autoplot(sine2cos2trendmodel, which = 1:6,
-#          colour = 'dodgerblue3',
-#          smooth.colour = 'black',
-#          smooth.linetype = 'dashed',
-#          ad.colour = 'blue',
-#          label.size = 2,
-#          label.n = 5,
-#          label.colour = 'blue',
-#          ncol = 3)
-
-
-## Full Model Fit Assessment - base R alternative
-# par(mfrow = c(2, 3))
-# plot(sine2cos2trendmodel, which = 1:6)
-# dev.off()
+    scale_x_continuous(limits = c(0, max.index), breaks=seq(0, max.index, 77)) +
+    tsa_theme + 
+    theme(axis.text.x = element_text(angle = 30, hjust = 1)) 
+    
 ```
 
+Do you see a patterns that can explain the periodogram?
 
-*Mean-variance plot of the data and residuals* - The `meanvarplot` function,
-which was loaded above with `source("src/tidyverse/session_6.R")`, and shown below
-will plot the mean against the variance for a series of observations.
-Note that we have followed the Stata code in plotting the standard deviation
-rather than the variance. 
-
-```{r, task-6-2-meanvarplot}
-meanvarplot <- function(x, groupnum = 50, ...) {
-    x <- as.vector(x)
-    x <- x[order(x)]
-
-    group <-
-        cut(
-            1:length(x),
-            breaks = groupnum,
-            labels = 0:(groupnum - 1),
-            include.lowest = TRUE,
-            right = FALSE
-        )
-
-    datf <- data.frame(group, x)
-    mcases <- aggregate(x ~ group, mean, data = datf)$x
-    vcases <- aggregate(x ~ group, stats::sd, data = datf)$x
-
-    plot(mcases, vcases, ...)
-
-    invisible(list(datf, mcases, vcases))
-}
-```
-
-
-```{r, task-6-2-mean-variance-residuals}
-meanvarplot(mortz$cases,
-    xlab = "Means of groups",
-    ylab = "Variances of groups (sd plotted)",
-    main = "Mean-variance plot of data"
-)
-```
-
-
-What the function above does is:
-
-- Group the observations, ordered by their values, into 50 sequential groups of approximately equal size (50 is an arbitrary number).
-- Calculate the mean of each group of observations.
-- Calculate the standard deviation of each group of observations.
-- Plot the standard deviations against the means.
-- The last line of the function (`invisible` etc) just returns the results of the calculations as a list without printing them to the console, to allow you to use them for something else if you wanted to.
-
-Comment on your findings.
-
-You can repeat the plot for the residuals, using the same function. Compare to the previous plot.
-
-```{r, task-6-2-mean-variance2-residuals}
-meanvarplot(res$residuals,
-    xlab = "Means of groups",
-    ylab = "Variances of groups (sd plotted)",
-    main = "Main-variance plot of residuals"
-)
-```
-
-
-*Check for the mean of the residuals* - Fit a linear regression model of the
-residuals on time. Plot the predictions against time. Discuss the plot.
-
-```{r, task-6-2-time-predictions-residuals-plot-tidy}
-mortz_joined <-
-    left_join(x = mortz, y = res, by = c("Date" = "time_i")) %>%
-    mutate(Date = as.integer(Date))
-
-residtimemodel2 <- lm(residuals ~ Date, data = mortz_joined)
-
-broom::tidy(residtimemodel2)
-
-lin_mod_resid2 <-
-    enframe(fitted(residtimemodel2), name = "time_i", value = "fitted_res") %>%
-    mutate(time_i = as.numeric(time_i))
-
-## residuals by time variable
-ggplot(data = lin_mod_resid2) +
-    geom_point(
-        mapping = aes(x = time_i, y = fitted_res),
-        alpha = 0.4,
-        colour = "darkorange"
-    ) +
-    scale_y_continuous(limits = c(NA, NA)) +
-    labs(
-        x = "Index",
-        y = "Predictions"
-    ) +
-    tsa_theme()
-```
 
 
 *Check for autocorrelation* - Note that there are `acf` functions in more than
@@ -308,26 +166,33 @@ one package, so to be sure you are using the using the base R function here use
 `stats::acf`. Graph the autocorrelation on 50 (week) lags. 
 
 ```{r, task-6-2-acf-residuals-plot-tidy}
-mortacf <-
-    mortz %>%
-    fill_gaps() %>%
-    select(date_index, cases) %>%
-    feasts::ACF(cases, lag_max = 50)
 
-mortacf
+# THIS IS NOT WORKING, WITH stats:acf() or TSA::acf() /SKB
+#mortacf <-
+#    mortz %>%
+#    fill_gaps() %>%
+#    select(res) %>%
+#    TSA::acf(res, lag_max = 52, type="correlation", plot=TRUE)
 
-mortacf %>%
+
+mort_res_acf <- stats::acf(mortz$res, lag.max = 52, type="correlation", plot=TRUE)
+
+mort_res_acf
+
+# not sure necessary and cannot get it to work with TSA::acf() which is already good enough. 
+#No need to complicate it.
+mort_res_acf %>%
     autoplot() +
     scale_x_continuous(breaks = seq(1, 50, by = 3)) +
     labs(
         x = "Lag (week)", y = "Autocorrelation",
-        title = "Autocorrelation plot of cases"
+        title = "Autocorrelation of residuals model with trend plus 2 sine and cosine terms"
     ) +
     tsa_theme()
 ```
 
 
-The `ACF` function estimates and plots autocorrelations. The lag zero vertical line
+The `acf` function estimates and plots autocorrelations. The lag zero vertical line
 is omitted in this plot because it is always 1, as it shows the correlation of each
 observation with itself (lag zero). 
 The first vertical line shows the correlation between each observation
@@ -335,10 +200,7 @@ and the observation just before it (lag one). The second shows the correlation
 between each observation and the observation before last (lag two). And so on. 
 
 The blue dotted line is the 95% confidence interval. Vertical lines which reach
-above or below the confidence limits indicate significant autocorrelations.
-
-The final line of code prints out the values of ACF which are shown from lag
-zero.
+above or below the confidence limits indicate significant autocorrelations, and is based on the number of observations.
 
 If there was no autocorrelation, only the first vertical line would exceed the
 confidence interval. 
@@ -349,22 +211,23 @@ evidence of periodicity.
 Graph the partial autocorrelation on 50 (week) lags.
 
 ```{r, task-6-2-pacf-residuals-plot-tidy}
-mortpacf <-
-    mortz %>%
-    fill_gaps() %>%
-    select(date_index, cases) %>%
-    feasts::PACF(cases, lag_max = 50)
+#mortpacf <-
+#    mortz %>%
+#    fill_gaps() %>%
+#    select(index, cases) %>%
+#    feasts::PACF(cases, lag_max = 50)
 
-mortpacf
+mortpacf <- stats::pacf(mortz$res, lag.max=50, plot=TRUE)
 
-mortpacf %>%
-    autoplot() +
-    scale_x_continuous(breaks = seq(1, 50, by = 3)) +
-    labs(
-        x = "Lag (week)", y = "Partial autocorrelation",
-        title = "Partial autocorrelation plot of cases"
-    ) +
-    tsa_theme()
+#
+#mortpacf %>%
+#    autoplot() +
+#    scale_x_continuous(breaks = seq(1, 50, by = 3)) +
+#    labs(
+#        x = "Lag (week)", y = "Partial autocorrelation",
+#        title = "Partial autocorrelation plot of cases"
+#    ) +
+#    tsa_theme()
 ```
 
 
@@ -374,29 +237,23 @@ for lag two is the autocorrelation at lag two adjusted for the autocorrelation a
 one. The partial autocorrelation at lag three is the autocorrelation at lag three
 adjusted for the autocorrelations at lag two and lag one.
 
-The main feature of interest in this plot is the positive spike at lag one. There is
-nothing else to write home about.
-
-The final line of code prints out the values of PACF which are shown from lag one.
-
-Using ACF and PACF plots is a key part of model selection for ARIMA models, which
-are not covered in this course. Slow decay seen on the ACF plot and a spike seen on
-the PACF plot are clues to the particular ARIMA model which would account for serial
-dependence in the data.
+The main feature of interest in this plot is the positive spike at lag one. 
 
 Test for significant autocorrelations in the residuals.
 
 ```{r, task-6-2-Ljung-Box-residuals}
-Box.test(mortz$cases, type = "Ljung-Box") %>% broom::tidy()
+Box.test(mortz$res, type = "Ljung-Box")
 ```
 
+The Ljung-Box is a portmanteau-type test that examines the null hypothesis of
+independence of the residuals  in a time series. A significant $p$ value suggests that there is autocorrelation in the data, that is, they are not independent. A portmanteau-type test are those where the alternative hypothesis is not well defined, but the null hypothesis (here independence) is well defined.
 
-The Ljung-Box (or "Portmanteau") test examines the null hypothesis of
-independence (as opposed to autocorrelation) in a time series. 
-
-A significant $p$ value suggests that there is autocorrelation in the data.
 
 *Check for periodicity remaining in the residuals* - First look at the sample autocorrelations.
+
+
+
+NEEDS CHECKING; ADD AUTOCORRELATION TO THE MODEL? CODE IS NEEDED.
 
 ```{r, task-6-2-acf-residuals-2-tidy}
 resACF <-
@@ -448,3 +305,12 @@ resPACF %>%
 ```
 
 What do you see? Is there any interesting pattern in the residuals that we need to account for?
+
+
+
+```{r, task-6-save}
+save(list = ls(pattern = 'mort'), file = here("data", "mortagg2_case_6.RData"))
+
+#load(here("data","mortagg2_case_6.RData"))
+
+```

@@ -137,7 +137,6 @@ than linear regression) may be relevant in this example?
 Import the `mortality.Rdata` dataset.
 
 ```{r, task-4-1-import-csv}
-#mortagg <- import(here("data", "mortagg.dat"))
 load(here("data", "mortagg2.Rdata"))
 
 ```
@@ -188,21 +187,19 @@ ggplot(data = mortz) +
 ## Help for Task 4.1.1 {-#solution-4-1-1}
 
 ```{r, task-opt-4-1-mort-sex-aggr-week-plots-tidy}
-## Men
+## Men and Women
 ggplot(data = mortz) +
-  geom_line(mapping = aes(x = date_index, y = cases_m)) +
+  geom_line(mapping = aes(x = date_index, y = cases_m),
+        colour = "green",
+        lwd=1.1) +
+  geom_line(mapping = aes(x = date_index, y = cases_f),
+        colour = "black",
+        lwd=1.1) + 
   scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
   scale_y_continuous(limits = c(0, NA)) +
-  labs(x = "Date", y = "Number of Deaths", title = "Mortality - Men") +
+  labs(x = "Week", y = "Number of Deaths", title = "Spain: Number of deaths by sex") +
   tsa_theme
-
-## Women
-ggplot(data = mortz) +
-  geom_line(mapping = aes(x = date_index, y = cases_f)) +
-  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
-  scale_y_continuous(limits = c(0, NA)) +
-  labs(x = "Date", y = "Number of Deaths", title = "Mortality - Women") +
-  tsa_theme
+#
 ```
 
 
@@ -300,8 +297,8 @@ ggplot(data = mortzma, mapping = aes(x = date_index)) +
   geom_line(mapping = aes(y = MA5c), colour = "green") +
   scale_x_yearweek(date_labels = "%Y-%W", 
                    date_breaks = "1 year") +
-  labs(x = "Date", 
-       y = "Number of Deaths", 
+  labs(x = "Week", 
+       y = "Number of deaths", 
        title = "Moving averages") +
   tsa_theme
 ```
@@ -327,8 +324,8 @@ ggplot(mortz, mapping = aes(x = date_index, y = cases)) +
   scale_x_yearweek(date_labels = "%Y-%W", 
                    date_breaks = "1 year") +
   scale_y_continuous(limits = c(0, NA)) +
-  labs(x = "Date", 
-       y = "Number of Deaths", 
+  labs(x = "Week", 
+       y = "Number of deaths", 
        title = "Loess smoothing") +
   tsa_theme
 ```
@@ -343,10 +340,10 @@ produce smoother lines.
 ```{r, task-4-2-mort-MAx-scatterplot-span-tidy}
 ggplot(data = mortz, mapping = aes(x = date_index, y = cases)) +
   geom_point(alpha = 0.5) +
-  geom_smooth(se = TRUE) +
+  stat_smooth(se = TRUE, span=0.1) +
   scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
   scale_y_continuous(limits = c(0, NA)) +
-  labs(x = "Date", y = "Number of Deaths", title = "Loess smoothing (span = 0.1)") +
+  labs(x = "Week", y = "Number of deaths", title = "Loess smoothing (span = 0.1)") +
   tsa_theme
 ```
 
@@ -386,6 +383,7 @@ mortzma2 <-
     )
   )
 
+
 ## Visually inspect data
 slice(mortzma2, 20:30)
 slice(mortzma2, 45:55)
@@ -403,15 +401,15 @@ View(mortzma2)
 ```{r, task-4-2-mort-MAx-longer-length-plots-tidy}
 ## wide format dataset ---
 ggplot(mortzma2, mapping = aes(x = date_index)) +
-  geom_line(mapping = aes(y = cases), colour = "black") +
-  geom_line(mapping = aes(y = MA25), colour = "red") +
-  geom_line(mapping = aes(y = MA51), colour = "blue") +
-  geom_line(mapping = aes(y = MA103), colour = "green") +
+  geom_line(mapping = aes(y = cases), colour = "black", lwd=0.7) +
+  geom_line(mapping = aes(y = MA25), colour = "red", lwd=1.1) +
+  geom_line(mapping = aes(y = MA51), colour = "blue", lwd=1.1) +
+  geom_line(mapping = aes(y = MA103), colour = "orange", lwd=1.1) +
   scale_x_yearweek(date_labels = "%Y-%W", 
                    date_breaks = "1 year") +
   scale_y_continuous(limits = c(0, NA)) +
-  labs(x = "Date", 
-       y = "Number of Deaths", 
+  labs(x = "Week", 
+       y = "Number of deaths", 
        title = "Moving averages") +
   tsa_theme
 ```
@@ -427,57 +425,58 @@ What would happen if you used an even greater window?
 Using regression against time is a very simple way to look at the trends
 and test the slope with the Wald test provided.
 
-We will use the standard `lm` function to fit a linear regression model.
+We will use the  `glm` function to fit a linear Poisson regression model.
 
-For the regression you will need to create a date variable from the year
+For the regression you will need to create an index variable from the year
 and week (consecutive number of week).
 
-```{r, task-4-3-regression-lm}
+```{r, task-4-3-regression-poi}
 mortz <-
   mortz %>%
   ungroup() %>% 
-  mutate(Date = seq.int(from = 1, to = nrow(.)))
+  mutate(index = seq.int(from = 1, to = nrow(.)))
 
-linregmodel <- glm(
-  formula = cases ~ Date,
+mort_poissontrend <- glm(
+  formula = cases ~ index,
   family = "poisson",
   data = mortz
 )
 
-names(linregmodel)
+
 ```
 
 
 Check model results.
 
-```{r, task-4-3-regression-lm-summary}
-summary(linregmodel)
+```{r, task-4-3-regression-poi-summary}
+summary(mort_poissontrend)
 ```
 
 
-The `lm` function fits a linear regression model. You can use the `names`
-function to see the various components of the output of the `lm` function,
+The `glm` function fits a linear regression model to the log of the number of deaths. You can use the `names`
+function to see the various components of the output of the `glm` function,
 as above. As mentioned in the previous session, the `str` function is also often
-useful for looking at the "structure" of the output of an R function. 
+useful for looking at the "structure" of the output of an R function. Summary provides a quick function for checking the results.
+
 
 Variables in R models are specified using notation along the lines of
-`response_variable ~ explanatory_variable_1 + explanatory_variable_2` etc. A more
-detailed explanation of how to build model formulas in R can be found in the
-*Details* section of the help page of the `formula` function: `?stats::formula`.
+`response_variable ~ explanatory_variable_1 + explanatory_variable_2` etc. Check the material from the MVA module. A more
+detailed explanation of how to build model formulas in R can also be found in the
+*Details* section of the help page of the `formula` function: `?stats::formula`. 
 
-`summary`, when given the results of fitting a linear regression model, will
+`summary`, when given the results of fitting a regression model, will
 provide a summary of the fitted trend and associated statistics.
 
-Identify and interpret the intercept and the trend.
+Identify and interpret the intercept and the trend. In a Poisson model on the log(y), the coefficient needs to be exponentiated in order to interpret it for the output y (that is, the original y without the log).
 
 Plot the fitted values against the observed ones.
 
 ```{r, task-4-3-regression-lm-plot-tidy}
-ggplot(data = mortz, mapping = aes(x = Date)) +
+ggplot(data = mortz, mapping = aes(x = index)) +
   geom_point(mapping = aes(y = cases), alpha = 0.5) +
-  geom_line(mapping = aes(y = fitted(linregmodel)), colour = "green") +
+  geom_line(mapping = aes(y = fitted(mort_poissontrend), colour = "green", lwd=1.1) +
   scale_y_continuous(limits = c(0, NA)) +
-  labs(x = "Time point", y = "Number of Deaths", title = "Mortality with fitted trend") +
+  labs(x = "Week", y = "Number of deaths", title = "Number of deaths per week with fitted trend") +
   tsa_theme
 ```
 
@@ -495,7 +494,8 @@ glmtidy <- function(x, caption = "") {
   pander::pander(
     broom::tidy(x,
       exponentiate = TRUE,
-      conf.int = TRUE
+      conf.int = TRUE,
+      options(digits = 5)
     ),
     caption = caption
   )
@@ -508,57 +508,50 @@ glmstats <- function(x) {
 ```
 
 
-To take the population into account, we can model it with a Poisson regression
-(introduced later); first, we need to import the population data provided
-into the dataset. We will assume the population was steady each year and
-"jumped" to a new value on January 1<sup>st<sup>.
+To take the population into account, we need to include the population in the 
+model. This is done by adding a term called offset(). The parameter beta for the offset, in this case for the
+population, will be forced to be 1; in other words, the offset will not affect the 
+outcome. The advantage is that we can interpret the IRR of time in terms of mortality rate = cases/population. 
 
-```{r, task-opt-4-3-regression-pois-pop-data}
-mortz <-
-  mortz %>%
-  mutate(pop = rep(c(
-    39953520, 40688520, 41423520, 42196231, 42859172,
-    43662613, 44360521, 45236004, 45983169, 46367550
-  ),
-  each = 52
-  ))
-```
-
-
-We have used the `rep` function to repeat each of the population values for each
-of the 52 weeks in each year.
-
-The "jump" effect has affected the predicted values, too:
 
 ```{r, task-opt-4-3-regression-pois}
-mortpoismodel <- glm(cases ~ offset(log(pop)) + Date,
+mort_poissontrend_pop <- glm(cases ~  index + offset(log(pop)),
   data = mortz,
   family = "poisson"
 )
 
-glmtidy(mortpoismodel)
+summary(mort_poissontrend_pop)
+
+# Trend in the original scale of the outcome cases (deaths) wit 95% confidence intervals. 
+exp(cbind(Estimate=mort_poissontrend_pop$coef, confint(mort_poissontrend_pop)))*1000
+
+glmtidy(mort_poissontrend_pop)
 ```
 
 
 ```{r, task-opt-4-3-regression-pois-plot-tidy}
-ggplot(data = mortz, mapping = aes(x = Date)) +
-  geom_point(mapping = aes(y = cases), alpha = 0.5) +
-  geom_line(mapping = aes(y = fitted(mortpoismodel)), colour = "blue") +
+
+mortz<- mortz %>%
+  mutate(
+    mortality_rate = cases/pop*1000
+  )
+
+ggplot(data = mortz, mapping = aes(x = date_index)) +
+  geom_point(mapping = aes(y = mortality_rate), alpha = 0.5) +
+  geom_line(mapping = aes(y = fitted(mort_poissontrend_pop)/pop*1000), colour = "blue", lwd=1.1) +
   scale_y_continuous(limits = c(0, NA)) +
   labs(
-    x = "Time point", y = "Number of Deaths",
-    title = "Mortality with fitted trend (Poisson)"
+    x = "Week", y = "Mortality rate (per 1000 pop)",
+    title = "Mortality rate per 1000 population with fitted Poisson trend"
   ) +
   tsa_theme
 ```
 
 
-Because of the yearly jump, the overall trend is now negative. Overall,
-the predicted number of deaths still rises, because the yearly jump is
-bigger in absolute number than the yearly effect of the negative trend.
-
-
 ## Help for Task 4.3.2 {-#solution-4-3-2}
+
+HAVE NOT TRIED THIS ONE OUT.
+
 
 You can use the salmonellosis example (`dis1`) to see how an exponential
 trend might fit the data better.
@@ -725,4 +718,12 @@ ggplot(data = salmoz2, mapping = aes(x = date)) +
     title = "Salmonella data with fitted trend"
   ) +
   tsa_theme
+```
+
+
+
+```{r, task-4-save}
+save(list = ls(pattern = 'mort'), file = here("data", "mortagg2_case_4.RData"))
+#load(here("data","mortagg2_case_4.RData"))
+
 ```

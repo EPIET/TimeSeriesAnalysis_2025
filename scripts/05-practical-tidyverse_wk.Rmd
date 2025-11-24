@@ -13,8 +13,24 @@ pacman::p_load(
   skimr,
   tsibble,
   TSA,
-  tidyverse
+  tidyverse,
+  season
 )
+
+
+# Create tsa_theme from previous exercise
+tsa_theme <- theme_bw() + 
+        theme(
+            plot.title = element_text(face = "bold", 
+                                      size = 12),
+            legend.background = element_rect(fill = "white", 
+                                             size = 4, 
+                                             colour = "white"),
+            # legend.justification = c(0, 1),
+            legend.position = "bottom",
+            panel.grid.minor = element_blank()
+        )
+
 ```
 
 ## Expected learning outcomes {#learn-5 .unnumbered}
@@ -49,11 +65,20 @@ Assess the existence of periodicity in the `dis1` dataset.
 
 ## Help for Task 5.1 {#solution-5-1 .unnumbered}
 
+
+
+
+
+
 Required source code.
 
 ```{r, task-5-1-source-Rscript}
+
+# Read data
 mortagg <- import(here("data", "mortagg.csv"))
 
+
+# 
 mortz <-
     mortagg %>%
     mutate(date_index = make_yearweek(year = year, week = week)) %>%
@@ -62,26 +87,56 @@ mortz <-
 mortz$Date <- seq.int(from = 1,
                       to = nrow(mortz))
 
-# Create tsa_theme from previous exercise
-tsa_theme <- theme_bw() + 
-        theme(
-            plot.title = element_text(face = "bold", 
-                                      size = 12),
-            legend.background = element_rect(fill = "white", 
-                                             size = 4, 
-                                             colour = "white"),
-            # legend.justification = c(0, 1),
-            legend.position = "bottom",
-            panel.grid.minor = element_blank()
-        )
+
 ```
 
+Step 1) 
+
+Explore the time series. The function stl() decomposes the time series by applying loess to the series; loess is a smoothing method (https://en.wikipedia.org/wiki/Local_regression).
+
+
+```{r, task-5-1-explore}
+mortz.ts  <- ts(mortz$cases, frequency=52, start=c(2010,1))
+
+#mortz.stl <- stl(mortz.ts, s.window="periodic")
+
+#print(plot(mortz.stl), size.x.tick=5)
+
+print(decompose(mortz.ts))
+
+
+```
+
+Discuss the panels obtained. What features seem to be relevant? 
+
+
+Step 2)
+
+We start by inspecting if there is a linear trend in the data.
+
+```{r, task-5-1-periodogram-freq}
+mort_trendmodel <- glm(cases ~ Date, family = "poisson", data = mortz)
+summary(mort_trendmodel)
+
+# incidence rate ratio per week:
+IRR_week <- exp(coef(mort_trendmodel))
+
+
+
+```
+Interpret the weekly incidence rate ratio (IRR).
+
+
+Step 2)
+
+As there seem to be some periodicity in the first exploration, we  proceed to inspect if there is a seasonality component in the time series. Seasonality, periodicity both refer to reoccurring patterns in the data.
+
 R has a number of functions which produce a *periodogram* - we will use
-the `periodogram` function from the `TSA` package.
+the `periodogram` function from the `TSA` package.  
 
 ```{r, task-5-1-periodogram}
-mortper <- TSA::periodogram(mortz$cases)
-str(mortper)
+mort_period <- TSA::periodogram(mortz$cases)
+str(mort_period)
 ```
 
 The `periodogram` function plots the estimated periodogram for a given
@@ -92,27 +147,21 @@ This type of plot is interpreted by identifying peaks. Convert the
 frequencies at which peaks occur to periods by taking the reciprocal.
 
 ```{r, task-5-1-periodogram-freq}
-mortper_recip <-
+mort_period_recip <-
     tibble(
-        freq = mortper$freq,
-        spec = mortper$spec
+        freq = mort_period$freq,
+        spec = mort_period$spec
     ) %>%
     arrange(desc(spec)) %>% 
-    mutate(reciprocal_freq = 1 / freq)
+    mutate(reciprocal_freq = 1 / freq)  # here in weeks
 
-view(mortper_recip)
+view(mort_period_recip)
 ```
 
 The above lines of code extract two variables (`freq` and `spec`) from
-the `mortper` object and place them in a `tibble` data.frame.
+the `mort_period_recip` object and place them in a `tibble` data.frame.
 Simultaneously, both columns values are order by descending order of the
-spectral variable.
-
-It allows to find the frequencies with the highest peaks in the
-periodogram and converts those frequencies to periods (which are numbers
-of weeks for this data). The reciprocal values are calculated and stored 
-on the `reciprocal_freq` variable
-
+spectral variable. It allows to find the strongest spectral signal; given the strongest spectral, you wish to check its periodicity (reciprocal frequency). Observe that the reciprocal frequency is in the same units as the data. In other words, the column reciprocal_freq in this case is in  weeks. 
 
 ```{r, task-5-1-periodogram-epergram-tidy}
 ggplot(data = mortper_recip, aes(x = reciprocal_freq, y = log(spec))) +
@@ -123,7 +172,13 @@ ggplot(data = mortper_recip, aes(x = reciprocal_freq, y = log(spec))) +
     tsa_theme
 ```
 
-Is there any periodicity? If so, what is the period?
+
+What is the main periodicity in the mortality data? (use the plot and the table of mort_period_recip).
+
+Is there another periodicity that is worth checking out?
+
+
+
 
 ## Help for Task 5.2 {#solution-5-2 .unnumbered}
 
@@ -131,79 +186,28 @@ As the periodogram shows periodicity close to 52 weeks, we will use a
 *sine curve* of a 52-week period. Note that periodicity with a *period
 of* *one year is also referred to as seasonality*.
 
-Fit a poisson regression of `cases` with a sine predictor term:
-
-```{r, task-5-2-sin52}
-mortz <- mortz %>%
-  mutate(sin52 = sin(2 * pi * Date / 52))
-
-
-sinemodel <- glm(cases ~ sin52, family = "poisson", data = mortz)
-summary(sinemodel)
-```
-
-Plot the fitted values against the original data and comment.
-
-```{r, task-5-2-sin52-plot-tidy}
-ggplot(data = mortz, aes(x = Date)) +
-    geom_point(aes(y = cases), alpha = 0.4) +
-    geom_line(
-        mapping = aes(y = fitted(sinemodel)),
-        colour = "green"
-    ) +
-    scale_y_continuous(limits = c(0, NA)) +
-    labs(x = "Index", 
-         y = "Mortality", 
-         title = "Regression model: one sine term") +
-    tsa_theme
-```
-
-*Addition of the cosine* - In order to have an appropriate phase in your
-model (you don't have to worry about identifying it; this will happen
+Fit a poisson regression of `cases` with a sine and cosine predictor term. In 
+order to have an appropriate phase in your model (you don't have to worry 
+about identifying it; this will happen 
 automatically), you need to use *both* a sine and a cosine curve with
 the same period. The sum of these two curves gives the periodicity for
 the specified period and the phase best describing our data.
 
-You can fit a linear model for the cases, using sine and cosine as
-explanatory variables. Plot the fitted values against the data and
-comment:
 
 ```{r, task-5-2-sin52-cos52}
 mortz <- mortz %>%
-  mutate(cos52 = cos(2 * pi * Date / 52))
+  mutate(cos52 = cos(2 * pi * Date / 52),
+         sin52 = sin(2 * pi * Date / 52))
 
-sinecosmodel <- glm(cases ~ sin52 + cos52, family = "poisson", data = mortz)
-summary(sinecosmodel)
+mort_sinecostrend <- glm(cases ~ Date + sin52 + cos52, family = "poisson", data = mortz)
+summary(mort_sinecostrend)
 ```
 
 ```{r, task-5-2-sin52-cos52-plot-tidy}
 ggplot(data = mortz, aes(x = Date)) +
     geom_point(aes(y = cases), alpha = 0.4) +
     geom_line(
-        mapping = aes(y = fitted(sinecosmodel)),
-        colour = "green"
-    ) +
-    scale_y_continuous(limits = c(0, NA)) +
-    labs(x = "Index", 
-         y = "Mortality", 
-         title = "Regression model: sine, cosine terms") +
-    tsa_theme
-```
-
-How does the fit look graphically?
-
-Now adjust not only for periodicity, but also for trend:
-
-```{r, task-5-2-sin52-cos52-trend}
-sinecostrendmodel <- glm(cases ~ sin52 + cos52 + Date, family = "poisson", data = mortz)
-summary(sinecostrendmodel)
-```
-
-```{r, task-5-2-sin52-cos52-trend-plot-tidy}
-ggplot(data = mortz, aes(x = Date)) +
-    geom_point(aes(y = cases), alpha = 0.4) +
-    geom_line(
-        mapping = aes(y = fitted(sinecostrendmodel)),
+        mapping = aes(y = fitted(mort_sinecostrend)),
         colour = "green"
     ) +
     scale_y_continuous(limits = c(0, NA)) +
@@ -212,6 +216,9 @@ ggplot(data = mortz, aes(x = Date)) +
          title = "Regression model: trend, sine, cosine terms") +
     tsa_theme
 ```
+
+How does the fit look graphically?
+
 
 *A model with a trend plus 2 sine and 2 cosine curves* - To fit the
 model better, we could try to add more sine/cosine curves, of a period
