@@ -524,7 +524,7 @@ summary(mort_poissontrend_pop)
 # Trend in the original scale of the outcome cases (deaths) wit 95% confidence intervals. 
 exp(cbind(Estimate=mort_poissontrend_pop$coef, confint(mort_poissontrend_pop)))*1000
 
-glmtidy(mort_poissontrend_pop)
+#glmtidy(mort_poissontrend_pop)
 ```
 
 
@@ -556,7 +556,7 @@ You can use the salmonellosis example (`dis1`) to see how an exponential
 trend might fit the data better.
 
 ```{r, task-opt-4-3-2-source-Rscript, echo=TRUE, eval=FALSE}
-source("src/tidyverse/session_4.R")
+#source("src/tidyverse/session_4.R")
 ```
 
 
@@ -564,47 +564,47 @@ For the regression you will still need to create a date variable from the
 year and week (weeknumber).
 
 ```{r, task-opt-4-3-2-data}
-dis1 <- import(here("data", "tsa_practice.xlsx"), which = "dis1")
-
-dis1 <-
-  dis1 %>%
-  mutate(date = seq.int(from = 1, to = nrow(.)))
+#dis1 <- import(here("data", "tsa_practice.xlsx"), which = "dis1")
+#
+#dis1 <-
+#  dis1 %>%
+#  mutate(date = seq.int(from = 1, to = nrow(.)))
 ```
 
 
 Generate a new variable `lcases` as the natural logarithm of cases:
 
 ```{r, task-opt-4-3-2-log-cases}
-salmo <- dis1
-
-salmo <-
-  salmo %>%
-  mutate(lcases = log(cases))
-
-salmoz2 <-
-  salmo %>%
-  mutate(date_index = make_yearweek(year = year, week = week)) %>%
-  as_tsibble(index = date_index)
+#salmo <- dis1
+#
+#salmo <-
+#  salmo %>%
+#  mutate(lcases = log(cases))
+#
+#salmoz2 <-
+#  salmo %>%
+#  mutate(date_index = make_yearweek(year = year, week = week)) %>%
+#  as_tsibble(index = date_index)
 ```
 
 
 Plot the logarithm of the number of cases according to the time:
 
 ```{r, task-opt-4-3-2-plot-tidy}
-ggplot(data = salmoz2, mapping = aes(x = date_index)) +
-  geom_line(mapping = aes(y = lcases)) +
-  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
-  scale_y_continuous(limits = c(0, NA)) +
-  labs(x = "Year", y = "Cases (natural log scale)", title = "Log Salmonella data") +
-  tsa_theme
+#ggplot(data = salmoz2, mapping = aes(x = date_index)) +
+#  geom_line(mapping = aes(y = lcases)) +
+#  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
+#  scale_y_continuous(limits = c(0, NA)) +
+#  labs(x = "Year", y = "Cases (natural log scale)", title = "Log Salmonella data") +
+#  tsa_theme
 ```
 
 
 Fit a model of `lcases` against date using linear regression. 
 
 ```{r, task-opt-4-3-2-log-lm}
-logmodel <- lm(lcases ~ date, data = salmoz2)
-summary(logmodel)
+#logmodel <- lm(lcases ~ date, data = salmoz2)
+#summary(logmodel)
 ```
 
 
@@ -613,19 +613,19 @@ be created where the number of cases is missing. Stata seems to do linear
 interpolation of the fitted values to fill in the gaps, so we will do that too.
 
 ```{r, task-opt-4-3-2-interpolate-lm}
-fitted_pois_df <-
-  enframe(fitted(logmodel), name = "date", value = "ltrend") %>%
-  mutate(date = as.integer(date))
-
-salmoz2 <-
-  salmoz2 %>%
-  left_join(
-    x = .,
-    y = fitted_pois_df,
-    by = "date"
-  ) %>%
-  mutate(ltrend = imputeTS::na_interpolation(x = ltrend, option = "linear"))
-
+#fitted_pois_df <-
+#  enframe(fitted(logmodel), name = "date", value = "ltrend") %>%
+#  mutate(date = as.integer(date))
+#
+#salmoz2 <-
+#  salmoz2 %>%
+#  left_join(
+#    x = .,
+#    y = fitted_pois_df,
+#    by = "date"
+#  ) %>%
+#  mutate(ltrend = imputeTS::na_interpolation(x = ltrend, option = "linear"))
+#
 
 ```
 
@@ -635,43 +635,43 @@ We then use `na.approx`, mentioned above, to interpolate missing values.
 
 
 ```{r, task-opt-4-3-2-interpolate-lm-plot-tidy}
-ggplot(data = salmoz2, mapping = aes(x = date)) +
-  geom_line(mapping = aes(y = lcases)) +
-  geom_line(mapping = aes(y = ltrend), colour = "green") +
-  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
-  scale_y_continuous(limits = c(0, NA)) +
-  labs(
-    x = "Time point",
-    y = "Log Salmonella cases",
-    title = "Log Salmonella data with fitted trend"
-  ) +
-  tsa_theme
+#ggplot(data = salmoz2, mapping = aes(x = date)) +
+#  geom_line(mapping = aes(y = lcases)) +
+#  geom_line(mapping = aes(y = ltrend), colour = "green") +
+#  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
+#  scale_y_continuous(limits = c(0, NA)) +
+#  labs(
+#    x = "Time point",
+#    y = "Log Salmonella cases",
+#    title = "Log Salmonella data with fitted trend"
+#  ) +
+#  tsa_theme
 ```
 
 
 Generate a new variable (`trend`), the anti-log of the prediction (`ltrend`):
 
 ```{r, task-opt-4-3-2-anti-log}
-salmoz2 <-
-  salmoz2 %>%
-  mutate(trend = exp(ltrend))
+#salmoz2 <-
+#  salmoz2 %>%
+#  mutate(trend = exp(ltrend))
 ```
 
 
 Plot the real data (`cases`) and this model (`trend`) according to time:
 
 ```{r, task-opt-4-3-2-anti-log-plot-tidy}
-ggplot(data = salmoz2, mapping = aes(x = date)) +
-  geom_line(mapping = aes(y = cases)) +
-  geom_line(mapping = aes(y = trend), colour = "green") +
-  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
-  scale_y_continuous(limits = c(0, NA)) +
-  labs(
-    x = "Time point",
-    y = "Salmonella cases",
-    title = "Salmonella data with fitted trend"
-  ) +
-  tsa_theme
+#ggplot(data = salmoz2, mapping = aes(x = date)) +
+#  geom_line(mapping = aes(y = cases)) +
+#  geom_line(mapping = aes(y = trend), colour = "green") +
+#  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
+#  scale_y_continuous(limits = c(0, NA)) +
+#  labs(
+#    x = "Time point",
+#    y = "Salmonella cases",
+#    title = "Salmonella data with fitted trend"
+#  ) +
+#  tsa_theme
 ```
 
 Compare the results with those you would have got if you had used linear
@@ -681,48 +681,48 @@ Alternatively, you can run a Poisson or a negative binomial regression to
 model the data:
 
 ```{r}
-salmopoismodel <- glm(cases ~ date, data = salmoz2, family = "poisson")
-summary(salmopoismodel)
+#salmopoismodel <- glm(cases ~ date, data = salmoz2, family = "poisson")
+#summary(salmopoismodel)
 ```
 
 
 There is more on using Poisson regression later on.
 
 ```{r, task-opt-4-3-2-regression-pois}
-fitted_pois2_df <-
-  enframe(fitted(salmopoismodel), name = "date", value = "trend2") %>%
-  mutate(date = as.integer(date))
-
-salmoz2 <-
-  salmoz2 %>%
-  left_join(
-    x = .,
-    y = fitted_pois2_df,
-    by = "date"
-  ) %>%
-  mutate(trend2 = imputeTS::na_interpolation(x = trend2, option = "linear"))
-
+#fitted_pois2_df <-
+#  enframe(fitted(salmopoismodel), name = "date", value = "trend2") %>%
+#  mutate(date = as.integer(date))
+#
+#salmoz2 <-
+#  salmoz2 %>%
+#  left_join(
+#    x = .,
+#    y = fitted_pois2_df,
+#    by = "date"
+#  ) %>%
+#  mutate(trend2 = imputeTS::na_interpolation(x = trend2, option = "linear"))
+#
 ```
 
 
 ```{r, task-opt-4-3-2-regression-pois-plot-tidy}
-ggplot(data = salmoz2, mapping = aes(x = date)) +
-  geom_line(mapping = aes(y = cases)) +
-  geom_line(mapping = aes(y = trend2), colour = "green") +
-  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
-  scale_y_continuous(limits = c(0, NA)) +
-  labs(
-    x = "Time point",
-    y = "Salmonella cases",
-    title = "Salmonella data with fitted trend"
-  ) +
-  tsa_theme
+#ggplot(data = salmoz2, mapping = aes(x = date)) +
+#  geom_line(mapping = aes(y = cases)) +
+#  geom_line(mapping = aes(y = trend2), colour = "green") +
+#  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
+#  scale_y_continuous(limits = c(0, NA)) +
+#  labs(
+#    x = "Time point",
+#    y = "Salmonella cases",
+#    title = "Salmonella data with fitted trend"
+#  ) +
+#  tsa_theme
 ```
 
 
 
 ```{r, task-4-save}
-save(list = ls(pattern = 'mort'), file = here("data", "mortagg2_case_4.RData"))
-#load(here("data","mortagg2_case_4.RData"))
+#save(list = ls(pattern = 'mort'), file = here("data", "mortagg2_case_4.RData"))
+##load(here("data","mortagg2_case_4.RData"))
 
 ```
