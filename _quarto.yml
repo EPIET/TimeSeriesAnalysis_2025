@@ -1,0 +1,51 @@
+project:
+  type: book
+  output-dir: output
+
+book:
+  title: "Time Series Analysis Module"
+  author: "EPIET Team"
+  page-navigation: true
+  sidebar:                
+    style: docked
+  chapters:
+    - index.qmd
+    - part: "PRACTICALS"
+      chapters:
+        - "scripts/03-practical.qmd"
+        - "scripts/04-practical.qmd"
+        - "scripts/05-practical.qmd"
+        - "scripts/06-practical.qmd"
+        - "scripts/07-practical.qmd"
+        - "scripts/09-practical.qmd"
+        - "scripts/10-practical.qmd"
+
+format:
+  html:
+    theme: cosmo
+    page-layout: full
+    code-copy: true
+    toc: true
+    toc-depth: 3
+    toc-expand: true
+    number-depth: 2
+    link-external-newwindow: true
+    embed-resources: true
+    
+grid:
+  body-width: 1500px
+  margin-width: 300px
+  sidebar-width: 300px
+    
+execute: 
+  freeze: auto
+  warning: false
+  message: false
+  
+knitr: 
+  opts_chunk: 
+    out.width: "100%"
+
+
+editor: visual
+

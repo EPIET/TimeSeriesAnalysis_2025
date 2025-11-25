@@ -1,0 +1,347 @@
+# Practical Session 7 {-}
+
+## Forecasting {-#title-7}
+
+```{r, knitr-global-chunk-07, cache=FALSE}
+rm(list=ls())
+
+# Install pacman if not installed already, and activate it
+if (!require("pacman")) install.packages("pacman")
+
+# Install, update and activate libraries
+pacman::p_load(
+  here, 
+  rio, 
+  skimr,
+  tsibble,
+  TSA,
+  tidyverse,
+  ciTools
+)
+
+
+
+# Create tsa_theme from previous exercise
+tsa_theme <- theme_bw() + 
+        theme(
+            plot.title = element_text(face = "bold", 
+                                      size = 12),
+            legend.background = element_rect(fill = "white", 
+                                           load(here("data", "mortagg2_case_6.Rdata"))
+
+# Prepare ts data
+mortz <-
+    mortagg %>%
+    mutate(year_week = make_yearweek(year = year, week = week),
+           index = seq.int(from = 1, to = nrow(mortagg)),
+           sin52 = sin(2 * pi * week / 52), 
+           cos52 = cos(2 * pi * week / 52),
+           sin26 = sin(2 * pi * week / 26), 
+           cos26 = cos(2 * pi * week / 26)) %>%
+    as_tsibble(index = index)
+
+View(mortz)
+print(summary(mortz))
+  size = 4, 
+                                             colour = "white"),
+            # legend.justification = c(0, 1),
+            legend.position = "bottom",
+            panel.grid.minor = element_blank()
+        )
+
+```
+
+## Expected learning outcomes {-#learn-7}
+
+By the end of this session, participants should be able to:
+-	understand the use of forecasting in public health surveillance data
+-	forecast the expected number of cases of a disease into the future
+
+
+## Task 7.1 {-#task-7-1}
+
+
+January 2020: Your boss received a phone call from the Ministry of Health. She is part of
+a committee that is responsible for setting the alert levels for mortality in Spain for
+the next year (2020). Before doing so, she gives you the task to forecast the total 
+expected number of deaths for 2020 based on the historical data up to and
+including 2019. 
+
+
+## Task 7.2 (Optional) {-#task-7-2}
+
+January 2021:  A committee member is interested to get a better understanding of when there
+were periods of unusually high excess mortality and asks you to provide an
+analysis that highlights the time when these occurred.
+
+
+
+## Task 7.3 (Optional) {-#task-7-3}
+
+January 2021: your boss needs to inform the Ministry of Health about 
+excess deaths so far during the first year of the pandemic. 
+
+
+## Help for Task 7.1 {-#solution-7-1}
+
+Required source code.
+```{r, task-7-1-source-Rscript}
+
+# Load raw data
+#mortagg <- import(here("data", "mortagg.Rdata"))
+
+ADD AUTOCORRELATION? DEPENDS ON CASE 6. 
+
+# Model with trend and seasonality
+mort_sine2cos2trendmodel <- glm(cases ~ index + sin52 + cos52 + sin26 + cos26,
+                           family = "poisson",
+                           data = mortz)
+
+summary(mort_sine2cos2trendmodel)
+```
+
+```{r, task-7-1-explore}
+ggplot(data = mortz) +
+    geom_line(
+        mapping = aes(x = year_week, y = cases),
+        colour = "black",
+        alpha = 1.2
+    ) +
+    geom_line(
+        mapping = aes(x = year_week, y = mort_sine2cos2trendmodel$fitted),
+        colour = "red",
+        alpha = 1.2
+    ) +
+    scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "8 weeks") +
+    labs(x = "Year Week", y = "Weekly cases") +
+    tsa_theme + 
+    theme(axis.text.x = element_text(angle = 30, hjust = 1)) 
+```
+
+The dataset has records up to 2019-W52, and you would like to project the data
+(forecast) into 2020.
+
+First, create a new time series object for 2020. Note that 2020 has 53 weeks.
+
+```{r, task-7-1-dataset}
+pred.df <-
+    tibble(
+        year=2020,
+        week  = 1:53,
+        index = 521:(521+53-1), # add 53 weeks
+        year_week = make_yearweek(year = year, week = week),
+        sin52 = sin(2 * pi * week / 52),
+        cos52 = cos(2 * pi * week / 52),
+        sin26 = sin(2 * pi * week / 26),
+        cos26 = cos(2 * pi * week / 26),
+        pop = 47318050) %>%                # Spanish pop in 2020 (1st Jan)
+    as_tsibble(index = index)
+
+view(pred.df)
+```
+
+
+Calculate the expected values and 95% prediction intervals for each week of 
+2020 assuming that the Poisson regression model with trend and 2 seasonality 
+terms based on the previous years is appropriate. 
+
+Predict and plot the expected number of deaths per week for 2020 with 
+prediction intervals: 
+
+```{r, task-7-1-prediction-interval}
+
+# apply mort_sine2cos2trendmodel to new data and predict cases with C.I. using bootstrapping.
+# bootstrapping is a statistical method where you draw random samples from your data, 
+# and analyze each of this samples.
+# https://en.wikipedia.org/wiki/Bootstrapping_(statistics)
+
+
+set.seed(12589)
+pred.mort <- ciTools::add_ci(pred.df,
+                            mort_sine2cos2trendmodel,
+                            names=c("lPI", "uPI"),
+                            yhatName="pred_cases",
+                            response=TRUE,
+                            type="boot",
+                            nSims=1000)
+head(pred.mort, 5)
+```
+
+
+
+```{r, task-7-1-prediction-interval-plot-tidy}
+ggplot(data = pred.mort) +
+    geom_line(
+        mapping = aes(x = year_week, y = pred_cases),
+        colour = "red",
+        alpha = 0.7
+    ) +
+    geom_ribbon(
+        mapping = aes(x = year_week, ymin = lPI, ymax = uPI),
+        fill = "red",
+        alpha = 0.1
+    ) +
+    scale_y_continuous(limits = c(0, NA)) +
+    scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "4 weeks") +
+    labs(x = "Year Week", y = "Predicted weekly fatalities") +
+    tsa_theme + 
+    theme(axis.text.x = element_text(angle = 30, hjust = 1)) 
+    
+```
+
+Calculate the total number of expected deaths in 2020 in Spain.
+
+```{r, task-7-1-prediction-interval-total-tidy}
+# do not know how to do it in tidy
+#total_pred_mort_2020 <- pred.mort %>%
+#                                total_expected_2020 = sum(pred_cases)
+#                                total_expected_2020_lPI = sum(lPI),
+#                                total_expected_2020_uPI = sum(uPI)
+                            
+
+total_pred_mort_2020 <- apply(pred.mort[, c('pred_cases', 'lPI', 'uPI')], 2, sum)
+
+
+```
+
+
+
+
+
+## Help for Task 7.2 {-#solution-7-2}
+
+CUSUM (cumulative sum) is a graphical method that can be used to determine when
+there is a change in a process (all-cause mortality in this example). In TSA it
+can also be used to decide whether there is a need to revise the model
+e.g. include a covariate or there have been changes in the seasonality.
+
+
+Using expected values from the previous regression model, you can calculate the
+cumulative sum of the differences between the weekly observed and expected
+numbers of deaths:
+
+
+```{r, task-7-2-diff-exp-obs}
+
+mortz <- mortz %>%
+            mutate(fit_cases = mort_sine2cos2trendmodel$fit)
+
+mortz <-
+    mortz %>%
+    mutate(
+        
+        difference = cases - fit_cases,
+        cumsum_excess = cumsum(difference),
+        diff_zero = cases - mean(fit_cases),
+        cumsum_zero = cumsum(diff_zero)
+    )
+
+mortz
+```
+
+
+Plot this cumulative sum of the residuals.
+
+```{r, task-7-2-diff-exp-obs-plot-tidy}
+ggplot(data = mortz) +
+geom_line(
+        mapping = aes(x = year_week, y = diff_zero),
+        colour = "green",
+        alpha = 0.7,
+        lwd = 2
+    ) +
+    geom_line(
+        mapping = aes(x = year_week, y = cumsum_zero),
+        colour = "orange",
+        alpha = 0.7,
+        lwd = 2
+    ) +
+    scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
+    labs(x = "Year", y = "Cumulative excess cases") +
+    tsa_theme
+```
+
+
+
+
+
+## Help for Task 7.3 {-#solution-7-3}
+
+Plot the actual number of deaths and compare with the predictions from the 
+model based on 2010-2019. 
+
+
+```{r, task-7-3-diff-obs-predict-plot-tidy}
+
+# order mort2020 from week 1 to week 53, same as in pred.mort
+mort2020 <- mort2020[order(mort2020$week),]
+
+pred.mort <- pred.mort %>% 
+                mutate(cases = mort2020$cases)
+
+ggplot(data = pred.mort) +
+    geom_line(
+        mapping = aes(x = year_week, y = pred_cases),
+        colour = "red",
+        alpha = 0.7,
+        lwd = 1.2
+    ) +
+    geom_ribbon(
+        mapping = aes(x = year_week, ymin = lPI, ymax = uPI),
+        fill = "red",
+        alpha = 0.1
+    ) +
+    geom_line(
+        mapping = aes(x = year_week, y = cases),
+        colour = "black",
+        alpha = 0.7,
+        lwd = 1.2
+    ) +
+    scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "4 weeks") +
+    labs(x = "Year Week", y = "Predicted weekly cases") +
+    tsa_theme + 
+    theme(axis.text.x = element_text(angle = 30, hjust = 1)) 
+    
+```
+
+Excess deaths can be calculated as the difference of the actual number of 
+fatalities per week and the predicted mean, or the predicted upper 95% PI. 
+
+
+```{r, task-7-3-diff-obs-predict-plot-tidy}
+
+pred.mort <-
+    pred.mort %>%
+    mutate(
+        difference_mean = cases - pred_cases,
+        cusum_excess_mean = cumsum(difference_mean),
+        difference_uPI = cases - uPI,
+        cusum_excess_uPI = cumsum(difference_uPI)
+    )
+
+ggplot(data = pred.mort) +
+    geom_line(
+        mapping = aes(x = year_week, y = cusum_excess_mean),
+        colour = "orange",
+        alpha = 0.7,
+        lwd = 2
+    ) +
+    geom_line(
+        mapping = aes(x = year_week, y = cusum_excess_uPI),
+        colour = "blue",
+        alpha = 0.7,
+        lwd = 2
+    ) +   
+    #scale_y_continuous(limits = c(-100, NA)) +
+    scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "4 weeks") +
+    labs(x = "Year", y = "Cumulative excess cases") +
+    tsa_theme
+
+```
+
+
+```{r, task-7-save}
+save(list = ls(pattern = 'mort'), file = here("data", "mortagg2_case_7.RData"))
+#load(here("data","mortagg2_case_7.RData"))
+
+```
