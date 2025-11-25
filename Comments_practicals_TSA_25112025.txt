@@ -1,0 +1,8 @@
+-New project structure: a lot of folders and subfolders have the same names (ex “scripts”), I found it confusing. Is it possible to rename?
+-I like that the code can be hidden and shown as wished. Is it possible to do the same for the output (ex for str(db))?
+-Names of created dataset: there are a lot of names that are inherited from previous ways of functioning in R. For example the “z” at the end of the time-series comes from the fact that we used to use “zooreg”… could we homogeneize them and make them more explicit? Disz could become Dis_ts for example
+
+PRACTICAL 3
+-There is a whole explanation about the index and key for tsibble but then the key is never used. Can it be made explicit in the code to not confuse the fellow?
+-Using fill_gaps: it would be nice to show how to use it here. Personally I think it’s good practice to always make sure your time series in complete.
+-Towards the end of the help for 3.1 there are many kinds of weekly dates created. It’s a bit unclear if it’s for the fun of it or if it has a purpose. To clarify? 
