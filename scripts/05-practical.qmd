@@ -114,13 +114,15 @@ IRR_week
 ```
 
 ```{r, task-5-2-sin52-cos52-plot-tidy}
-ggplot(data = mortz, aes(x = index)) +
+ggplot(data = mortz, aes(x = date_index)) +
     geom_point(aes(y = cases), alpha = 0.4) +
     geom_line(
         mapping = aes(y = fitted(mort_trend)),
         colour = "green",
         lwd=1.5
     ) +
+  scale_x_yearweek(date_labels = "%Y-%W", 
+                   date_breaks = "1 year") +
     scale_y_continuous(limits = c(0, NA)) +
     labs(x = "Index", 
          y = "Number of deaths", 
@@ -208,7 +210,7 @@ ggplot(data=mort_sincos$glm$data, aes(x=week, y=sinw)) +
     
 
 
-ggplot(data = mortz, aes(x = index)) +
+ggplot(data = mortz, aes(x = date_index)) +
     geom_point(aes(y = cases), alpha = 0.4) +
     geom_line(
         mapping = aes(y = fitted(mort_sincos)),
@@ -216,6 +218,8 @@ ggplot(data = mortz, aes(x = index)) +
         lwd=1.5
     ) +
     scale_y_continuous(limits = c(0, NA)) +
+  scale_x_yearweek(date_labels = "%Y-%W", 
+                   date_breaks = "1 year") +
     labs(x = "Index", 
          y = "Number of deaths", 
          title = "Regression model: sin, cos terms") +
@@ -242,7 +246,7 @@ mort_trendsincos <- glm(cases ~ index + sin52 + cos52, family = "poisson", data 
 
 summary(mort_trendsincos)
 
-ggplot(data = mortz, aes(x = index)) +
+ggplot(data = mortz, aes(x = date_index)) +
     geom_point(aes(y = cases), alpha = 0.4) +
     geom_line(
         mapping = aes(y = fitted(mort_trendsincos)),
@@ -250,6 +254,8 @@ ggplot(data = mortz, aes(x = index)) +
         lwd=1.5
     ) +
     scale_y_continuous(limits = c(0, NA)) +
+  scale_x_yearweek(date_labels = "%Y-%W", 
+                   date_breaks = "1 year") +
     labs(x = "Index", 
          y = "Number of deaths", 
          title = "Regression model: trend, sin, cos terms") +
@@ -286,7 +292,7 @@ summary(mort_trendsin2cos2)
 ```
 
 ```{r, task-5-2-sin26-cos26-trend-plot-tidy}
-ggplot(data = mortz, aes(x = index)) +
+ggplot(data = mortz, aes(x = date_index)) +
     geom_point(aes(y = cases), alpha = 0.4) +
     geom_line(
         mapping = aes(y = fitted(mort_trendsin2cos2)),
@@ -294,6 +300,8 @@ ggplot(data = mortz, aes(x = index)) +
         lwd=1.5
     ) +
     scale_y_continuous(limits = c(0, NA)) +
+  scale_x_yearweek(date_labels = "%Y-%W", 
+                   date_breaks = "1 year") +
     labs(x = "Index", 
          y = "Number of deaths", 
          title = "Regression model: trend, sin52, cos52, sin26, cos26 terms") +
