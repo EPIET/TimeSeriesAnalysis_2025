@@ -582,14 +582,17 @@ ggplot(data = mortz, mapping = aes(x = date_index)) +
 
 
 
+
+## Task 4.4 (Optional) {-#task-4-4}
+
+Carry out the same analysis for men and women. Do you see differences?
+
+
+
+
 ```{r, task-4-save}
-save(mortagg, mortz, file = here("data", "mortagg2_case_4.RData"))
+#save(mortagg, mortz, file = here("data", "mortagg2_case_4.RData"))
 #save(list = ls(pattern = 'mort'), file = here("data", "mortagg2_case_4.RData"))
 ##load(here("data","mortagg2_case_4.RData"))
 
 ```
-
-## Task 4.1.1 (Optional) {-#task-4-1-1}
-
-**Would you reach the same conclusions if you were exploring mortality for males 
-and females separately? Discuss with your peers.**
