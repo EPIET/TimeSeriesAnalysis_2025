@@ -1,9 +1,5 @@
 # Welcome page {.unnumbered}
 
-This is a Quarto book.
+Welcome to the practical sessions of the Time Series Analysis of the ECDC EPIET & EUPHEM Program.
 
-To learn more about Quarto books visit <https://quarto.org/docs/books>.
-
-```{r}
-1 + 1
-```
+Work in progress

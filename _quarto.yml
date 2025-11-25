@@ -9,7 +9,8 @@ book:
   sidebar:                
     style: docked
   chapters:
-    - index.qmd
+    - href: index.qmd
+      text: "Welcome"
     - part: "PRACTICALS"
       chapters:
         - "scripts/03-practical.qmd"
@@ -24,6 +25,9 @@ format:
   html:
     theme: cosmo
     page-layout: full
+    code-fold: show
+    code-summary: "Show the code"
+    code-tools: true
     code-copy: true
     toc: true
     toc-depth: 3
