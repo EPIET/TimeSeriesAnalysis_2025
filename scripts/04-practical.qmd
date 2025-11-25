@@ -36,7 +36,7 @@ tsa_theme <- theme_bw() +
 
 The Spanish daily mortality monitoring system is run by the National Centre for Epidemiology in Madrid and gathers data from a stable number of municipalities around the country with a computerised death register; the system is representative of the population of Spain and was developed in 2004 with the objective of identifying exceedances in mortality during the summer period. Data since 2000 were collected retrospectively.
 
-Sessions 4-7 and 11 use data from this mortality surveillance system. Session 10 uses data from the same system, but for only one autonomous community in Spain (Aragón).
+Practicals 4-7 and 11 use data from this mortality surveillance system. Session 10 uses data from the same system, but for only one autonomous community in Spain (Aragón).
 
 ## Expected learning outcomes {#learn-4 .unnumbered}
 
@@ -46,7 +46,7 @@ By the end of the session, participants should be able to:
 
 -   Assess and interpret the significance of trend in surveillance data.
 
-You are provided with a dataset in R (`mortagg.Rdata`) which includes variables on week, year, total number of deaths (`cases`), and population, as well as number of deaths and population among males and females separately.
+You are provided with a dataset (`mortagg.csv`) which includes variables on week, year, total number of deaths (`cases`), and population, as well as number of deaths and population among males and females separately.
 
 ## Task 4.1 {#task-4-1 .unnumbered}
 
@@ -72,7 +72,7 @@ Using regression methods against the time variable is a simple and familiar way 
 
 ## Task 4.2 {#task-4-2 .unnumbered}
 
-Assess visually the existence of a long-term trend and periodicity in the \``mortagg` dataset by using smoothing techniques. Where would you centre the smoothing window and why? What is the effect of using different smoothing window centring options?
+Assess visually the existence of a long-term trend and periodicity in the \``mortagg` dataset by using smoothing techniques. Where would you centre the smoothing window and why? What is the effect of using different smoothing window centering options?
 
 ## Task 4.3 {#task-4-3 .unnumbered}
 
@@ -88,7 +88,7 @@ If you are confident with addressing the tasks above and still have enough time,
 
 ## Help for Task 4.1 {#solution-4-1 .unnumbered}
 
-Import the `mortality.Rdata` dataset.
+Import the `mortality.csv` dataset.
 
 ```{r, task-4-1-import-csv}
 mortagg <- import(here("data", "mortagg.csv"))
@@ -114,11 +114,6 @@ mortz <-
   mutate(date_index = make_yearweek(year = year, week = week)) %>%
   as_tsibble(index = date_index)
 
-ggplot(data = mortz) +
-  geom_line(mapping = aes(x = date_index, y = cases)) +
-  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
-  labs(x = "Date", y = "Number of Deaths", title = "Mortality") +
-  tsa_theme
 ```
 
 ```{r, task-4-1-mort-aggr-week-plot2-tidy}
@@ -150,13 +145,11 @@ ggplot(data = mortz) +
 
 ## Help for Task 4.2 {#solution-4-2 .unnumbered}
 
-According to the `slider` package description, `slider` is a package for rolling windows analysis. It means that a given function is repeatedly applied to different “windows” of your data as you step through it. Typical examples of applications of rolling window window functions include moving averages or cumulative sums.
-
-The `slider` family of functions from the `slider` package contains a collection of functions specifically designed to compute a given operation on a rolling window. An introduction vignette for slider can be found by running the following command: `vignette("slider")`
+According to the `slider` package description, `slider` is a package for rolling windows analysis. It means that a given function is repeatedly applied to different “windows” of your data as you step through it. Typical examples of applications of rolling window functions include moving averages or cumulative sums. An introduction vignette for slider can be found by running the following command: `vignette("slider")`
 
 For each record, create the following various types of moving average.
 
--   `MA5a`: the 5-week moving average, centred on cases.
+-   `MA5a`: the 5-week moving average, centered on cases.
 
 -   `MA5b`: the 5-week moving average of cases and the 4 previous weeks.
 
@@ -206,7 +199,7 @@ The `.i` argument defines the vector with the time variable that will be used fo
 
 The `.f` argument indicates the function that will be used to perform the intended computations. In this case, an arithmetic mean computation is carried out by using the `mean` function. The `na.rm = TRUE` is a varying argument included as a `...` argument of `slide_index_dbl`. (Run the expression `args("slide_index_dbl")` and take notice on the position/sequence of this function's arguments).
 
-The `.before` argument defines the number of observations before the central time point of a given time window to use in the rolling window computation. In the example above for a 5 time points centred moving average, in `MA5a`, 2 observations are used before the central point, and 2 observations are used after it, using the `.after` argument.
+The `.before` argument defines the number of observations before the central time point of a given time window to use in the rolling window computation. In the example above for a 5 time points centered moving average, in `MA5a`, 2 observations are used before the central point, and 2 observations are used after it, using the `.after` argument.
 
 The `complete` argument indicates where the computation should be carried in rolling windows that have complete observations.
 
@@ -227,9 +220,11 @@ ggplot(data = mortzma, mapping = aes(x = date_index)) +
   tsa_theme
 ```
 
-We observe that the calculation is similar across these various methods, but is not aligned to the series in the same way. `MA5a` is centred in the middle of the period used to calculate the mean. `MA5b` is placed at the end of the period. `MA5c` is placed one step forward (smoothing functions can be used for forecasting the following point). The "models" provided are similar for a 5-week window, but the *lag* is different.
+We observe that the calculation is similar across these various methods, but is not aligned to the series in the same way. `MA5a` is centered in the middle of the period used to calculate the mean. `MA5b` is placed at the end of the period. `MA5c` is placed one step forward (smoothing functions can be used for forecasting the following point). The "models" provided are similar for a 5-week window, but the *lag* is different.
 
 Moving average is only one way of smoothing. Other ways of smoothing the data to get a general idea of the trend include, for example, LOESS (locally estimated scatterplot smoothing) smoothing, where the contribution of surrounding observations is weighted, i.e. it is not the arithmetical mean for each set (window) of observations.
+
+The `stat_smooth` provides a smoothing curve using a LOESS method.
 
 ```{r task-4-2-mort-MAx-scatterplot-tidy, message=FALSE, warning=FALSE}
 ggplot(mortz, mapping = aes(x = date_index, y = cases)) +
@@ -244,7 +239,7 @@ ggplot(mortz, mapping = aes(x = date_index, y = cases)) +
   tsa_theme
 ```
 
-The `stat_smooth` provides a smoothing curve using a LOESS method. We can change the degree of smoothing by adding a `span` option. The `span` controls the amount of smoothing for the default loess smoother; smaller numbers produce wigglier lines, and larger numbers produce smoother lines.
+ We can change the degree of smoothing by adding a `span` option. The `span` controls the amount of smoothing for the default loess smoother; smaller numbers produce wigglier lines, and larger numbers produce smoother lines.
 
 ```{r, task-4-2-mort-MAx-scatterplot-span-tidy}
 ggplot(data = mortz, mapping = aes(x = date_index, y = cases)) +
@@ -348,16 +343,18 @@ The `glm` function fits a linear regression model to the log of the number of de
 
 Variables in R models are specified using notation along the lines of `response_variable ~ explanatory_variable_1 + explanatory_variable_2` etc. Check the material from the MVA module. A more detailed explanation of how to build model formulas in R can be found in the *Details* section of the help page of the `formula` function: `?stats::formula`.
 
-`summary`, when given the results of fitting a linear regression model, will provide a summary of the fitted trend and associated statistics.
+`summary`, when given the results of fitting a regression model, will provide a summary of the fitted trend and associated statistics.
 
 Identify and interpret the intercept and the trend. In a Poisson model on the log(y), the coefficient needs to be exponentiated in order to interpret it for the output y (that is, the original y without the log).
 
 Plot the fitted values against the observed ones.
 
 ```{r, task-4-3-regression-lm-plot-tidy}
-ggplot(data = mortz, mapping = aes(x = index)) +
+ggplot(data = mortz, mapping = aes(x = date_index)) +
   geom_point(mapping = aes(y = cases), alpha = 0.5) +
   geom_line(mapping = aes(y = fitted(mort_poissontrend)), colour = "green", lwd = 1.1) +
+  scale_x_yearweek(date_labels = "%Y-%W", 
+                   date_breaks = "1 year") +
   scale_y_continuous(limits = c(0, NA)) +
   labs(x = "Week", y = "Number of deaths", title = "Number of deaths per week with fitted trend") +
   tsa_theme
@@ -386,13 +383,15 @@ mort_poissontrend_pop %>%
   )
 ```
 
-And plot the predicted agains the original values
+And plot the predicted against the original values
 
 ```{r, task-opt-4-3-regression-pois-plot-tidy}
-ggplot(data = mortz, mapping = aes(x = index)) +
+ggplot(data = mortz, mapping = aes(x = date_index)) +
   geom_point(mapping = aes(y = cases), alpha = 0.5) +
   geom_line(mapping = aes(y = fitted(mort_poissontrend_pop)), colour = "blue", lwd = 1.1) +
   #scale_y_continuous(limits = c(0, NA)) +
+  scale_x_yearweek(date_labels = "%Y-%W", 
+                   date_breaks = "1 year") +
   labs(
     x = "Time point", y = "Number of Deaths",
     title = "Mortality with fitted trend (Poisson)"
@@ -402,7 +401,7 @@ ggplot(data = mortz, mapping = aes(x = index)) +
 
 ## Help for Task 4.3.2 {#solution-4-3-2 .unnumbered}
 
-You can use the salmonellosis example (`dis1`) to see how an exponential trend might fit the data better.
+You can use the salmonellosis example (`dis1`) to see how an exponential trend might fit the data better than a linear one.
 
 ```{r, task-opt-4-3-2-source-Rscript, echo=TRUE, eval=FALSE}
 source("src/tidyverse/session_4.R")
@@ -451,7 +450,7 @@ logmodel <- lm(lcases ~ date, data = salmoz2)
 summary(logmodel)
 ```
 
-Plot the log data and the model against time. Note that fitted values cannot be created where the number of cases is missing. Stata seems to do linear interpolation of the fitted values to fill in the gaps, so we will do that too.
+Plot the log data and the model against time. Note that fitted values cannot be created where the number of cases is missing. We will do a linear interpolation of the fitted values to fill in the gaps using the `imputeTS` package.
 
 ```{r, task-opt-4-3-2-interpolate-lm}
 fitted_pois_df <-
@@ -470,12 +469,9 @@ salmoz2 <-
 
 ```
 
-We use `is.na` as above to correctly slot the fitted values back into the time series.
-
-We then use `na.approx`, mentioned above, to interpolate missing values.
 
 ```{r, task-opt-4-3-2-interpolate-lm-plot-tidy}
-ggplot(data = salmoz2, mapping = aes(x = date)) +
+ggplot(data = salmoz2, mapping = aes(x = date_index)) +
   geom_line(mapping = aes(y = lcases)) +
   geom_line(mapping = aes(y = ltrend), colour = "green") +
   scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
@@ -499,7 +495,7 @@ salmoz2 <-
 Plot the real data (`cases`) and this model (`trend`) according to time:
 
 ```{r, task-opt-4-3-2-anti-log-plot-tidy}
-ggplot(data = salmoz2, mapping = aes(x = date)) +
+ggplot(data = salmoz2, mapping = aes(x = date_index)) +
   geom_line(mapping = aes(y = cases)) +
   geom_line(mapping = aes(y = trend), colour = "green") +
   scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
@@ -512,7 +508,7 @@ ggplot(data = salmoz2, mapping = aes(x = date)) +
   tsa_theme
 ```
 
-Compare the results with those you would have got if you had used linear regression on the original data.
+Compare the results with those you would have gotten if you had used linear regression on the original data.
 
 Alternatively, you can run a Poisson or a negative binomial regression to model the data:
 
@@ -540,7 +536,7 @@ salmoz2 <-
 ```
 
 ```{r, task-opt-4-3-2-regression-pois-plot-tidy}
-ggplot(data = salmoz2, mapping = aes(x = date)) +
+ggplot(data = salmoz2, mapping = aes(x = date_index)) +
   geom_line(mapping = aes(y = cases)) +
   geom_line(mapping = aes(y = trend2), colour = "green") +
   scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +

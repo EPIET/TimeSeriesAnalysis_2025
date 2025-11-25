@@ -6,3 +6,8 @@ PRACTICAL 3
 -There is a whole explanation about the index and key for tsibble but then the key is never used. Can it be made explicit in the code to not confuse the fellow?
 -Using fill_gaps: it would be nice to show how to use it here. Personally I think it’s good practice to always make sure your time series in complete.
 -Towards the end of the help for 3.1 there are many kinds of weekly dates created. It’s a bit unclear if it’s for the fun of it or if it has a purpose. To clarify? 
+
+PRACTICAL 4
+-This R script doesn't source: source("src/tidyverse/session_4.R"). But doesn't seem to be needed?
+-We need to make sure date labels are adjuste everywhere to not show "1970...". 
+-"Practicals 4-7 and 11 use data from this mortality surveillance system. Session 10 uses data from the same system, but for only one autonomous community in Spain (Aragón)." - Please double check as it is not correct for Session 10.
