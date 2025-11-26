@@ -400,7 +400,14 @@ The result above indicates that from one week to another, the number of deaths i
 
 Another way in R to obtain the incidence rate ratio (IRR) is:
 
-`{r: task-4-3-IRR-trend} mort_poissontrend %>%    gtsummary::tbl_regression(     exponentiate = T,     estimate_fun = ~style_number(.x, digits = 4)   )`
+
+```{r: task-4-3-IRR-gtsummary}
+mort_poissontrend %>% 
+  gtsummary::tbl_regression(
+    exponentiate = T,
+    estimate_fun = ~style_number(.x, digits = 4)
+  )
+```
 
 ## Task 4.4 {#task-4-4 .unnumbered .unnumbered}
 
