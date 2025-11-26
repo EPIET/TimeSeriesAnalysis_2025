@@ -1,3 +1,310 @@
-# Practical Session 6: Autocorrelation and blablabla {.unnumbered}
+# Practical Session 6: Residuals and autocorrelation {.unnumbered}
 
-this is cool :)
+
+## Residuals patterns in Surveillance data {-#title-6}
+
+
+```{r, knitr-global-chunk-06t, include=FALSE, cache=FALSE}
+rm(list=ls())
+
+#source("_common.R")
+pacman::p_load(
+  here, 
+  rio, 
+  skimr,
+  tsibble,
+  tidyverse,
+  TSA,
+  lmtest
+)
+
+# Create tsa_theme from previous exercise to be used in ggplot.
+tsa_theme <- theme_bw() + 
+        theme(
+            plot.title = element_text(face = "bold", 
+                                      size = 12),
+            legend.background = element_rect(fill = "white", 
+                                             size = 4, 
+                                             colour = "white"),
+            # legend.justification = c(0, 1),
+            legend.position = "bottom",
+            panel.grid.minor = element_blank()
+        )
+
+```
+
+## Expected learning outcomes {-#learn-6}
+
+By the end of this session, participants should be able to:
+
+- decide on remaining actions when modelling surveillance data after
+you have accounted for trend and periodicity
+
+- detect autocorrelation in the residuals of models on surveillance data
+
+
+
+
+## Task 6.1 {-#task-6-1 .unnumbered}
+
+
+*Start by fitting the model with trend and two cosines and two sines.*
+*Assuming you are happy with that Poisson regression model from the previous
+session, check whether this regression model was appropriate in this
+case.*
+
+
+```{r, task-6-1-source-Rscript}
+load(here("data","mortagg2_case_5.RData"))
+```
+
+
+*Start by fitting the model with trend and two cosines and two sines.*
+
+*Then, assuming you are happy with that model, check whether this regression 
+model was appropriate in this case.* 
+
+
+*Plot the residuals from the model in case study 5 that included a trend, 
+52-week periodicity and 26-week periodicity.* 
+
+
+```{r, task-6-2-calculate-residuals}
+
+mortz <-
+    mortz %>%
+    mutate(res=residuals(mort_trendsin2cos2)
+    )
+```
+
+```{r, task-6-2-repeat-session-3-tidy}
+ggplot(data = mortz) +
+    geom_point(
+        mapping = aes(x = date_index, y = res)
+    ) +
+    scale_x_yearweek(date_labels = "%Y-%W", 
+                   date_breaks = "1 year") +
+    labs(x = "Year week", 
+         y = "Residuals", 
+         title = "Spain: number of deaths. Residuals model trend + 2 sine + 2 cosine."
+    ) +
+    tsa_theme
+```
+
+*Start by examining the residuals against time. Do you see any additional patterns?*
+
+
+## Task 6.2 {-#task-6-2 .unnumbered}
+
+
+*Is there any other periodicity that can be observed in the residuals?*
+
+
+To assess whether there is any more periodicity in the data, one can produce 
+a periodogram of the residuals (use code from case study 5). 
+
+```{r, task-6-1-periodogram}
+mort_residual_period <- TSA::periodogram(mortz$res)
+
+mort_residual_period_recip <-
+    tibble(
+        freq = mort_residual_period$freq,
+        spec = mort_residual_period$spec
+    ) %>%
+    arrange(desc(spec)) %>% 
+    mutate(reciprocal_freq = 1 / freq)  # here in weeks
+
+view(mort_residual_period_recip)
+
+# breaks every 13, equivalent to every 3 months approximately.
+ggplot(data = mort_residual_period_recip, aes(x = reciprocal_freq, y = 2*spec)) +
+    geom_line() +
+    scale_x_continuous(limits = c(0, 160), breaks=seq(0, 160, 13)) +
+    labs(x = "Period (weeks)", 
+         y = "Spectral density",
+         title="Periodogram residuals of model with trend + 2 sine + 2 cosine.") +
+    tsa_theme
+
+```
+
+*Plot the residuals again, but now using lines.*
+
+
+```{r, task-6-2-residuals-lines}
+max.index <- max(mortz$index)
+
+ggplot(data = mortz) +
+    geom_line(
+        mapping = aes(x = index, y = res)
+    ) +
+    labs(
+        x = "Week",
+        y = "Residuals",
+        title = "Regression model with trend + 2 sine + 2 cosine."
+    ) +
+    scale_x_continuous(limits = c(0, max.index), breaks=seq(0, max.index, 77)) +
+    tsa_theme
+```
+
+
+*Based on these latest plots, do you see a patterns that can explain the 
+periodogram? Does the periodicity makes sense in this case?* 
+
+
+
+## Task 6.3 {-#task-6-3 .unnumbered}
+
+
+*Check if there is autocorrelation that needs to be included in the model.*
+
+
+Note that there are `acf` functions in more than
+one package, so to be sure you are using the using the base R function here use
+`stats::acf`. Graph the autocorrelation on 50 (week) lags. 
+
+
+```{r, task-6-2-acf-residuals-plot-tidy}
+mort_res_acf <- stats::acf(mortz$res, lag.max = 52, type="correlation", plot=TRUE)
+
+mort_res_acf
+
+```
+
+
+The `acf` function estimates and plots autocorrelations. The lag zero vertical line
+is omitted in this plot because it is always 1, as it shows the correlation of each
+observation with itself (lag zero). 
+
+The first vertical line shows the correlation between each observation
+and the observation just before it (lag one). The second shows the correlation
+between each observation and the observation before last (lag two). And so on. 
+
+The blue dotted line is the 95% confidence interval. Vertical lines which 
+reach above or below the confidence limits indicate significant 
+autocorrelations, and is based on the number of observations. 
+
+If there was no significant autocorrelation, only the first vertical line would exceed the
+confidence interval. 
+
+*Test for significant autocorrelations in the residuals.*
+
+```{r, task-6-2-Ljung-Box-residuals}
+Box.test(mortz$res, type = "Ljung-Box")
+```
+
+The Ljung-Box is a portmanteau-type test that examines the null hypothesis of 
+independence of the residuals  in a time series. A significant $p$-value 
+suggests that there is autocorrelation in the data, that is, the observations are not 
+independent. A portmanteau-type test are those where the alternative 
+hypothesis is not well defined, but the null hypothesis (here independence) 
+is well defined. 
+
+In the acf plot, the first 7 lags where statistically significant. We will 
+add them one by one, checking everytime if the added lag(s) improve the fit 
+of the model. 
+
+
+```{r, task-6-2-lag}
+
+mortz <-
+    mortz %>%
+    mutate(
+        lag1 =  Hmisc::Lag(cases, shift=1),   
+        lag2 =  Hmisc::Lag(cases, shift=2),   
+        lag3 =  Hmisc::Lag(cases, shift=3),   
+        lag4 =  Hmisc::Lag(cases, shift=4),   
+        lag5 =  Hmisc::Lag(cases, shift=5),
+        lag6 =  Hmisc::Lag(cases, shift=6),    
+        lag7 =  Hmisc::Lag(cases, shift=7), 
+        lag8 =  Hmisc::Lag(cases, shift=8)  
+
+   )
+   
+   
+head(as.data.frame(mortz), 10)
+tail(as.data.frame(mortz), 10)    
+``` 
+
+As the data is lagged, the missing value (NA) must be added at the beginning. 
+For lag 1, the value for 2010 week 1 is shifted to 2010 week 2, and therefore 
+week 1 is now NA. That also means that the last value in 2019 week 52 is lost 
+and has been replaced by what it wasw before 2019 week 51. If you are not 
+familiar with lags, take some time to study how the data has been shifted. 
+ 
+Another side effect of lagging the data, is that the number of observations 
+decreases. At the start, we had 521 observations (years and weeks); after lag 
+1, we have 520; after lag 2, we have 519; etc. This affects when we wish to 
+compare the models using the likelihood ratio test (LRT), since the test 
+requires that the same dataset be used in the two models being compared. For 
+that reason, the original model will be refitted, but each time using the 
+same data as in the model with lags. 
+
+No we will add one lag at a time to our model with trend, cos52, sin52, cos26 
+and sin26, and test if adding each lag improves the fit. This could be 
+automatized, but we will do it "by hand" this time, in order to secure that 
+we understand what is going on. 
+
+Normally, all lags are added. Even if only lag 2 is significant, lag 1 will 
+also be included in the model. This is because it is difficult to imagine 
+that only the observation lagged 2 is important, but not the one lagged 1. 
+
+
+```{r, task-6-2-lag}
+
+# Model with trend+2sin+2cos+lag1
+mort_trendsin2cos2_ac <- update(mort_trendsin2cos2, .~. + lag1,
+                                data=mortz)
+
+  
+summary(mort_trendsin2cos2_ac)
+
+# Model with trend+2sin+2cos and first row removed.
+mort_trendsin2cos2_removeNA <- update(mort_trendsin2cos2, .~.,
+                                data=mortz[-1,])
+                          
+summary(mort_trendsin2cos2_removeNA)
+
+lrtest(mort_trendsin2cos2_removeNA, mort_trendsin2cos2_ac)
+
+## Lag 2: update mdoel with lag 1
+mort_trendsin2cos2_ac <- update(mort_trendsin2cos2_ac, .~. + lag2,
+                                data=mortz)
+
+  
+summary(mort_trendsin2cos2_ac)
+
+# Model with trend+2sin+2cos and rows removed.
+mort_trendsin2cos2_removeNA <- update(mort_trendsin2cos2, .~.,
+                                data=mortz[-(1:2),])
+                          
+summary(mort_trendsin2cos2_removeNA)
+
+lrtest(mort_trendsin2cos2_removeNA, mort_trendsin2cos2_ac)
+
+
+##### Continue to test the remaining significant lags. #############################
+
+```
+
+*How many lags were included in the best model? Does the model make sense?*
+
+*Which model would you choose to present to your boss?*
+
+
+
+## Task 6.3 (Optional) {-#task-6-3}
+
+*As a sensitivity analysis, add yet one more lag (not significant in the acf) 
+to the last model. Does that lag improve the model?* 
+
+## Task 6.4 (Optional) {-#task-6-4}
+
+Carry out similar analyzes for men and for women.
+
+
+```{r, task-6-save}
+#save(mortagg, mortz, file = here("data", "mortagg2_case_6.RData"))
+
+#load(here("data","mortagg2_case_6.RData"))
+
+```
