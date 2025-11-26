@@ -44,10 +44,6 @@ By the end of this session, participants should be able to:
 
 Using the **aragon** dataset, assess the effect of ambient temperature (using average weekly maximum temperature) on mortality in the autonomous community of Aragón. Is this effect uniform throughout the year?
 
-## Task 9.2 (Optional) {#task-9-2 .unnumbered}
-
-It has been argued by experts that low temperatures in winter might be “slow killers”; that is, very low temperatures in winter do not result in a peak in mortality on the same day/week as they are observed, but rather after some time has elapsed. On the other hand, very high temperatures in summer are “fast killers”; they are associated with peaks in mortality very fast, i.e. heat waves kill people fast. Can you find evidence for this for Aragón?
-
 ## Help for Task 9.1 {#solution-9-1 .unnumbered}
 
 Open the dataset `aragon.csv`. There you will find mean maximum temperature and mortality data for the autonomous community of Aragon by week.
@@ -189,6 +185,10 @@ tbl_m2m3
 Note that `winter * tmax` tells R to include terms in the model for `winter`, `tmax` and for their interaction. If we just wanted to include the interaction term without its corresponding "main effects", i.e. without `winter` or `tmax`, we would use `winter:tmax` instead.
 
 Discuss the output of the two models. Does the interpretation change when winter is taken into account as an interaction term along with temperature?
+
+## Task 9.2 (Optional) {#task-9-2 .unnumbered}
+
+It has been argued by experts that low temperatures in winter might be “slow killers”; that is, very low temperatures in winter do not result in a peak in mortality on the same day/week as they are observed, but rather after some time has elapsed. On the other hand, very high temperatures in summer are “fast killers”; they are associated with peaks in mortality very fast, i.e. heat waves kill people fast. Can you find evidence for this for Aragón?
 
 ## Help for Task 9.2 {#solution-9-2 .unnumbered}
 
