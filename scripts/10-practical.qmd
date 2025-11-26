@@ -52,10 +52,6 @@ You have been given a dataset for notified Rotavirus infections in England and W
 
 Assess the impact of the introduction of the vaccination scheme in England and Wales for the whole population. Has the vaccine introduction had an effect on trend or periodicity patterns? Has the vaccine introduction affected the timing of the yearly outbreaks?
 
-## Task 10.2 (Optional) {#task-10-2 .unnumbered}
-
-Discuss with colleagues how you can determine the number of cases prevented as a result of the introduction of the vaccine (Hint: refer to Practical 7!).
-
 ## Help for Task 10.1 {#solution-10-1 .unnumbered}
 
 Open the **rotavirus** dataset, which is a line list of all notified rotavirus infections in the UK between June 2009 and December 2014. Prepare your data and test if the introduction of the vaccine has had an impact on the notified number of cases of rotavirus infections in the UK. Has the trend changed? Has the periodicity changed?
@@ -432,3 +428,7 @@ comparison_all
 ```
 
 What about age? Can you see a difference in impact of vaccination depending on age category?
+
+## Task 10.2 (Optional) {#task-10-2 .unnumbered}
+
+Discuss with colleagues how you can determine the number of cases prevented as a result of the introduction of the vaccine (Hint: refer to Practical 7!).

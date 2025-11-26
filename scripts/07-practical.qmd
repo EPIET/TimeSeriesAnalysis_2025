@@ -60,14 +60,6 @@ By the end of this session, participants should be able to: - understand the use
 
 January 2020: Your boss received a phone call from the Ministry of Health. She is part of a committee that is responsible for setting the alert levels for mortality in Spain for the next year (2020). Before doing so, she gives you the task to forecast the total expected number of deaths for 2020 based on the historical data up to and including 2019.
 
-## Task 7.2 (Optional) {#task-7-2 .unnumbered}
-
-January 2021: A committee member is interested to get a better understanding of when there were periods of unusually high excess mortality and asks you to provide an analysis that highlights the time when these occurred.
-
-## Task 7.3 (Optional) {#task-7-3 .unnumbered}
-
-January 2021: your boss needs to inform the Ministry of Health about excess deaths so far during the first year of the pandemic.
-
 ## Help for Task 7.1 {#solution-7-1 .unnumbered}
 
 ```{r, task-7-1-explore}
@@ -165,6 +157,10 @@ pred.mort %>%
 
 ```
 
+## Task 7.2 (Optional) {#task-7-2 .unnumbered}
+
+January 2021: A committee member is interested to get a better understanding of when there were periods of unusually high excess mortality and asks you to provide an analysis that highlights the time when these occurred.
+
 ## Help for Task 7.2 {#solution-7-2 .unnumbered}
 
 CUSUM (cumulative sum) is a graphical method that can be used to determine when there is a change in a process (all-cause mortality in this example). In TSA it can also be used to decide whether there is a need to revise the model e.g. include a covariate or there have been changes in the seasonality.
@@ -204,6 +200,12 @@ geom_line(
     labs(x = "Year", y = "Cumulative excess cases") +
     tsa_theme
 ```
+
+
+## Task 7.3 (Optional) {#task-7-3 .unnumbered}
+
+January 2021: your boss needs to inform the Ministry of Health about excess deaths so far during the first year of the pandemic.
+
 
 ## Help for Task 7.3 {#solution-7-3 .unnumbered}
 
