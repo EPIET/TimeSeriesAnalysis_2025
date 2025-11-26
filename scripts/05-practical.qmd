@@ -255,7 +255,7 @@ plot(mort_trendsincos$residual)
 
 ```
 
-How does the fit look visually?  Which models seems to fit better?
+How does the fit look visually? Which models seems to fit better?
 
 What do you observe in the plot of residuals?
 
