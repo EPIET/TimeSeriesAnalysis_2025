@@ -70,7 +70,6 @@ January 2021: your boss needs to inform the Ministry of Health about excess deat
 
 ## Help for Task 7.1 {#solution-7-1 .unnumbered}
 
-
 ```{r, task-7-1-explore}
 ggplot(data = mortz) +
     geom_line(

@@ -8,8 +8,6 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
-
 ```{r}
 #load  required packages
 
@@ -21,7 +19,7 @@ pacman::p_load(readxl,car,writexl,lme4, lmerTest, ggplot2, plotly, performance, 
 ```{r}
 #this part of the code reads the Excel database into R
 
-COVID_0207_data <- read_excel("COVID_0207_data_OECD.xlsx", 
+COVID_0207_data <- read_excel(here("data","COVID_0207_data_new.xlsx"), 
 col_types = c("text", "numeric", "numeric", "numeric", 
          "numeric", "numeric","numeric", "numeric","numeric", "numeric", 
          "numeric", "numeric","date", "date","numeric", 
@@ -76,20 +74,13 @@ paper.update.data2$tests.pth.cent <- paper.update.data2$tests.pthousand - mean(p
 
 ```
 
-
-
 #CHUNK 2: visualise database. Please insert the correct name of the database between the brackets and take a quick look at it
 
 ```{r}
 View(_______________)
 ```
 
-
-
-
-#CHUNK 3: plot the outcome of interest over time for each country. Insert the mising variables in the code. The part of the code that says "facet_wrap" allows to generate a graph for each country. Insert the missing variable in the brackets and then run the chunk 
-
-
+#CHUNK 3: plot the outcome of interest over time for each country. Insert the mising variables in the code. The part of the code that says "facet_wrap" allows to generate a graph for each country. Insert the missing variable in the brackets and then run the chunk
 
 ```{r}
 
@@ -128,7 +119,6 @@ paper.update.data2 %>%
 
 
 ```
-
 
 #Chunk 6: building the linear longitudinal multilevel model part 1. First we want to check that the probit transformation of the outcome of interest is associated with time. Please insert the names of the missing variables and run the chunk
 
@@ -196,19 +186,3 @@ abline(h=0, col="blue")
 vif(model_F1new)
 
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

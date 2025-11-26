@@ -1,0 +1,32 @@
+-New project structure: a lot of folders and subfolders have the same names (ex “scripts”), I found it confusing. Is it possible to rename?
+-I like that the code can be hidden and shown as wished. Is it possible to do the same for the output (ex for str(db))?
+-Names of created dataset: there are a lot of names that are inherited from previous ways of functioning in R. For example the “z” at the end of the time-series comes from the fact that we used to use “zooreg”… could we homogeneize them and make them more explicit? Disz could become Dis_ts for example
+-Can we homogenize how we call the dates' variables and the tsibble index? We often call the index a "date" when it's not a date
+
+PRACTICAL 3
+-There is a whole explanation about the index and key for tsibble but then the key is never used. Can it be made explicit in the code to not confuse the fellow?
+-Using fill_gaps: it would be nice to show how to use it here. Personally I think it’s good practice to always make sure your time series in complete.
+-Towards the end of the help for 3.1 there are many kinds of weekly dates created. It’s a bit unclear if it’s for the fun of it or if it has a purpose. To clarify? 
+
+PRACTICAL 4
+-This R script doesn't source: source("src/tidyverse/session_4.R"). But doesn't seem to be needed?
+-We need to make sure date labels are adjuste everywhere to not show "1970...". 
+-"Practicals 4-7 and 11 use data from this mortality surveillance system. Session 10 uses data from the same system, but for only one autonomous community in Spain (Aragón)." - Please double check as it is not correct for Session 10.
+
+PRACTICAL 5
+-The function ts() is used. I don't think it is used anywhere else. Can we add more explanation on it, including package in which the function can be found?
+-Function cosinor(): do we need it here? I don't see the advantages of using it instead of creating the sine cosine terms, which they will have to do later on anyway. But maybe I'm missing something - please enlighten me!
+
+
+
+PRACTICAL 6
+
+PRACTICAL 7
+
+- Should the last part be un-commented? It was un-commented in practical 4. 
+# save(list = ls(pattern = 'mort'), file = here("data", "mortagg2_case_7.RData"))
+#load(here("data","mortagg2_case_7.RData"))
+
+
+PRACTICAL 11
+- Do we need to update it? The first block already gets an error as number of columns doesn't match.

@@ -180,7 +180,7 @@ Before we have a look at the period post-vaccination, is a Poisson model really 
 
 Overdispersion occurs when the mean of the data is not equal to its variance, violating the fundamental assumption of the Poisson distribution. If this happens, the model underestimates the standard error of the coefficients, biasing results towards narrower confidence intervals and artifically lower p-values.
 
-Let's check for overdispersion. We can calculate an overdispersion parameter from a model as the ratio of the deviance and the residuals degrees of freedom. Also, proper statistical test are availibale, for example using the `AER` library and the `dispersiontest` function
+Let's check for overdispersion. We can calculate an overdispersion parameter from a model as the ratio of the deviance and the residuals degrees of freedom. Also, proper statistical test are available, for example using the `AER` library and the `dispersiontest` function
 
 ```{r, task-10-1-rota-vacc-interv-model_nb}
 # Quick check for overdispersion: if check > 1 then use negative binomial

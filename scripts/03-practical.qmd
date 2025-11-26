@@ -10,13 +10,13 @@ By the end of the session, participants should be able to:
 
 -   Plot surveillance data against time
 
-You have been provided with one MS Excel file (`tsa_practice.xlsx`) containing 2 sheets, one for each of two different diseases (**dis1**, **dis2**); and one csv file called (`tsa_pumala.csv`) about Puumala virus infections in Finland.
+You have been provided with one MS Excel file (`tsa_practice.xlsx`) containing 2 sheets, one for each of two different diseases (**dis1**, **dis2**); and one csv file (`tsa_pumala.csv`) about Puumala virus infections in Finland.
 
 ## Task 3.1
 
-Assess visually the reported number of each disease by ISO (epidemiological) week or calendar month for all the data provided ("dis2" is optional).
+Assess visually the reported number of cases of dis1 by ISO (epidemiological) week or calendar month for all the data provided ("dis2" is optional).
 
-What diseases do you think they are, judging from their distribution in time?
+What diseases do you think dis1 is, judging from the cases' distribution in time?
 
 ## Help for Task 3.1 {#solution-3-1 .unnumbered}
 
@@ -37,7 +37,7 @@ pacman::p_load(
 )
 ```
 
-Import your data to R from these Excel files and examine it using the well-known `str`, `summary` and `skim` functions
+Import your data to R from these Excel files and examine them using the well-known `str`, `summary` and `skim` functions
 
 ```{r, task-3-1-import-xls}
 dis1 <- import(here("data", "tsa_practice.xlsx"), which = "dis1")
@@ -55,7 +55,7 @@ summary(dis1)
 skim(dis1) %>% as_tibble()
 ```
 
-Since we will work with time series data, we could use some time to explore the most relevant variable: **date** (in this case, the `year` variable). `dis1` is a dataset containing weekly counts of a certain disease between 1981 and 1989. A typical year has 52 weeks, thus we can count the number of times each year appear in the data using `table`, `tabyl` or `count` function, your to-go tools for categorical variables
+Since we will work with time series data, we could use some time to explore the most relevant variable: **date** (in this case, the `year` variable). `dis1` is a dataset containing weekly counts of a certain disease between 1981 and 1989. A typical year has 52 weeks, thus we can count the number of times each year appear in the data using `table`, `tabyl` or `count` function, your go-to tools for categorical variables
 
 ```{r, task-3-1-table-dis1}
 table(dis1$year)
@@ -71,7 +71,7 @@ Each one provides different outputs and possesses unique capabilities. In genera
 
 R has a collection of packages for handling time series data.
 
-Some of these packages are part of the `tidyverts` family of packages. Particularly, it includes the `tsibble` package, which intends to create a data infrastructure for easier manipulation and handling of temporal data, and adapts the [principles of the](https://tidyr.tidyverse.org/articles/tidy-data.html)).
+Some of these packages are part of the `tidyverse` family of packages. Particularly, it includes the `tsibble` package, which intends to create a data infrastructure for easier manipulation and handling of temporal data, and adapts the [principles of tidy data](https://tidyr.tidyverse.org/articles/tidy-data.html)).
 
 According to the help description, a `tsibble` object is defined by
 
@@ -81,7 +81,7 @@ According to the help description, a `tsibble` object is defined by
 
 -   uniquely identified observations by an index and a key.
 
-To convert the original dis1 dataset to a `tsibble` object, we use the `as_tsibble` function and specify the `index`, i.e. the variable specifying the time unit of interest. In our case, this is `year` and `week` variables. Variables that are not used for index or key purposes, such as the `cases` variables, are considered as measured variables.
+To convert the original `dis1` dataset to a `tsibble` object, we use the `as_tsibble` function and specify the `index`, i.e. the variable specifying the time unit of interest. In our case, this is `year` and `week` variables. Variables that are not used for index or key purposes, such as the `cases` variables, are considered as measured variables.
 
 ```{r, task-3-1-tsibble-week-base}
 dis1z <-
@@ -93,7 +93,7 @@ str(dis1z)
 head(dis1z, 10)
 ```
 
-You can see how the number of disease 1 cases is distributed in time using the `ggplot` package.
+You can see how the number of dis1 cases is distributed in time using the `ggplot` package.
 
 ```{r, task-3-1-plot-tsibble-week-tidy}
 ggplot(data = dis1z) +
@@ -128,13 +128,16 @@ tsa_theme <- theme_bw() +
 
 Note from the plot that there are missing values in the data.
 
-If data points are collected at regular time interval, we can correct missingness by providing a default a default value or interpolating missing values from other data. The `tsibble` package has the `fill_gaps` function, which fills missing values with a pre-specified default value. It is quite common to replaces `NA`s with its previous observation for each origin in time series analysis, which is easily done using `fill` function from `tidyr` package.
+If data points are collected at regular time interval, we can correct missing data by providing a default value or interpolating missing values from other data. The `tsibble` package has the `fill_gaps` function, which fills missing values with a pre-specified default value. It is quite common to replaces `NA`s with its previous observation for each time point in a time series analysis, which is easily done using the `fill` function from `tidyr` package.
 
 A quick overview of implicit missing values with `tsibble` is available on `vignette("implicit-na")`.
 
 As the focus of this training is on understanding principles of time series analysis rather than visualisation of time series, we will mainly use the `ggplot` functions for the remaining exercises.
 
-Our colleagues shared some data with us they produced with Stata. They forgot to save it as a excell or csv. Luckily for us, the function `import` is here to save the day
+
+--------------------------------------------------------------
+
+Let's now work with the Pumala data
 
 ```{r, task-3-1-dis3-import}
 dis3 <- import(here("data", "tsa_pumala.csv"))
@@ -222,7 +225,7 @@ ggplot(data = dis3z_v2) +
 
 ## Help for Optional Task 3.1.1 {#solution-3-1-1 .unnumbered}
 
-Import your data to R from these Excel files.
+Import your data to R from the dis2 excel file.
 
 ```{r, task-3-1-opt-dis2-import}
 dis2 <- import(here("data", "tsa_practice.xlsx"), which = "dis2")

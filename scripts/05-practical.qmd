@@ -45,7 +45,7 @@ By the end of this session, participants should be able to:
 
 ## Task 5.1 {#task-5-1 .unnumbered}
 
-Using `mortagg.Rdata`, visually assess the existence of any periodicity in the total number of deaths (cyclical patterns). What do you think the period is, if any? Discuss your results with your peers.
+Using `mortagg2_case_4.RData` (created in Practical 4), visually assess the existence of any periodicity in the total number of deaths (cyclical patterns). What do you think the period is, if any? Discuss your results with your peers.
 
 ## Task 5.2 {#task-5-2 .unnumbered}
 
@@ -66,19 +66,6 @@ Required source code.
 ```{r, task-5-1-source-Rscript}
 # Read data
 load(here("data", "mortagg2_case_4.RData"))
-#
-## 
-#mortz <-
-#    mortagg %>%
-#    mutate(date_index = make_yearweek(year = year, week = week)) %>%
-#    as_tsibble(index = date_index)
-#
-## Create an index that goes from 1 to the number of rows in the dataset. This 
-## variable with represent time. 
-#
-#mortz$index <- seq.int(from = 1,
-#                      to = nrow(mortz))
-
 
 ```
 
@@ -101,7 +88,7 @@ Step 2)
 
 This step has already been done in case study 4. Run the code in order to have at hand the results and be able to compare later with other models.
 
-We start by inspecting if there is a linear trend in the data.
+We start by inspecting if there is a trend in the data.
 
 ```{r, task-5-1-trend}
 mort_trend <- glm(cases ~ index, family = "poisson", data = mortz)
@@ -114,13 +101,15 @@ IRR_week
 ```
 
 ```{r, task-5-2-sin52-cos52-plot-tidy}
-ggplot(data = mortz, aes(x = index)) +
+ggplot(data = mortz, aes(x = date_index)) +
     geom_point(aes(y = cases), alpha = 0.4) +
     geom_line(
         mapping = aes(y = fitted(mort_trend)),
         colour = "green",
         lwd=1.5
     ) +
+  scale_x_yearweek(date_labels = "%Y-%W", 
+                   date_breaks = "1 year") +
     scale_y_continuous(limits = c(0, NA)) +
     labs(x = "Index", 
          y = "Number of deaths", 
@@ -131,9 +120,9 @@ ggplot(data = mortz, aes(x = index)) +
 
 Interpret the weekly incidence rate ratio (IRR).
 
-Step 2)
+Step 3)
 
-As there seem to be some periodicity in the first exploration, we proceed to inspect if there is a seasonality component in the time series. Seasonality, periodicity both refer to reoccurring patterns in the data.
+As there seems to be some periodicity in the first exploration, we proceed to inspect if there is a seasonality component in the time series. Seasonality, periodicity both refer to reoccurring patterns in the data.
 
 R has a number of functions which produce a *periodogram* - we will use the `periodogram` function from the `TSA` package.
 
@@ -179,7 +168,7 @@ Is there another periodicity that is worth checking out?
 
 As the periodogram shows periodicity close to 52 weeks, we will use a *sine curve* of a 52-week period. Note that periodicity with a *period of* *one year is also referred to as seasonality*.
 
-Fit a poisson regression of `cases` with only sine and cosine predictor term. In order to have an appropriate phase in your model (you do not have to worry about identifying it; this will happen automatically), you need to use *both* a sine and a cosine curve with the same period. The sum of these two curves gives the periodicity for the specified period and the phase best describing our data.
+Fit a poisson regression of `cases` with only sine and cosine predictor terms. In order to have an appropriate phase in your model (you do not have to worry about identifying it; this will happen automatically), you need to use *both* a sine and a cosine curve with the same period. The sum of these two curves gives the periodicity for the specified period and the phase best describing our data.
 
 The function cosinor fits a model with sinus and cosinus. You need to specify the unit of time as well as the number of cycles per year. Here the data is weekly, and we assume that there is one cycle per year since we assume a 52-week period.
 
@@ -208,7 +197,7 @@ ggplot(data=mort_sincos$glm$data, aes(x=week, y=sinw)) +
     
 
 
-ggplot(data = mortz, aes(x = index)) +
+ggplot(data = mortz, aes(x = date_index)) +
     geom_point(aes(y = cases), alpha = 0.4) +
     geom_line(
         mapping = aes(y = fitted(mort_sincos)),
@@ -216,6 +205,8 @@ ggplot(data = mortz, aes(x = index)) +
         lwd=1.5
     ) +
     scale_y_continuous(limits = c(0, NA)) +
+  scale_x_yearweek(date_labels = "%Y-%W", 
+                   date_breaks = "1 year") +
     labs(x = "Index", 
          y = "Number of deaths", 
          title = "Regression model: sin, cos terms") +
@@ -231,6 +222,8 @@ When you inspect the residuals of the model with only sinus and cosinus terms, w
 
 In the next model include a trend and the seasonality. We will calculate the sinus and cosinus by hand.
 
+Add a line with the fitted values of the model with only sine and cosine terms.
+
 ```{r, task-5-2-trend-sin52-cos52}
 # calculate the sine and cosine terms.
 
@@ -242,7 +235,7 @@ mort_trendsincos <- glm(cases ~ index + sin52 + cos52, family = "poisson", data 
 
 summary(mort_trendsincos)
 
-ggplot(data = mortz, aes(x = index)) +
+ggplot(data = mortz, aes(x = date_index)) +
     geom_point(aes(y = cases), alpha = 0.4) +
     geom_line(
         mapping = aes(y = fitted(mort_trendsincos)),
@@ -250,6 +243,8 @@ ggplot(data = mortz, aes(x = index)) +
         lwd=1.5
     ) +
     scale_y_continuous(limits = c(0, NA)) +
+  scale_x_yearweek(date_labels = "%Y-%W", 
+                   date_breaks = "1 year") +
     labs(x = "Index", 
          y = "Number of deaths", 
          title = "Regression model: trend, sin, cos terms") +
@@ -260,7 +255,7 @@ plot(mort_trendsincos$residual)
 
 ```
 
-How does the fit look visually? Add a line with the fitted values of the model with only sine and cosine terms. Which models seems to fit better?
+How does the fit look visually?  Which models seems to fit better?
 
 What do you observe in the plot of residuals?
 
@@ -286,7 +281,7 @@ summary(mort_trendsin2cos2)
 ```
 
 ```{r, task-5-2-sin26-cos26-trend-plot-tidy}
-ggplot(data = mortz, aes(x = index)) +
+ggplot(data = mortz, aes(x = date_index)) +
     geom_point(aes(y = cases), alpha = 0.4) +
     geom_line(
         mapping = aes(y = fitted(mort_trendsin2cos2)),
@@ -294,6 +289,8 @@ ggplot(data = mortz, aes(x = index)) +
         lwd=1.5
     ) +
     scale_y_continuous(limits = c(0, NA)) +
+  scale_x_yearweek(date_labels = "%Y-%W", 
+                   date_breaks = "1 year") +
     labs(x = "Index", 
          y = "Number of deaths", 
          title = "Regression model: trend, sin52, cos52, sin26, cos26 terms") +
