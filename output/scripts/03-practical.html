@@ -3978,12 +3978,12 @@ vertical-align: -.125em;
 <li><p>Create specific time series objects using <code>tsibble</code></p></li>
 <li><p>Plot surveillance data against time</p></li>
 </ul>
-<p>You have been provided with one MS Excel file (<code>tsa_practice.xlsx</code>) containing 2 sheets, one for each of two different diseases (<strong>dis1</strong>, <strong>dis2</strong>); and one csv file called (<code>tsa_pumala.csv</code>) about Puumala virus infections in Finland.</p>
+<p>You have been provided with one MS Excel file (<code>tsa_practice.xlsx</code>) containing 2 sheets, one for each of two different diseases (<strong>dis1</strong>, <strong>dis2</strong>); and one csv file (<code>tsa_pumala.csv</code>) about Puumala virus infections in Finland.</p>
 </section>
 <section id="task-3.1" class="level2">
 <h2 class="anchored" data-anchor-id="task-3.1">Task 3.1</h2>
-<p>Assess visually the reported number of each disease by ISO (epidemiological) week or calendar month for all the data provided (“dis2” is optional).</p>
-<p>What diseases do you think they are, judging from their distribution in time?</p>
+<p>Assess visually the reported number of cases of dis1 by ISO (epidemiological) week or calendar month for all the data provided (“dis2” is optional).</p>
+<p>What diseases do you think dis1 is, judging from the cases’ distribution in time?</p>
 </section>
 <section id="solution-3-1" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="solution-3-1">Help for Task 3.1</h2>
@@ -4005,7 +4005,7 @@ vertical-align: -.125em;
 <span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>Import your data to R from these Excel files and examine it using the well-known <code>str</code>, <code>summary</code> and <code>skim</code> functions</p>
+<p>Import your data to R from these Excel files and examine them using the well-known <code>str</code>, <code>summary</code> and <code>skim</code> functions</p>
 <div class="cell">
 <details open="" class="code-fold">
 <summary>Show the code</summary>
@@ -4056,7 +4056,7 @@ vertical-align: -.125em;
 #   numeric.p75 &lt;dbl&gt;, numeric.p100 &lt;dbl&gt;, numeric.hist &lt;chr&gt;</code></pre>
 </div>
 </div>
-<p>Since we will work with time series data, we could use some time to explore the most relevant variable: <strong>date</strong> (in this case, the <code>year</code> variable). <code>dis1</code> is a dataset containing weekly counts of a certain disease between 1981 and 1989. A typical year has 52 weeks, thus we can count the number of times each year appear in the data using <code>table</code>, <code>tabyl</code> or <code>count</code> function, your to-go tools for categorical variables</p>
+<p>Since we will work with time series data, we could use some time to explore the most relevant variable: <strong>date</strong> (in this case, the <code>year</code> variable). <code>dis1</code> is a dataset containing weekly counts of a certain disease between 1981 and 1989. A typical year has 52 weeks, thus we can count the number of times each year appear in the data using <code>table</code>, <code>tabyl</code> or <code>count</code> function, your go-to tools for categorical variables</p>
 <div class="cell">
 <details open="" class="code-fold">
 <summary>Show the code</summary>
@@ -4089,14 +4089,14 @@ vertical-align: -.125em;
 <p>Each one provides different outputs and possesses unique capabilities. In general, <code>tabyl</code> should be your preferred basic function, thanks to its tidy integration and format output. It also enables some customization and data manipulation.</p>
 <hr>
 <p>R has a collection of packages for handling time series data.</p>
-<p>Some of these packages are part of the <code>tidyverts</code> family of packages. Particularly, it includes the <code>tsibble</code> package, which intends to create a data infrastructure for easier manipulation and handling of temporal data, and adapts the <a href="https://tidyr.tidyverse.org/articles/tidy-data.html">principles of the</a>).</p>
+<p>Some of these packages are part of the <code>tidyverse</code> family of packages. Particularly, it includes the <code>tsibble</code> package, which intends to create a data infrastructure for easier manipulation and handling of temporal data, and adapts the <a href="https://tidyr.tidyverse.org/articles/tidy-data.html">principles of tidy data</a>).</p>
 <p>According to the help description, a <code>tsibble</code> object is defined by</p>
 <ul>
 <li><p>an <code>index</code>, as a variable with inherent ordering from past to present.</p></li>
 <li><p>a <code>key</code>, as a set of variables that define observational units over time.</p></li>
 <li><p>uniquely identified observations by an index and a key.</p></li>
 </ul>
-<p>To convert the original dis1 dataset to a <code>tsibble</code> object, we use the <code>as_tsibble</code> function and specify the <code>index</code>, i.e.&nbsp;the variable specifying the time unit of interest. In our case, this is <code>year</code> and <code>week</code> variables. Variables that are not used for index or key purposes, such as the <code>cases</code> variables, are considered as measured variables.</p>
+<p>To convert the original <code>dis1</code> dataset to a <code>tsibble</code> object, we use the <code>as_tsibble</code> function and specify the <code>index</code>, i.e.&nbsp;the variable specifying the time unit of interest. In our case, this is <code>year</code> and <code>week</code> variables. Variables that are not used for index or key purposes, such as the <code>cases</code> variables, are considered as measured variables.</p>
 <div class="cell">
 <details open="" class="code-fold">
 <summary>Show the code</summary>
@@ -4144,7 +4144,7 @@ vertical-align: -.125em;
 10  1981    10    NA   1981 W10</code></pre>
 </div>
 </div>
-<p>You can see how the number of disease 1 cases is distributed in time using the <code>ggplot</code> package.</p>
+<p>You can see how the number of dis1 cases is distributed in time using the <code>ggplot</code> package.</p>
 <div class="cell">
 <details open="" class="code-fold">
 <summary>Show the code</summary>
@@ -4188,10 +4188,11 @@ vertical-align: -.125em;
 </details>
 </div>
 <p>Note from the plot that there are missing values in the data.</p>
-<p>If data points are collected at regular time interval, we can correct missingness by providing a default a default value or interpolating missing values from other data. The <code>tsibble</code> package has the <code>fill_gaps</code> function, which fills missing values with a pre-specified default value. It is quite common to replaces <code>NA</code>s with its previous observation for each origin in time series analysis, which is easily done using <code>fill</code> function from <code>tidyr</code> package.</p>
+<p>If data points are collected at regular time interval, we can correct missing data by providing a default value or interpolating missing values from other data. The <code>tsibble</code> package has the <code>fill_gaps</code> function, which fills missing values with a pre-specified default value. It is quite common to replaces <code>NA</code>s with its previous observation for each time point in a time series analysis, which is easily done using the <code>fill</code> function from <code>tidyr</code> package.</p>
 <p>A quick overview of implicit missing values with <code>tsibble</code> is available on <code>vignette("implicit-na")</code>.</p>
 <p>As the focus of this training is on understanding principles of time series analysis rather than visualisation of time series, we will mainly use the <code>ggplot</code> functions for the remaining exercises.</p>
-<p>Our colleagues shared some data with us they produced with Stata. They forgot to save it as a excell or csv. Luckily for us, the function <code>import</code> is here to save the day</p>
+<hr>
+<p>Let’s now work with the Pumala data</p>
 <div class="cell">
 <details open="" class="code-fold">
 <summary>Show the code</summary>
@@ -4390,7 +4391,7 @@ vertical-align: -.125em;
 </section>
 <section id="solution-3-1-1" class="level2 unnumbered">
 <h2 class="unnumbered anchored" data-anchor-id="solution-3-1-1">Help for Optional Task 3.1.1</h2>
-<p>Import your data to R from these Excel files.</p>
+<p>Import your data to R from the dis2 excel file.</p>
 <div class="cell">
 <details open="" class="code-fold">
 <summary>Show the code</summary>
@@ -5032,13 +5033,13 @@ vertical-align: -.125em;
 <span id="cb55-10"><a href="#cb55-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb55-11"><a href="#cb55-11" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span>Plot surveillance data against time</span>
 <span id="cb55-12"><a href="#cb55-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-13"><a href="#cb55-13" aria-hidden="true" tabindex="-1"></a>You have been provided with one MS Excel file (<span class="in">`tsa_practice.xlsx`</span>) containing 2 sheets, one for each of two different diseases (**dis1**, **dis2**); and one csv file called (<span class="in">`tsa_pumala.csv`</span>) about Puumala virus infections in Finland.</span>
+<span id="cb55-13"><a href="#cb55-13" aria-hidden="true" tabindex="-1"></a>You have been provided with one MS Excel file (<span class="in">`tsa_practice.xlsx`</span>) containing 2 sheets, one for each of two different diseases (**dis1**, **dis2**); and one csv file (<span class="in">`tsa_pumala.csv`</span>) about Puumala virus infections in Finland.</span>
 <span id="cb55-14"><a href="#cb55-14" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb55-15"><a href="#cb55-15" aria-hidden="true" tabindex="-1"></a><span class="fu">## Task 3.1</span></span>
 <span id="cb55-16"><a href="#cb55-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-17"><a href="#cb55-17" aria-hidden="true" tabindex="-1"></a>Assess visually the reported number of each disease by ISO (epidemiological) week or calendar month for all the data provided ("dis2" is optional).</span>
+<span id="cb55-17"><a href="#cb55-17" aria-hidden="true" tabindex="-1"></a>Assess visually the reported number of cases of dis1 by ISO (epidemiological) week or calendar month for all the data provided ("dis2" is optional).</span>
 <span id="cb55-18"><a href="#cb55-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-19"><a href="#cb55-19" aria-hidden="true" tabindex="-1"></a>What diseases do you think they are, judging from their distribution in time?</span>
+<span id="cb55-19"><a href="#cb55-19" aria-hidden="true" tabindex="-1"></a>What diseases do you think dis1 is, judging from the cases' distribution in time?</span>
 <span id="cb55-20"><a href="#cb55-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb55-21"><a href="#cb55-21" aria-hidden="true" tabindex="-1"></a><span class="fu">## Help for Task 3.1 {#solution-3-1 .unnumbered}</span></span>
 <span id="cb55-22"><a href="#cb55-22" aria-hidden="true" tabindex="-1"></a></span>
@@ -5059,7 +5060,7 @@ vertical-align: -.125em;
 <span id="cb55-37"><a href="#cb55-37" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb55-38"><a href="#cb55-38" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb55-39"><a href="#cb55-39" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-40"><a href="#cb55-40" aria-hidden="true" tabindex="-1"></a>Import your data to R from these Excel files and examine it using the well-known <span class="in">`str`</span>, <span class="in">`summary`</span> and <span class="in">`skim`</span> functions</span>
+<span id="cb55-40"><a href="#cb55-40" aria-hidden="true" tabindex="-1"></a>Import your data to R from these Excel files and examine them using the well-known <span class="in">`str`</span>, <span class="in">`summary`</span> and <span class="in">`skim`</span> functions</span>
 <span id="cb55-41"><a href="#cb55-41" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb55-42"><a href="#cb55-42" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-import-xls}</span></span>
 <span id="cb55-43"><a href="#cb55-43" aria-hidden="true" tabindex="-1"></a>dis1 <span class="ot">&lt;-</span> <span class="fu">import</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"tsa_practice.xlsx"</span>), <span class="at">which =</span> <span class="st">"dis1"</span>)</span>
@@ -5077,7 +5078,7 @@ vertical-align: -.125em;
 <span id="cb55-55"><a href="#cb55-55" aria-hidden="true" tabindex="-1"></a><span class="fu">skim</span>(dis1) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span>
 <span id="cb55-56"><a href="#cb55-56" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb55-57"><a href="#cb55-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-58"><a href="#cb55-58" aria-hidden="true" tabindex="-1"></a>Since we will work with time series data, we could use some time to explore the most relevant variable: **date** (in this case, the <span class="in">`year`</span> variable). <span class="in">`dis1`</span> is a dataset containing weekly counts of a certain disease between 1981 and 1989. A typical year has 52 weeks, thus we can count the number of times each year appear in the data using <span class="in">`table`</span>, <span class="in">`tabyl`</span> or <span class="in">`count`</span> function, your to-go tools for categorical variables</span>
+<span id="cb55-58"><a href="#cb55-58" aria-hidden="true" tabindex="-1"></a>Since we will work with time series data, we could use some time to explore the most relevant variable: **date** (in this case, the <span class="in">`year`</span> variable). <span class="in">`dis1`</span> is a dataset containing weekly counts of a certain disease between 1981 and 1989. A typical year has 52 weeks, thus we can count the number of times each year appear in the data using <span class="in">`table`</span>, <span class="in">`tabyl`</span> or <span class="in">`count`</span> function, your go-to tools for categorical variables</span>
 <span id="cb55-59"><a href="#cb55-59" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb55-60"><a href="#cb55-60" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-table-dis1}</span></span>
 <span id="cb55-61"><a href="#cb55-61" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(dis1<span class="sc">$</span>year)</span>
@@ -5093,7 +5094,7 @@ vertical-align: -.125em;
 <span id="cb55-73"><a href="#cb55-73" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb55-74"><a href="#cb55-74" aria-hidden="true" tabindex="-1"></a>R has a collection of packages for handling time series data.</span>
 <span id="cb55-75"><a href="#cb55-75" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-76"><a href="#cb55-76" aria-hidden="true" tabindex="-1"></a>Some of these packages are part of the <span class="in">`tidyverts`</span> family of packages. Particularly, it includes the <span class="in">`tsibble`</span> package, which intends to create a data infrastructure for easier manipulation and handling of temporal data, and adapts the <span class="co">[</span><span class="ot">principles of the</span><span class="co">](https://tidyr.tidyverse.org/articles/tidy-data.html)</span>).</span>
+<span id="cb55-76"><a href="#cb55-76" aria-hidden="true" tabindex="-1"></a>Some of these packages are part of the <span class="in">`tidyverse`</span> family of packages. Particularly, it includes the <span class="in">`tsibble`</span> package, which intends to create a data infrastructure for easier manipulation and handling of temporal data, and adapts the <span class="co">[</span><span class="ot">principles of tidy data</span><span class="co">](https://tidyr.tidyverse.org/articles/tidy-data.html)</span>).</span>
 <span id="cb55-77"><a href="#cb55-77" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb55-78"><a href="#cb55-78" aria-hidden="true" tabindex="-1"></a>According to the help description, a <span class="in">`tsibble`</span> object is defined by</span>
 <span id="cb55-79"><a href="#cb55-79" aria-hidden="true" tabindex="-1"></a></span>
@@ -5103,7 +5104,7 @@ vertical-align: -.125em;
 <span id="cb55-83"><a href="#cb55-83" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb55-84"><a href="#cb55-84" aria-hidden="true" tabindex="-1"></a><span class="ss">-   </span>uniquely identified observations by an index and a key.</span>
 <span id="cb55-85"><a href="#cb55-85" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-86"><a href="#cb55-86" aria-hidden="true" tabindex="-1"></a>To convert the original dis1 dataset to a <span class="in">`tsibble`</span> object, we use the <span class="in">`as_tsibble`</span> function and specify the <span class="in">`index`</span>, i.e. the variable specifying the time unit of interest. In our case, this is <span class="in">`year`</span> and <span class="in">`week`</span> variables. Variables that are not used for index or key purposes, such as the <span class="in">`cases`</span> variables, are considered as measured variables.</span>
+<span id="cb55-86"><a href="#cb55-86" aria-hidden="true" tabindex="-1"></a>To convert the original <span class="in">`dis1`</span> dataset to a <span class="in">`tsibble`</span> object, we use the <span class="in">`as_tsibble`</span> function and specify the <span class="in">`index`</span>, i.e. the variable specifying the time unit of interest. In our case, this is <span class="in">`year`</span> and <span class="in">`week`</span> variables. Variables that are not used for index or key purposes, such as the <span class="in">`cases`</span> variables, are considered as measured variables.</span>
 <span id="cb55-87"><a href="#cb55-87" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb55-88"><a href="#cb55-88" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-tsibble-week-base}</span></span>
 <span id="cb55-89"><a href="#cb55-89" aria-hidden="true" tabindex="-1"></a>dis1z <span class="ot">&lt;-</span></span>
@@ -5115,7 +5116,7 @@ vertical-align: -.125em;
 <span id="cb55-95"><a href="#cb55-95" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dis1z, <span class="dv">10</span>)</span>
 <span id="cb55-96"><a href="#cb55-96" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
 <span id="cb55-97"><a href="#cb55-97" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-98"><a href="#cb55-98" aria-hidden="true" tabindex="-1"></a>You can see how the number of disease 1 cases is distributed in time using the <span class="in">`ggplot`</span> package.</span>
+<span id="cb55-98"><a href="#cb55-98" aria-hidden="true" tabindex="-1"></a>You can see how the number of dis1 cases is distributed in time using the <span class="in">`ggplot`</span> package.</span>
 <span id="cb55-99"><a href="#cb55-99" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb55-100"><a href="#cb55-100" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-plot-tsibble-week-tidy}</span></span>
 <span id="cb55-101"><a href="#cb55-101" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> dis1z) <span class="sc">+</span></span>
@@ -5150,150 +5151,153 @@ vertical-align: -.125em;
 <span id="cb55-130"><a href="#cb55-130" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb55-131"><a href="#cb55-131" aria-hidden="true" tabindex="-1"></a>Note from the plot that there are missing values in the data.</span>
 <span id="cb55-132"><a href="#cb55-132" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-133"><a href="#cb55-133" aria-hidden="true" tabindex="-1"></a>If data points are collected at regular time interval, we can correct missingness by providing a default a default value or interpolating missing values from other data. The <span class="in">`tsibble`</span> package has the <span class="in">`fill_gaps`</span> function, which fills missing values with a pre-specified default value. It is quite common to replaces <span class="in">`NA`</span>s with its previous observation for each origin in time series analysis, which is easily done using <span class="in">`fill`</span> function from <span class="in">`tidyr`</span> package.</span>
+<span id="cb55-133"><a href="#cb55-133" aria-hidden="true" tabindex="-1"></a>If data points are collected at regular time interval, we can correct missing data by providing a default value or interpolating missing values from other data. The <span class="in">`tsibble`</span> package has the <span class="in">`fill_gaps`</span> function, which fills missing values with a pre-specified default value. It is quite common to replaces <span class="in">`NA`</span>s with its previous observation for each time point in a time series analysis, which is easily done using the <span class="in">`fill`</span> function from <span class="in">`tidyr`</span> package.</span>
 <span id="cb55-134"><a href="#cb55-134" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb55-135"><a href="#cb55-135" aria-hidden="true" tabindex="-1"></a>A quick overview of implicit missing values with <span class="in">`tsibble`</span> is available on <span class="in">`vignette("implicit-na")`</span>.</span>
 <span id="cb55-136"><a href="#cb55-136" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb55-137"><a href="#cb55-137" aria-hidden="true" tabindex="-1"></a>As the focus of this training is on understanding principles of time series analysis rather than visualisation of time series, we will mainly use the <span class="in">`ggplot`</span> functions for the remaining exercises.</span>
 <span id="cb55-138"><a href="#cb55-138" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-139"><a href="#cb55-139" aria-hidden="true" tabindex="-1"></a>Our colleagues shared some data with us they produced with Stata. They forgot to save it as a excell or csv. Luckily for us, the function <span class="in">`import`</span> is here to save the day</span>
-<span id="cb55-140"><a href="#cb55-140" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-141"><a href="#cb55-141" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-dis3-import}</span></span>
-<span id="cb55-142"><a href="#cb55-142" aria-hidden="true" tabindex="-1"></a>dis3 <span class="ot">&lt;-</span> <span class="fu">import</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"tsa_pumala.csv"</span>))</span>
-<span id="cb55-143"><a href="#cb55-143" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb55-144"><a href="#cb55-144" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-145"><a href="#cb55-145" aria-hidden="true" tabindex="-1"></a>Here you have one variable for the year, one variable for the month and one variable with the complete date in days, but in a text (<span class="in">`chr`</span> class) format.</span>
-<span id="cb55-146"><a href="#cb55-146" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-147"><a href="#cb55-147" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-dis3-inspect}</span></span>
-<span id="cb55-148"><a href="#cb55-148" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(dis3)</span>
-<span id="cb55-149"><a href="#cb55-149" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dis3)</span>
-<span id="cb55-150"><a href="#cb55-150" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(dis3)</span>
-<span id="cb55-151"><a href="#cb55-151" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb55-152"><a href="#cb55-152" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-153"><a href="#cb55-153" aria-hidden="true" tabindex="-1"></a>With the complete date, you can generate ISO weeks, but first you need the date variable to be converted from text to something R recognises as a date. The <span class="in">`lubridate`</span> package has a number of convenient functions for converting text strings to dates.</span>
-<span id="cb55-154"><a href="#cb55-154" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-155"><a href="#cb55-155" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-dis3-date-format-base}</span></span>
-<span id="cb55-156"><a href="#cb55-156" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(dis3<span class="sc">$</span>date_str)</span>
+<span id="cb55-139"><a href="#cb55-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-140"><a href="#cb55-140" aria-hidden="true" tabindex="-1"></a>--------------------------------------------------------------</span>
+<span id="cb55-141"><a href="#cb55-141" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-142"><a href="#cb55-142" aria-hidden="true" tabindex="-1"></a>Let's now work with the Pumala data</span>
+<span id="cb55-143"><a href="#cb55-143" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-144"><a href="#cb55-144" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-dis3-import}</span></span>
+<span id="cb55-145"><a href="#cb55-145" aria-hidden="true" tabindex="-1"></a>dis3 <span class="ot">&lt;-</span> <span class="fu">import</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"tsa_pumala.csv"</span>))</span>
+<span id="cb55-146"><a href="#cb55-146" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb55-147"><a href="#cb55-147" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-148"><a href="#cb55-148" aria-hidden="true" tabindex="-1"></a>Here you have one variable for the year, one variable for the month and one variable with the complete date in days, but in a text (<span class="in">`chr`</span> class) format.</span>
+<span id="cb55-149"><a href="#cb55-149" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-150"><a href="#cb55-150" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-dis3-inspect}</span></span>
+<span id="cb55-151"><a href="#cb55-151" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(dis3)</span>
+<span id="cb55-152"><a href="#cb55-152" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dis3)</span>
+<span id="cb55-153"><a href="#cb55-153" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(dis3)</span>
+<span id="cb55-154"><a href="#cb55-154" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb55-155"><a href="#cb55-155" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-156"><a href="#cb55-156" aria-hidden="true" tabindex="-1"></a>With the complete date, you can generate ISO weeks, but first you need the date variable to be converted from text to something R recognises as a date. The <span class="in">`lubridate`</span> package has a number of convenient functions for converting text strings to dates.</span>
 <span id="cb55-157"><a href="#cb55-157" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-158"><a href="#cb55-158" aria-hidden="true" tabindex="-1"></a>dis3 <span class="ot">&lt;-</span> dis3 <span class="sc">%&gt;%</span></span>
-<span id="cb55-159"><a href="#cb55-159" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">my_date =</span> <span class="fu">dmy</span>(date_str))</span>
+<span id="cb55-158"><a href="#cb55-158" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-dis3-date-format-base}</span></span>
+<span id="cb55-159"><a href="#cb55-159" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(dis3<span class="sc">$</span>date_str)</span>
 <span id="cb55-160"><a href="#cb55-160" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-161"><a href="#cb55-161" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(dis3<span class="sc">$</span>my_date)</span>
-<span id="cb55-162"><a href="#cb55-162" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb55-161"><a href="#cb55-161" aria-hidden="true" tabindex="-1"></a>dis3 <span class="ot">&lt;-</span> dis3 <span class="sc">%&gt;%</span></span>
+<span id="cb55-162"><a href="#cb55-162" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">my_date =</span> <span class="fu">dmy</span>(date_str))</span>
 <span id="cb55-163"><a href="#cb55-163" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-164"><a href="#cb55-164" aria-hidden="true" tabindex="-1"></a>As a complementary note, check the help for <span class="in">`strftime`</span> to learn about different date formats in R (<span class="in">`?strftime`</span>).</span>
-<span id="cb55-165"><a href="#cb55-165" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-166"><a href="#cb55-166" aria-hidden="true" tabindex="-1"></a>To convert to ISO week, we can use the <span class="in">`ISOweek`</span> function from the <span class="in">`ISOweek`</span> package, which creates a new variable representing the ISO week. We could then also create a new variable representing the first Monday of each ISO week. Although the popular <span class="in">`lubridate`</span> package has an <span class="in">`isoweek`</span> function (there is also a similar function in the <span class="in">`surveillance`</span> package), we use the <span class="in">`ISOweek`</span> package here as it has the <span class="in">`ISOweek2date`</span> function. If epidemiological weeks are required, use the <span class="in">`EpiWeek`</span> package.</span>
-<span id="cb55-167"><a href="#cb55-167" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-168"><a href="#cb55-168" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-dis3-isoweek-base}</span></span>
-<span id="cb55-169"><a href="#cb55-169" aria-hidden="true" tabindex="-1"></a>dis3 <span class="ot">&lt;-</span> dis3 <span class="sc">%&gt;%</span></span>
-<span id="cb55-170"><a href="#cb55-170" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
-<span id="cb55-171"><a href="#cb55-171" aria-hidden="true" tabindex="-1"></a>        <span class="at">date_isowk =</span> <span class="fu">ISOweek</span>(my_date),</span>
-<span id="cb55-172"><a href="#cb55-172" aria-hidden="true" tabindex="-1"></a>        <span class="at">isodate =</span> <span class="fu">ISOweek2date</span>(<span class="fu">paste</span>(date_isowk, <span class="st">"-1"</span>, <span class="at">sep =</span> <span class="st">""</span>))</span>
-<span id="cb55-173"><a href="#cb55-173" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb55-174"><a href="#cb55-174" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-175"><a href="#cb55-175" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dis3)</span>
-<span id="cb55-176"><a href="#cb55-176" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb55-164"><a href="#cb55-164" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(dis3<span class="sc">$</span>my_date)</span>
+<span id="cb55-165"><a href="#cb55-165" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb55-166"><a href="#cb55-166" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-167"><a href="#cb55-167" aria-hidden="true" tabindex="-1"></a>As a complementary note, check the help for <span class="in">`strftime`</span> to learn about different date formats in R (<span class="in">`?strftime`</span>).</span>
+<span id="cb55-168"><a href="#cb55-168" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-169"><a href="#cb55-169" aria-hidden="true" tabindex="-1"></a>To convert to ISO week, we can use the <span class="in">`ISOweek`</span> function from the <span class="in">`ISOweek`</span> package, which creates a new variable representing the ISO week. We could then also create a new variable representing the first Monday of each ISO week. Although the popular <span class="in">`lubridate`</span> package has an <span class="in">`isoweek`</span> function (there is also a similar function in the <span class="in">`surveillance`</span> package), we use the <span class="in">`ISOweek`</span> package here as it has the <span class="in">`ISOweek2date`</span> function. If epidemiological weeks are required, use the <span class="in">`EpiWeek`</span> package.</span>
+<span id="cb55-170"><a href="#cb55-170" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-171"><a href="#cb55-171" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-dis3-isoweek-base}</span></span>
+<span id="cb55-172"><a href="#cb55-172" aria-hidden="true" tabindex="-1"></a>dis3 <span class="ot">&lt;-</span> dis3 <span class="sc">%&gt;%</span></span>
+<span id="cb55-173"><a href="#cb55-173" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb55-174"><a href="#cb55-174" aria-hidden="true" tabindex="-1"></a>        <span class="at">date_isowk =</span> <span class="fu">ISOweek</span>(my_date),</span>
+<span id="cb55-175"><a href="#cb55-175" aria-hidden="true" tabindex="-1"></a>        <span class="at">isodate =</span> <span class="fu">ISOweek2date</span>(<span class="fu">paste</span>(date_isowk, <span class="st">"-1"</span>, <span class="at">sep =</span> <span class="st">""</span>))</span>
+<span id="cb55-176"><a href="#cb55-176" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb55-177"><a href="#cb55-177" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-178"><a href="#cb55-178" aria-hidden="true" tabindex="-1"></a>The <span class="in">`paste`</span> command concatenates text.</span>
-<span id="cb55-179"><a href="#cb55-179" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-180"><a href="#cb55-180" aria-hidden="true" tabindex="-1"></a>Here we are adding <span class="in">`"-01"`</span> onto the end of the ISO week variable (which is formatted something like <span class="in">`"1995-W01"`</span>), to indicate that we want the first day of that week, and then supplying that to the <span class="in">`ISOweek2date`</span> function, which converts that to a date.</span>
-<span id="cb55-181"><a href="#cb55-181" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-182"><a href="#cb55-182" aria-hidden="true" tabindex="-1"></a>Have a look at the new variables that have been created. <span class="in">`date_isowk`</span> is the ISO week variable, in string format, and <span class="in">`isodate`</span> is the Monday of each ISO week. Note that the years 1998 and 2004 each have an ISO week 53.</span>
-<span id="cb55-183"><a href="#cb55-183" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-184"><a href="#cb55-184" aria-hidden="true" tabindex="-1"></a>You have several observations in the same week since you have data from different days and one value corresponds to one case. Use the <span class="in">`count`</span> function to aggregate the data.</span>
-<span id="cb55-185"><a href="#cb55-185" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-186"><a href="#cb55-186" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-dis3-isoweek-aggr-base}</span></span>
-<span id="cb55-187"><a href="#cb55-187" aria-hidden="true" tabindex="-1"></a>dis3_v2 <span class="ot">&lt;-</span> dis3 <span class="sc">%&gt;%</span></span>
-<span id="cb55-188"><a href="#cb55-188" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(date_isowk)</span>
-<span id="cb55-189"><a href="#cb55-189" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-190"><a href="#cb55-190" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dis3_v2)</span>
-<span id="cb55-191"><a href="#cb55-191" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb55-178"><a href="#cb55-178" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dis3)</span>
+<span id="cb55-179"><a href="#cb55-179" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb55-180"><a href="#cb55-180" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-181"><a href="#cb55-181" aria-hidden="true" tabindex="-1"></a>The <span class="in">`paste`</span> command concatenates text.</span>
+<span id="cb55-182"><a href="#cb55-182" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-183"><a href="#cb55-183" aria-hidden="true" tabindex="-1"></a>Here we are adding <span class="in">`"-01"`</span> onto the end of the ISO week variable (which is formatted something like <span class="in">`"1995-W01"`</span>), to indicate that we want the first day of that week, and then supplying that to the <span class="in">`ISOweek2date`</span> function, which converts that to a date.</span>
+<span id="cb55-184"><a href="#cb55-184" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-185"><a href="#cb55-185" aria-hidden="true" tabindex="-1"></a>Have a look at the new variables that have been created. <span class="in">`date_isowk`</span> is the ISO week variable, in string format, and <span class="in">`isodate`</span> is the Monday of each ISO week. Note that the years 1998 and 2004 each have an ISO week 53.</span>
+<span id="cb55-186"><a href="#cb55-186" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-187"><a href="#cb55-187" aria-hidden="true" tabindex="-1"></a>You have several observations in the same week since you have data from different days and one value corresponds to one case. Use the <span class="in">`count`</span> function to aggregate the data.</span>
+<span id="cb55-188"><a href="#cb55-188" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-189"><a href="#cb55-189" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-dis3-isoweek-aggr-base}</span></span>
+<span id="cb55-190"><a href="#cb55-190" aria-hidden="true" tabindex="-1"></a>dis3_v2 <span class="ot">&lt;-</span> dis3 <span class="sc">%&gt;%</span></span>
+<span id="cb55-191"><a href="#cb55-191" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(date_isowk)</span>
 <span id="cb55-192"><a href="#cb55-192" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-193"><a href="#cb55-193" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-dis3-isoweek-plot-tidy}</span></span>
-<span id="cb55-194"><a href="#cb55-194" aria-hidden="true" tabindex="-1"></a>dis3z <span class="ot">&lt;-</span> dis3_v2 <span class="sc">%&gt;%</span></span>
-<span id="cb55-195"><a href="#cb55-195" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">date_index =</span> <span class="fu">yearweek</span>(<span class="at">x =</span> date_isowk, <span class="at">week_start =</span> <span class="dv">1</span>L)) <span class="sc">%&gt;%</span></span>
-<span id="cb55-196"><a href="#cb55-196" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as_tsibble</span>(<span class="at">index =</span> date_index)</span>
-<span id="cb55-197"><a href="#cb55-197" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-198"><a href="#cb55-198" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(dis3z)</span>
-<span id="cb55-199"><a href="#cb55-199" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dis3z, <span class="dv">10</span>)</span>
+<span id="cb55-193"><a href="#cb55-193" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dis3_v2)</span>
+<span id="cb55-194"><a href="#cb55-194" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb55-195"><a href="#cb55-195" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-196"><a href="#cb55-196" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-dis3-isoweek-plot-tidy}</span></span>
+<span id="cb55-197"><a href="#cb55-197" aria-hidden="true" tabindex="-1"></a>dis3z <span class="ot">&lt;-</span> dis3_v2 <span class="sc">%&gt;%</span></span>
+<span id="cb55-198"><a href="#cb55-198" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">date_index =</span> <span class="fu">yearweek</span>(<span class="at">x =</span> date_isowk, <span class="at">week_start =</span> <span class="dv">1</span>L)) <span class="sc">%&gt;%</span></span>
+<span id="cb55-199"><a href="#cb55-199" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as_tsibble</span>(<span class="at">index =</span> date_index)</span>
 <span id="cb55-200"><a href="#cb55-200" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-201"><a href="#cb55-201" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> dis3z) <span class="sc">+</span></span>
-<span id="cb55-202"><a href="#cb55-202" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> date_index, <span class="at">y =</span> n)) <span class="sc">+</span></span>
-<span id="cb55-203"><a href="#cb55-203" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_x_yearweek</span>(<span class="at">date_labels =</span> <span class="st">"%Y"</span>) <span class="sc">+</span></span>
-<span id="cb55-204"><a href="#cb55-204" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Date"</span>, <span class="at">y =</span> <span class="st">"Number of Cases"</span>, <span class="at">title =</span> <span class="st">"Disease 1 data"</span>) <span class="sc">+</span></span>
-<span id="cb55-205"><a href="#cb55-205" aria-hidden="true" tabindex="-1"></a>    tsa_theme</span>
-<span id="cb55-206"><a href="#cb55-206" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb55-207"><a href="#cb55-207" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-208"><a href="#cb55-208" aria-hidden="true" tabindex="-1"></a>Aggregating cases by month is another possibility.</span>
-<span id="cb55-209"><a href="#cb55-209" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-210"><a href="#cb55-210" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-dis3-month-plot-tidy}</span></span>
-<span id="cb55-211"><a href="#cb55-211" aria-hidden="true" tabindex="-1"></a>dis3_agg <span class="ot">&lt;-</span> dis3 <span class="sc">%&gt;%</span></span>
-<span id="cb55-212"><a href="#cb55-212" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(year, month)</span>
-<span id="cb55-213"><a href="#cb55-213" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-214"><a href="#cb55-214" aria-hidden="true" tabindex="-1"></a>dis3z_v2 <span class="ot">&lt;-</span> dis3_agg <span class="sc">%&gt;%</span></span>
-<span id="cb55-215"><a href="#cb55-215" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">date_index =</span> <span class="fu">make_yearmonth</span>(<span class="at">year =</span> year, <span class="at">month =</span> month)) <span class="sc">%&gt;%</span></span>
-<span id="cb55-216"><a href="#cb55-216" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as_tsibble</span>(<span class="at">index =</span> date_index)</span>
-<span id="cb55-217"><a href="#cb55-217" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-218"><a href="#cb55-218" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> dis3z_v2) <span class="sc">+</span></span>
-<span id="cb55-219"><a href="#cb55-219" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> date_index, <span class="at">y =</span> n)) <span class="sc">+</span></span>
-<span id="cb55-220"><a href="#cb55-220" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_x_yearweek</span>(<span class="at">date_labels =</span> <span class="st">"%Y"</span>) <span class="sc">+</span></span>
-<span id="cb55-221"><a href="#cb55-221" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Date"</span>, <span class="at">y =</span> <span class="st">"Number of Cases"</span>, <span class="at">title =</span> <span class="st">"Disease 1 data"</span>) <span class="sc">+</span></span>
-<span id="cb55-222"><a href="#cb55-222" aria-hidden="true" tabindex="-1"></a>    tsa_theme</span>
-<span id="cb55-223"><a href="#cb55-223" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb55-224"><a href="#cb55-224" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-225"><a href="#cb55-225" aria-hidden="true" tabindex="-1"></a><span class="fu">## Help for Optional Task 3.1.1 {#solution-3-1-1 .unnumbered}</span></span>
-<span id="cb55-226"><a href="#cb55-226" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-227"><a href="#cb55-227" aria-hidden="true" tabindex="-1"></a>Import your data to R from these Excel files.</span>
-<span id="cb55-228"><a href="#cb55-228" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-229"><a href="#cb55-229" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-opt-dis2-import}</span></span>
-<span id="cb55-230"><a href="#cb55-230" aria-hidden="true" tabindex="-1"></a>dis2 <span class="ot">&lt;-</span> <span class="fu">import</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"tsa_practice.xlsx"</span>), <span class="at">which =</span> <span class="st">"dis2"</span>)</span>
-<span id="cb55-231"><a href="#cb55-231" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb55-232"><a href="#cb55-232" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-233"><a href="#cb55-233" aria-hidden="true" tabindex="-1"></a>Inspect the data.</span>
-<span id="cb55-234"><a href="#cb55-234" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-235"><a href="#cb55-235" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-opt-dis2-inspect}</span></span>
-<span id="cb55-236"><a href="#cb55-236" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(dis2)</span>
-<span id="cb55-237"><a href="#cb55-237" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dis2)</span>
-<span id="cb55-238"><a href="#cb55-238" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(dis2)</span>
-<span id="cb55-239"><a href="#cb55-239" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb55-240"><a href="#cb55-240" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-241"><a href="#cb55-241" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-opt-dis2-view, eval=FALSE}</span></span>
-<span id="cb55-242"><a href="#cb55-242" aria-hidden="true" tabindex="-1"></a><span class="fu">View</span>(dis2)</span>
-<span id="cb55-243"><a href="#cb55-243" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb55-244"><a href="#cb55-244" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-245"><a href="#cb55-245" aria-hidden="true" tabindex="-1"></a>You have separate columns containing the counts. To plot this data, you need to first reshape your dataset by converting it from the current wide format to a long format.</span>
-<span id="cb55-246"><a href="#cb55-246" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-247"><a href="#cb55-247" aria-hidden="true" tabindex="-1"></a>The function <span class="in">`pivot_longer`</span> can perform such transformation.</span>
-<span id="cb55-248"><a href="#cb55-248" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-249"><a href="#cb55-249" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-opt-dis2-pivot-longer-tidy}</span></span>
-<span id="cb55-250"><a href="#cb55-250" aria-hidden="true" tabindex="-1"></a>dis2l <span class="ot">&lt;-</span> dis2 <span class="sc">%&gt;%</span></span>
-<span id="cb55-251"><a href="#cb55-251" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
-<span id="cb55-252"><a href="#cb55-252" aria-hidden="true" tabindex="-1"></a>      <span class="at">cols =</span> <span class="sc">-</span>year, </span>
-<span id="cb55-253"><a href="#cb55-253" aria-hidden="true" tabindex="-1"></a>      <span class="at">names_to =</span> <span class="st">"month"</span>, </span>
-<span id="cb55-254"><a href="#cb55-254" aria-hidden="true" tabindex="-1"></a>      <span class="at">values_to =</span> <span class="st">"case"</span></span>
-<span id="cb55-255"><a href="#cb55-255" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb55-256"><a href="#cb55-256" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">month =</span> <span class="fu">as_factor</span>(month)) <span class="sc">%&gt;%</span>  <span class="co"># as_factor sets levels in the order they appear</span></span>
-<span id="cb55-257"><a href="#cb55-257" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(year, month)</span>
-<span id="cb55-258"><a href="#cb55-258" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-259"><a href="#cb55-259" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(dis2l)</span>
-<span id="cb55-260"><a href="#cb55-260" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dis2l)</span>
-<span id="cb55-261"><a href="#cb55-261" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb55-262"><a href="#cb55-262" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-263"><a href="#cb55-263" aria-hidden="true" tabindex="-1"></a>dis2l_agg <span class="ot">&lt;-</span> dis2l <span class="sc">%&gt;%</span></span>
-<span id="cb55-264"><a href="#cb55-264" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">date_index =</span> <span class="fu">make_yearmonth</span>(<span class="at">year =</span> year, <span class="at">month =</span> month)) <span class="sc">%&gt;%</span></span>
-<span id="cb55-265"><a href="#cb55-265" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as_tsibble</span>(<span class="at">index =</span> date_index)</span>
-<span id="cb55-266"><a href="#cb55-266" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-267"><a href="#cb55-267" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dis2l_agg)</span>
-<span id="cb55-268"><a href="#cb55-268" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-269"><a href="#cb55-269" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> dis2l_agg) <span class="sc">+</span></span>
-<span id="cb55-270"><a href="#cb55-270" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> date_index, <span class="at">y =</span> case)) <span class="sc">+</span></span>
-<span id="cb55-271"><a href="#cb55-271" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_x_yearweek</span>(<span class="at">date_labels =</span> <span class="st">"%Y"</span>) <span class="sc">+</span></span>
-<span id="cb55-272"><a href="#cb55-272" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Date"</span>, <span class="at">y =</span> <span class="st">"Number of Cases"</span>, <span class="at">title =</span> <span class="st">"Disease 3 data"</span>) <span class="sc">+</span></span>
-<span id="cb55-273"><a href="#cb55-273" aria-hidden="true" tabindex="-1"></a>    tsa_theme</span>
-<span id="cb55-274"><a href="#cb55-274" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
-<span id="cb55-275"><a href="#cb55-275" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb55-276"><a href="#cb55-276" aria-hidden="true" tabindex="-1"></a>**dis1** corresponds to salmonellosis cases, **dis2** to measles cases in New York.</span>
+<span id="cb55-201"><a href="#cb55-201" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(dis3z)</span>
+<span id="cb55-202"><a href="#cb55-202" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dis3z, <span class="dv">10</span>)</span>
+<span id="cb55-203"><a href="#cb55-203" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-204"><a href="#cb55-204" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> dis3z) <span class="sc">+</span></span>
+<span id="cb55-205"><a href="#cb55-205" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> date_index, <span class="at">y =</span> n)) <span class="sc">+</span></span>
+<span id="cb55-206"><a href="#cb55-206" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_x_yearweek</span>(<span class="at">date_labels =</span> <span class="st">"%Y"</span>) <span class="sc">+</span></span>
+<span id="cb55-207"><a href="#cb55-207" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Date"</span>, <span class="at">y =</span> <span class="st">"Number of Cases"</span>, <span class="at">title =</span> <span class="st">"Disease 1 data"</span>) <span class="sc">+</span></span>
+<span id="cb55-208"><a href="#cb55-208" aria-hidden="true" tabindex="-1"></a>    tsa_theme</span>
+<span id="cb55-209"><a href="#cb55-209" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb55-210"><a href="#cb55-210" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-211"><a href="#cb55-211" aria-hidden="true" tabindex="-1"></a>Aggregating cases by month is another possibility.</span>
+<span id="cb55-212"><a href="#cb55-212" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-213"><a href="#cb55-213" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-dis3-month-plot-tidy}</span></span>
+<span id="cb55-214"><a href="#cb55-214" aria-hidden="true" tabindex="-1"></a>dis3_agg <span class="ot">&lt;-</span> dis3 <span class="sc">%&gt;%</span></span>
+<span id="cb55-215"><a href="#cb55-215" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(year, month)</span>
+<span id="cb55-216"><a href="#cb55-216" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-217"><a href="#cb55-217" aria-hidden="true" tabindex="-1"></a>dis3z_v2 <span class="ot">&lt;-</span> dis3_agg <span class="sc">%&gt;%</span></span>
+<span id="cb55-218"><a href="#cb55-218" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">date_index =</span> <span class="fu">make_yearmonth</span>(<span class="at">year =</span> year, <span class="at">month =</span> month)) <span class="sc">%&gt;%</span></span>
+<span id="cb55-219"><a href="#cb55-219" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as_tsibble</span>(<span class="at">index =</span> date_index)</span>
+<span id="cb55-220"><a href="#cb55-220" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-221"><a href="#cb55-221" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> dis3z_v2) <span class="sc">+</span></span>
+<span id="cb55-222"><a href="#cb55-222" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> date_index, <span class="at">y =</span> n)) <span class="sc">+</span></span>
+<span id="cb55-223"><a href="#cb55-223" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_x_yearweek</span>(<span class="at">date_labels =</span> <span class="st">"%Y"</span>) <span class="sc">+</span></span>
+<span id="cb55-224"><a href="#cb55-224" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Date"</span>, <span class="at">y =</span> <span class="st">"Number of Cases"</span>, <span class="at">title =</span> <span class="st">"Disease 1 data"</span>) <span class="sc">+</span></span>
+<span id="cb55-225"><a href="#cb55-225" aria-hidden="true" tabindex="-1"></a>    tsa_theme</span>
+<span id="cb55-226"><a href="#cb55-226" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb55-227"><a href="#cb55-227" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-228"><a href="#cb55-228" aria-hidden="true" tabindex="-1"></a><span class="fu">## Help for Optional Task 3.1.1 {#solution-3-1-1 .unnumbered}</span></span>
+<span id="cb55-229"><a href="#cb55-229" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-230"><a href="#cb55-230" aria-hidden="true" tabindex="-1"></a>Import your data to R from the dis2 excel file.</span>
+<span id="cb55-231"><a href="#cb55-231" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-232"><a href="#cb55-232" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-opt-dis2-import}</span></span>
+<span id="cb55-233"><a href="#cb55-233" aria-hidden="true" tabindex="-1"></a>dis2 <span class="ot">&lt;-</span> <span class="fu">import</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"tsa_practice.xlsx"</span>), <span class="at">which =</span> <span class="st">"dis2"</span>)</span>
+<span id="cb55-234"><a href="#cb55-234" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb55-235"><a href="#cb55-235" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-236"><a href="#cb55-236" aria-hidden="true" tabindex="-1"></a>Inspect the data.</span>
+<span id="cb55-237"><a href="#cb55-237" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-238"><a href="#cb55-238" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-opt-dis2-inspect}</span></span>
+<span id="cb55-239"><a href="#cb55-239" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(dis2)</span>
+<span id="cb55-240"><a href="#cb55-240" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dis2)</span>
+<span id="cb55-241"><a href="#cb55-241" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(dis2)</span>
+<span id="cb55-242"><a href="#cb55-242" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb55-243"><a href="#cb55-243" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-244"><a href="#cb55-244" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-opt-dis2-view, eval=FALSE}</span></span>
+<span id="cb55-245"><a href="#cb55-245" aria-hidden="true" tabindex="-1"></a><span class="fu">View</span>(dis2)</span>
+<span id="cb55-246"><a href="#cb55-246" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb55-247"><a href="#cb55-247" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-248"><a href="#cb55-248" aria-hidden="true" tabindex="-1"></a>You have separate columns containing the counts. To plot this data, you need to first reshape your dataset by converting it from the current wide format to a long format.</span>
+<span id="cb55-249"><a href="#cb55-249" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-250"><a href="#cb55-250" aria-hidden="true" tabindex="-1"></a>The function <span class="in">`pivot_longer`</span> can perform such transformation.</span>
+<span id="cb55-251"><a href="#cb55-251" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-252"><a href="#cb55-252" aria-hidden="true" tabindex="-1"></a><span class="in">```{r, task-3-1-opt-dis2-pivot-longer-tidy}</span></span>
+<span id="cb55-253"><a href="#cb55-253" aria-hidden="true" tabindex="-1"></a>dis2l <span class="ot">&lt;-</span> dis2 <span class="sc">%&gt;%</span></span>
+<span id="cb55-254"><a href="#cb55-254" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(</span>
+<span id="cb55-255"><a href="#cb55-255" aria-hidden="true" tabindex="-1"></a>      <span class="at">cols =</span> <span class="sc">-</span>year, </span>
+<span id="cb55-256"><a href="#cb55-256" aria-hidden="true" tabindex="-1"></a>      <span class="at">names_to =</span> <span class="st">"month"</span>, </span>
+<span id="cb55-257"><a href="#cb55-257" aria-hidden="true" tabindex="-1"></a>      <span class="at">values_to =</span> <span class="st">"case"</span></span>
+<span id="cb55-258"><a href="#cb55-258" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb55-259"><a href="#cb55-259" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">month =</span> <span class="fu">as_factor</span>(month)) <span class="sc">%&gt;%</span>  <span class="co"># as_factor sets levels in the order they appear</span></span>
+<span id="cb55-260"><a href="#cb55-260" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(year, month)</span>
+<span id="cb55-261"><a href="#cb55-261" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-262"><a href="#cb55-262" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(dis2l)</span>
+<span id="cb55-263"><a href="#cb55-263" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dis2l)</span>
+<span id="cb55-264"><a href="#cb55-264" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb55-265"><a href="#cb55-265" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-266"><a href="#cb55-266" aria-hidden="true" tabindex="-1"></a>dis2l_agg <span class="ot">&lt;-</span> dis2l <span class="sc">%&gt;%</span></span>
+<span id="cb55-267"><a href="#cb55-267" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">date_index =</span> <span class="fu">make_yearmonth</span>(<span class="at">year =</span> year, <span class="at">month =</span> month)) <span class="sc">%&gt;%</span></span>
+<span id="cb55-268"><a href="#cb55-268" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as_tsibble</span>(<span class="at">index =</span> date_index)</span>
+<span id="cb55-269"><a href="#cb55-269" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-270"><a href="#cb55-270" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dis2l_agg)</span>
+<span id="cb55-271"><a href="#cb55-271" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-272"><a href="#cb55-272" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="at">data =</span> dis2l_agg) <span class="sc">+</span></span>
+<span id="cb55-273"><a href="#cb55-273" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_line</span>(<span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">x =</span> date_index, <span class="at">y =</span> case)) <span class="sc">+</span></span>
+<span id="cb55-274"><a href="#cb55-274" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_x_yearweek</span>(<span class="at">date_labels =</span> <span class="st">"%Y"</span>) <span class="sc">+</span></span>
+<span id="cb55-275"><a href="#cb55-275" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Date"</span>, <span class="at">y =</span> <span class="st">"Number of Cases"</span>, <span class="at">title =</span> <span class="st">"Disease 3 data"</span>) <span class="sc">+</span></span>
+<span id="cb55-276"><a href="#cb55-276" aria-hidden="true" tabindex="-1"></a>    tsa_theme</span>
+<span id="cb55-277"><a href="#cb55-277" aria-hidden="true" tabindex="-1"></a><span class="in">```</span></span>
+<span id="cb55-278"><a href="#cb55-278" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-279"><a href="#cb55-279" aria-hidden="true" tabindex="-1"></a>**dis1** corresponds to salmonellosis cases, **dis2** to measles cases in New York.</span>
 </code><button title="Copy to Clipboard" class="code-copy-button" data-in-quarto-modal=""><i class="bi"></i></button></pre></div>
 </div></div></div></div></div>
 </div> <!-- /content -->
