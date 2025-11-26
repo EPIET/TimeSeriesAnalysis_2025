@@ -343,7 +343,168 @@ mort_trendsin2cos2 <- glm(cases ~ index + sin52 + cos52 + sin26 + cos26,
                            data = mortz)
                            
 summary(mort_trendsin2cos2)
+
+mortz.db <- as.data.frame(mortz)
+
+mortz.db$lag1 <-  Hmisc::Lag(mortz.db$cases, shift=1)
+mortz.db$lag2 <-  Hmisc::Lag(mortz.db$cases, shift=2)
+mortz.db$lag3 <-  Hmisc::Lag(mortz.db$cases, shift=3)
+mortz.db$lag4 <-  Hmisc::Lag(mortz.db$cases, shift=4)
+mortz.db$lag5 <-  Hmisc::Lag(mortz.db$cases, shift=5)
+
+mortz <-
+    mortz %>%
+    mutate(
+        lag1 =  Hmisc::Lag(cases, shift=1),   
+        lag2 =  Hmisc::Lag(cases, shift=2),   
+        lag3 =  Hmisc::Lag(cases, shift=3),   
+        lag4 =  Hmisc::Lag(cases, shift=4),   
+        lag5 =  Hmisc::Lag(cases, shift=5)  
+   )      
+   
+##
+mort_trendsin2cos2_ac1 <- glm(cases ~ index + sin52 + cos52 + sin26 + cos26 + lag1,
+                           family = "poisson", 
+                           data = mortz)
+   
+summary(mort_trendsin2cos2_ac1)
+
+mort_trendsin2cos2_1 <- glm(cases ~ index + sin52 + cos52 + sin26 + cos26,
+                           family = "poisson", 
+                           data = mortz[-1,])
+                           
+summary(mort_trendsin2cos2_1)
+
+lrtest(mort_trendsin2cos2_1, mort_trendsin2cos2_ac1)
+
+##
+mort_trendsin2cos2_ac2 <- glm(cases ~ index + sin52 + cos52 + sin26 + cos26 + lag1 + lag2,
+                           family = "poisson", 
+                           data = mortz)
+   
+summary(mort_trendsin2cos2_ac2)
+
+mort_trendsin2cos2_2 <- glm(cases ~ index + sin52 + cos52 + sin26 + cos26,
+                           family = "poisson", 
+                           data = mortz[-(1:2),])
+                           
+summary(mort_trendsin2cos2_2)
+
+lrtest(mort_trendsin2cos2_2, mort_trendsin2cos2_ac2)
+
+###
+
+mort_trendsin2cos2_ac3 <- glm(cases ~ index + sin52 + cos52 + sin26 + cos26 + lag1 + lag2 + lag3,
+                           family = "poisson", 
+                           data = mortz)
+   
+summary(mort_trendsin2cos2_ac3)
+
+mort_trendsin2cos2_3 <- glm(cases ~ index + sin52 + cos52 + sin26 + cos26,
+                           family = "poisson", 
+                           data = mortz[-(1:3),])
+                           
+summary(mort_trendsin2cos2_3)
+
+lrtest(mort_trendsin2cos2_3, mort_trendsin2cos2_ac3)
+
+#
+
+mort_trendsin2cos2_ac4 <- glm(cases ~ index + sin52 + cos52 + sin26 + cos26 + lag1 + lag2 + lag3 + lag4,
+                           family = "poisson", 
+                           data = mortz)
+   
+summary(mort_trendsin2cos2_ac4)
+
+mort_trendsin2cos2_4 <- glm(cases ~ index + sin52 + cos52 + sin26 + cos26,
+                           family = "poisson", 
+                           data = mortz[-(1:4),])
+                           
+summary(mort_trendsin2cos2_4)
+
+lrtest(mort_trendsin2cos2_4, mort_trendsin2cos2_ac4)
+
+
+
+####
+
+#
+
+mort_trendsin2cos2_ac5 <- glm(cases ~ index + sin52 + cos52 + sin26 + cos26 + lag1 + lag2 + lag3 + lag4 + lag5,
+                           family = "poisson", 
+                           data = mortz)
+   
+summary(mort_trendsin2cos2_ac5)
+
+mort_trendsin2cos2_5 <- glm(cases ~ index + sin52 + cos52 + sin26 + cos26,
+                           family = "poisson", 
+                           data = mortz[-(1:5),])
+                           
+summary(mort_trendsin2cos2_5)
+
+lrtest(mort_trendsin2cos2_5, mort_trendsin2cos2_ac5)
+
+
+
+####
+
+####
+
+#
+
+mort_trendsin2cos2_ac6 <- glm(cases ~ index + sin62 + cos62 + sin26 + cos26 + lag1 + lag2 + lag3 + lag4 + lag5 + lag6,
+                           family = "poisson", 
+                           data = mortz)
+   
+summary(mort_trendsin2cos2_ac6)
+
+mort_trendsin2cos2_6 <- glm(cases ~ index + sin62 + cos62 + sin26 + cos26,
+                           family = "poisson", 
+                           data = mortz[-(1:6),])
+                           
+summary(mort_trendsin2cos2_6)
+
+lrtest(mort_trendsin2cos2_6, mort_trendsin2cos2_ac6)
+
+
+
+####
+
+
+
+
+for (i in 1:6){
+
+    print(paste("Model with AC lag", i))
+    
+for(j in 1:i){
+    
+    lagirep("+lag",i    
+    
+    
+    
+    
+    as.formula(paste0(".~.+ lag" , i))) 
+    
+    rep("lag
+    
+    model_with_ac <- update(mort_trendsin2cos2, as.formula(paste0(".~.+ lag" , i))) 
+    
+    model_no_ac <- glm(cases ~ index + sin52 + cos52 + sin26 + cos26,
+                       family = "poisson", 
+                      data = mortz[c(1:i),])
+       
+    print(lrtest(model_no_ac, model_with_ac))
+    
+
+}
+
 ```
+
+
+
+
+
 
 ```{r, task-5-2-sin26-cos26-trend-plot-tidy}
 ggplot(data = mortz, aes(x = index)) +
@@ -383,7 +544,7 @@ better fit with the additional variables.
 
 
 ```{r, task-5-save}
-save(list = ls(pattern = 'mort'), file = here("data", "mortagg2_case_5.RData"))
+#save(list = ls(pattern = 'mort'), file = here("data", "mortagg2_case_5.RData"))
 
 #load(here("data","mortagg2_case_5.RData"))
 

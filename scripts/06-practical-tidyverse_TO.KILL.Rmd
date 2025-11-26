@@ -175,20 +175,21 @@ one package, so to be sure you are using the using the base R function here use
 #    TSA::acf(res, lag_max = 52, type="correlation", plot=TRUE)
 
 
-mort_res_acf <- stats::acf(mortz$res, lag.max = 52, type="correlation", plot=TRUE)
+mort_res_acf <- acf(mortz$res, lag.max = 52, type="correlation", plot=TRUE)
 
 mort_res_acf
 
 # not sure necessary and cannot get it to work with TSA::acf() which is already good enough. 
 #No need to complicate it.
-mort_res_acf %>%
-    autoplot() +
-    scale_x_continuous(breaks = seq(1, 50, by = 3)) +
-    labs(
-        x = "Lag (week)", y = "Autocorrelation",
-        title = "Autocorrelation of residuals model with trend plus 2 sine and cosine terms"
-    ) +
-    tsa_theme()
+#mort_res_acf %>%
+#    autoplot() +
+#    scale_x_continuous(breaks = seq(1, 50, by = 3)) +
+#    labs(
+#        x = "Lag (week)", y = "Autocorrelation",
+#        title = "Autocorrelation of residuals model with trend plus 2 sine and cosine terms"
+#    ) +
+#    tsa_theme()
+
 ```
 
 
@@ -256,52 +257,52 @@ independence of the residuals  in a time series. A significant $p$ value suggest
 NEEDS CHECKING; ADD AUTOCORRELATION TO THE MODEL? CODE IS NEEDED.
 
 ```{r, task-6-2-acf-residuals-2-tidy}
-resACF <-
-    left_join(
-        x = res,
-        y = mortz %>% select(Date, date_index),
-        by = c("time_i" = "Date")
-    ) %>%
-    as_tsibble(index = date_index) %>%
-    fill_gaps() %>%
-    feasts::ACF(residuals, lag_max = 50)
-
-resACF
-
-resACF %>%
-    autoplot() +
-    scale_x_continuous(breaks = seq(1, 50, by = 3)) +
-    labs(
-        x = "Lag", y = "Autocorrelation",
-        title = "Autocorrelation plot of residuals"
-    ) +
-    tsa_theme()
+#resACF <-
+#    left_join(
+#        x = res,
+#        y = mortz %>% select(Date, date_index),
+#        by = c("time_i" = "Date")
+#    ) %>%
+#    as_tsibble(index = date_index) %>%
+#    fill_gaps() %>%
+#    acf(residuals, lag_max = 50)
+#
+#resACF
+#
+#resACF %>%
+#    autoplot() +
+#    scale_x_continuous(breaks = seq(1, 50, by = 3)) +
+#    labs(
+#        x = "Lag", y = "Autocorrelation",
+#        title = "Autocorrelation plot of residuals"
+#    ) +
+#    tsa_theme()
 ```
 
 
 Then examine the sample partial autocorrelations.
 
 ```{r, task-6-2-pacf-residuals-2-tidy}
-resPACF <-
-    left_join(
-        x = res,
-        y = mortz %>% select(Date, date_index),
-        by = c("time_i" = "Date")
-    ) %>%
-    as_tsibble(index = date_index) %>%
-    fill_gaps() %>%
-    feasts::PACF(residuals, lag_max = 50)
-
-resPACF
-
-resPACF %>%
-    autoplot() +
-    scale_x_continuous(breaks = seq(1, 50, by = 3)) +
-    labs(
-        x = "Lag", y = "Partial autocorrelation",
-        title = "Partial autocorrelation plot of residuals"
-    ) +
-    tsa_theme()
+#resPACF <-
+#    left_join(
+#        x = res,
+#        y = mortz %>% select(Date, date_index),
+#        by = c("time_i" = "Date")
+#    ) %>%
+#    as_tsibble(index = date_index) %>%
+#    fill_gaps() %>%
+#    feasts::PACF(residuals, lag_max = 50)
+#
+#resPACF
+#
+#resPACF %>%
+#    autoplot() +
+#    scale_x_continuous(breaks = seq(1, 50, by = 3)) +
+#    labs(
+#        x = "Lag", y = "Partial autocorrelation",
+#        title = "Partial autocorrelation plot of residuals"
+#    ) +
+#    tsa_theme()
 ```
 
 What do you see? Is there any interesting pattern in the residuals that we need to account for?
@@ -309,7 +310,7 @@ What do you see? Is there any interesting pattern in the residuals that we need 
 
 
 ```{r, task-6-save}
-save(list = ls(pattern = 'mort'), file = here("data", "mortagg2_case_6.RData"))
+#save(list = ls(pattern = 'mort'), file = here("data", "mortagg2_case_6.RData"))
 
 #load(here("data","mortagg2_case_6.RData"))
 
