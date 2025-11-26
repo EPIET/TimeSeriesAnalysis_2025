@@ -14,7 +14,8 @@ pacman::p_load(
   ISOweek,
   slider,    # for rolling means
   pander,
-  tidyverse
+  tidyverse,
+  gtsummary
 )
 
 
@@ -90,7 +91,7 @@ at $t-2$, $t-1$, $t$, $t+1$ and $t+2$.
 Load the `mortagg.Rdata` dataset.
 
 ```{r, task-4-1-import-data}
-load(here("data", "mortagg.Rdata"))
+load(here("data", "mortagg2.Rdata"))
 ```
 
 Inspect the data.
@@ -559,16 +560,15 @@ mort_poissontrend_pop %>%
 plot the predicted and the original values:
 
 ```{r, task-opt-4-4-regression-pois-plot-tidy}
-
 ggplot(data = mortz, mapping = aes(x = date_index)) +
-  geom_point(mapping = aes(y = mortality_rate), alpha = 0.5) +
-  geom_line(mapping = aes(y = fitted(mort_poissontrend_pop)/pop*1000), colour = "blue", lwd=1.1) +
+  geom_point(mapping = aes(y = cases), alpha = 0.5) +
+  geom_line(mapping = aes(y = fitted(mort_poissontrend_pop)), colour = "blue", lwd=1.1) +
   scale_y_continuous(limits = c(0, NA)) +
   scale_x_yearweek(date_labels = "%Y-%W", 
                    date_breaks = "1 year") +
   labs(
-    x = "Week", y = "Mortality rate (per 1000 pop)",
-    title = "Spain: Mortality rate per 1000 population per week with fitted trend"
+    x = "Week", y = "Mortality rate",
+    title = "Spain: Mortality rate per week with fitted trend"
   ) +
   tsa_theme
 
@@ -576,9 +576,36 @@ ggplot(data = mortz, mapping = aes(x = date_index)) +
 
 Compare the trend and IRR in the models with and without population. 
 
+
+For communication, it might be better to present the results in terms of 
+number of deaths per 100.000 inhabitants (population), which would then be 
+called the mortality rate. We will now plot the same trend but as rate per 
+100.000 inhabitants. For this purpose we must adjust both the observed and the 
+fitted values by multiplying with 100.000. 
+
+```{r, task-opt-4-3-regression-pois-plot-tidy}
+
+mortz<- mortz %>%
+  mutate(
+    mortality_rate = cases/pop*100000
+  )
+
+
+ggplot(data = mortz, mapping = aes(x = date_index)) +
+  geom_point(mapping = aes(y = mortality_rate), alpha = 0.5) +
+  geom_line(mapping = aes(y = fitted(mort_poissontrend_pop)/pop*100000), colour = "blue", lwd=1.1) +
+  scale_y_continuous(limits = c(0, NA)) +
+  scale_x_yearweek(date_labels = "%Y-%W", 
+                   date_breaks = "1 year") +
+  labs(
+    x = "Week", y = "Mortality rate (per 100.000 pop)",
+    title = "Spain: Mortality rate per 100.000 population per week with fitted trend"
+  ) +
+  tsa_theme
+
+```
+
 How do you interpret the IRR in the model for mortality rate?
-
-
 
 
 
