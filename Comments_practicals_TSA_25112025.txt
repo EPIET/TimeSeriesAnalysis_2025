@@ -18,8 +18,7 @@ PRACTICAL 5
 -Function cosinor(): do we need it here? I don't see the advantages of using it instead of creating the sine cosine terms, which they will have to do later on anyway. But maybe I'm missing something - please enlighten me!
 
 
-
-PRACTICAL 6
+PRACTICAL 6 - NA for now
 
 PRACTICAL 7
 
