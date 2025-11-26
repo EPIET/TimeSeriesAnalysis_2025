@@ -612,7 +612,7 @@ How do you interpret the IRR in the model for mortality rate?
 ## Task 4.5 (Optional) {-#task-4-5}
 
 Carry out the same analysis for men and women. Do you see differences between 
-the two? 
+the two? where? 
 
 
 
