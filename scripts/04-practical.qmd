@@ -1,6 +1,7 @@
 # Practical Session 4: Smoothing and Trends {.unnumbered}
 
 ```{r, knitr-global-chunk-04t}
+rm(list=ls())
 # Install pacman if not installed already, and activate it
 if (!require("pacman")) install.packages("pacman")
 
@@ -12,11 +13,11 @@ pacman::p_load(
   tsibble,
   ISOweek,
   slider,    # for rolling means
-  gtsummary,
-  imputeTS, 
   pander,
-  tidyverse
+  tidyverse,
+  gtsummary
 )
+
 
 # Create tsa_theme
 tsa_theme <- theme_bw() + 
@@ -26,7 +27,7 @@ tsa_theme <- theme_bw() +
             legend.background = element_rect(fill = "white", 
                                              size = 4, 
                                              colour = "white"),
-            # legend.justification = c(0, 1),
+            legend.justification = c(0, 1),
             legend.position = "bottom",
             panel.grid.minor = element_blank()
         )
@@ -34,9 +35,9 @@ tsa_theme <- theme_bw() +
 
 ## Mortality Surveillance data in Spain {#title-4-1 .unnumbered}
 
-The Spanish daily mortality monitoring system is run by the National Centre for Epidemiology in Madrid and gathers data from a stable number of municipalities around the country with a computerised death register; the system is representative of the population of Spain and was developed in 2004 with the objective of identifying exceedances in mortality during the summer period. Data since 2000 were collected retrospectively.
+The number of deaths in a country can be used as a surveillance indicator. An example of such an application is EuroMOMO, which monitors number of fatalities in European countries on a weekly basis (https://www.euromomo.eu/). The weekly time series on the number of deathls are routinely used to follow seasonal infections, for example influenza and covid 19 during the winter, but also heatwaves in the summer.
 
-Practicals 4-7 and 11 use data from this mortality surveillance system. Session 10 uses data from the same system, but for only one autonomous community in Spain (Aragón).
+In case studies 4 to 7, we will analyse the number of deaths retrieved from the Spanish national statistical institute (INE) (https://ine.es/). Each case study will build up from the analysis conducted in the previous case study. The data contains the number of fatalities per week for the entire country, from 2010 to 2019, and includes variables on year, week, total number of deaths (`cases`), and total population; the same data is also included for men and women.
 
 ## Expected learning outcomes {#learn-4 .unnumbered}
 
@@ -46,19 +47,13 @@ By the end of the session, participants should be able to:
 
 -   Assess and interpret the significance of trend in surveillance data.
 
-You are provided with a dataset (`mortagg.csv`) which includes variables on week, year, total number of deaths (`cases`), and population, as well as number of deaths and population among males and females separately.
+Save any changes to a new dataset named \``mortagg`.
 
 ## Task 4.1 {#task-4-1 .unnumbered}
 
-Assess visually how the total registered number of deaths has been behaving in the years with available data. Save any changes to a new dataset named \``mortagg`.
+Assess visually how the total registered number of deaths has been behaving in the years with available data.
 
 Discuss your results with your peers.
-
-How would you proceed in analysing your data to further understand how mortality behaves?
-
-## Task 4.1.1 (Optional) {#task-4-1-1 .unnumbered}
-
-Would you reach the same conclusions if you were exploring mortality for males and females separately? Discuss with your peers.
 
 ### Moving average and direct statistical modelling of trends {#task-4-1-1a .unnumbered}
 
@@ -66,32 +61,12 @@ Moving averages are simple methods to visualise the general trend of a series af
 
 Moving averages model a time series by calculating the numerical mean of the values adjacent to it. It is calculated for each observation, moving along the time axis: e.g. at each time $t$ and for a window of 5 time units, one way of calculating the moving average is by using the observations at $t-2$, $t-1$, $t$, $t+1$ and $t+2$.
 
-### Regression {#task-4-1-1b .unnumbered}
+## Help for Task 4.1 {#solution-4-1 .unnumbered .unnumbered}
 
-Using regression methods against the time variable is a simple and familiar way to look at trends and test the slope with the Wald test provided in the output. The kind of regression and interpretation you will use depends on the nature of your dependent variable – in this case, the number (count) of registered deaths.
+Load the `mortagg.Rdata` dataset.
 
-## Task 4.2 {#task-4-2 .unnumbered}
-
-Assess visually the existence of a long-term trend and periodicity in the \``mortagg` dataset by using smoothing techniques. Where would you centre the smoothing window and why? What is the effect of using different smoothing window centering options?
-
-## Task 4.3 {#task-4-3 .unnumbered}
-
-Assess statistically whether the registered number of deaths has been stable in the years available in your dataset. How well can you model the registered number of deaths by assessing only the long-term trend?
-
-## Task 4.3.1 (Optional) {#task-4-3-1 .unnumbered}
-
-How could you take the – potentially changing – population of Spain into account in your analyses? Data on population are provided as variables in `mortagg$pop`.
-
-## Task 4.3.2 (Optional) {#task-4-3-2 .unnumbered}
-
-If you are confident with addressing the tasks above and still have enough time, follow the same procedure with the `dis1` dataset. Which regression models may be relevant in this example?
-
-## Help for Task 4.1 {#solution-4-1 .unnumbered}
-
-Import the `mortality.csv` dataset.
-
-```{r, task-4-1-import-csv}
-mortagg <- import(here("data", "mortagg.csv"))
+```{r, task-4-1-import-data}
+load(here("data", "mortagg2.Rdata"))
 ```
 
 Inspect the data.
@@ -103,10 +78,10 @@ view(mortagg)
 ```
 
 ```{r, task-4-1-describe-mort}
-skimr::skim(mortagg)
+skimr::skim(mortagg) 
 ```
 
-Create a time series object with `tsibble`, using the total case counts and plot it.
+Create a time series object with `tsibble`, using the total case counts and plot the time series.
 
 ```{r, task-4-1-mort-aggr-week-plot-tidy}
 mortz <-
@@ -114,6 +89,12 @@ mortz <-
   mutate(date_index = make_yearweek(year = year, week = week)) %>%
   as_tsibble(index = date_index)
 
+
+ggplot(data = mortz) +
+  geom_line(mapping = aes(x = date_index, y = cases)) +
+  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
+  labs(x = "Year Week", y = "Number of Deaths", title = "Spain: number of deaths per week") +
+  tsa_theme
 ```
 
 ```{r, task-4-1-mort-aggr-week-plot2-tidy}
@@ -121,27 +102,37 @@ mortz <-
 ggplot(data = mortz) +
   geom_line(mapping = aes(x = date_index, y = cases)) +
   scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
-  scale_y_continuous(limits = c(2000, NA)) +
-  labs(x = "Date", y = "Number of Deaths", title = "Mortality") +
+  scale_y_continuous(limits = c(0, NA)) +
+  labs(x = "Date", y = "Number of Deaths", title = "Spain: number of deaths per week") +
   tsa_theme
 ```
 
-## Help for Task 4.1.1 {#solution-4-1-1 .unnumbered}
+Create a similar plot for men and women.
 
 ```{r, task-opt-4-1-mort-sex-aggr-week-plots-tidy}
-## Men and Women
-ggplot(data = mortz) +
-  geom_line(mapping = aes(x = date_index, y = cases_m),
-        colour = "green",
-        lwd=1.1) +
-  geom_line(mapping = aes(x = date_index, y = cases_f),
-        colour = "black",
-        lwd=1.1) + 
+
+## Men and Women in wide format
+
+colors <- c("cases_m"="green", "cases_f"="black")
+
+ggplot(data = mortz, aes(x = date_index)) +
+  geom_line(mapping = aes(y = cases_m, colour = "cases_m"), lwd=1) +
+  geom_line(mapping = aes(y = cases_f, colour = "cases_f"), lwd=1) + 
   scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
   scale_y_continuous(limits = c(0, NA)) +
-  labs(x = "Week", y = "Number of Deaths", title = "Spain: Number of deaths by sex") +
+  labs(x = "Week", y = "Number of Deaths", title = "Spain: number of deaths per week and by sex", 
+         colour = "Legend") +
+  scale_color_manual(values = colors, name="", labels = c("Men", "Women")) +
   tsa_theme
 ```
+
+## Task 4.2 {#task-4-2 .unnumbered .unnumbered}
+
+Assess visually the existence of a long-term trend and periodicity in the `mortaagg` dataset by using smoothing techniques.
+
+Consider: where would you centre the smoothing window and why? What is the effect of using different smoothing window centring options? Test!
+
+Of all the methods applied here (moving average with different windows, loess with different spans), which one do you think is the best for eliminating seasonality? Where would you centre the smoothing window and why? What would happen if you used an even greater window? Test!
 
 ## Help for Task 4.2 {#solution-4-2 .unnumbered}
 
@@ -206,50 +197,33 @@ The `complete` argument indicates where the computation should be carried in rol
 We applied a more complicated function to compute `MA5c`, taking a backwards moving window of six values but omitting the latest value (current time point) from the calculation of the average.
 
 ```{r task-4-2-mort-MAx-plots-tidy, message=FALSE, warning=FALSE}
+
 ## wide format dataset ---
+
+colors <- c("cases"="black", "MA5a"="red", "MA5b"="blue", "MA5c"="brown")
+
 ggplot(data = mortzma, mapping = aes(x = date_index)) +
-  geom_line(mapping = aes(y = cases), colour = "black") +
-  geom_line(mapping = aes(y = MA5a), colour = "red") +
-  geom_line(mapping = aes(y = MA5b), colour = "blue") +
-  geom_line(mapping = aes(y = MA5c), colour = "green") +
+  geom_line(mapping = aes(y = cases, colour = "cases")) +
+  geom_line(mapping = aes(y = MA5a, colour = "MA5a")) +
+  geom_line(mapping = aes(y = MA5b, colour = "MA5b")) +
+  geom_line(mapping = aes(y = MA5c, colour = "MA5c")) +
   scale_x_yearweek(date_labels = "%Y-%W", 
                    date_breaks = "1 year") +
-  labs(x = "Date", 
-       y = "Number of Deaths", 
-       title = "Moving averages") +
+  scale_y_continuous(limits = c(0, NA)) +
+  labs(x = "Week", 
+       y = "Number of deaths", 
+       title = "Spain: number of deaths - moving averages",
+       colour="Legend") +
+  scale_color_manual(values = colors, name="") +
   tsa_theme
+
 ```
 
 We observe that the calculation is similar across these various methods, but is not aligned to the series in the same way. `MA5a` is centered in the middle of the period used to calculate the mean. `MA5b` is placed at the end of the period. `MA5c` is placed one step forward (smoothing functions can be used for forecasting the following point). The "models" provided are similar for a 5-week window, but the *lag* is different.
 
 Moving average is only one way of smoothing. Other ways of smoothing the data to get a general idea of the trend include, for example, LOESS (locally estimated scatterplot smoothing) smoothing, where the contribution of surrounding observations is weighted, i.e. it is not the arithmetical mean for each set (window) of observations.
 
-The `stat_smooth` provides a smoothing curve using a LOESS method.
-
-```{r task-4-2-mort-MAx-scatterplot-tidy, message=FALSE, warning=FALSE}
-ggplot(mortz, mapping = aes(x = date_index, y = cases)) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(se = TRUE) +
-  scale_x_yearweek(date_labels = "%Y-%W", 
-                   date_breaks = "1 year") +
-  scale_y_continuous(limits = c(0, NA)) +
-  labs(x = "Date", 
-       y = "Number of Deaths", 
-       title = "Loess smoothing") +
-  tsa_theme
-```
-
- We can change the degree of smoothing by adding a `span` option. The `span` controls the amount of smoothing for the default loess smoother; smaller numbers produce wigglier lines, and larger numbers produce smoother lines.
-
-```{r, task-4-2-mort-MAx-scatterplot-span-tidy}
-ggplot(data = mortz, mapping = aes(x = date_index, y = cases)) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(se = TRUE, span = 0.1) +
-  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
-  scale_y_continuous(limits = c(0, NA)) +
-  labs(x = "Date", y = "Number of Deaths", title = "Loess smoothing (span = 0.1)") +
-  tsa_theme
-```
+Why do you think we have chosen these windows for the moving average?
 
 To better observe the general trend, we need to find the length of the moving average that will erase the seasonal component. Various lengths can be tried; here we have used 25, 51 and 103.
 
@@ -295,42 +269,91 @@ You can use `View` to examine the first rows of `mortzma2.`
 View(mortzma2)
 ```
 
+Plot the times series with the different moving averages.
+
 ```{r, task-4-2-mort-MAx-longer-length-plots-tidy}
-ggplot(mortzma2, mapping = aes(x = date_index)) +
-  geom_line(mapping = aes(y = cases), colour = "black", lwd=0.7) +
-  geom_line(mapping = aes(y = MA25), colour = "red", lwd=1.1) +
-  geom_line(mapping = aes(y = MA51), colour = "blue", lwd=1.1) +
-  geom_line(mapping = aes(y = MA103), colour = "orange", lwd=1.1) +
+## wide format dataset ---
+
+colors <- c("cases"="black", "MA25"="red", "MA51"="blue", "MA103"="orange")
+
+ggplot(data = mortzma2, mapping = aes(x = date_index)) +
+  geom_line(mapping = aes(y = cases, colour = "cases"), linewidth=1) +
+  geom_line(mapping = aes(y = MA25, colour = "MA25"), linewidth=1.2) +
+  geom_line(mapping = aes(y = MA51, colour = "MA51"), linewidth=1.2) +
+  geom_line(mapping = aes(y = MA103, colour = "MA103"), linewidth=1.2) +
   scale_x_yearweek(date_labels = "%Y-%W", 
                    date_breaks = "1 year") +
   scale_y_continuous(limits = c(0, NA)) +
-  labs(x = "Week", 
+  labs(x = "Year-Week", 
        y = "Number of deaths", 
-       title = "Moving averages") +
+       title = "Spain: number of deaths - moving averages with 26, 51 and 103-week windows",
+       colour="Legend") +
+  scale_color_manual(values = colors, name="", breaks = names(colors)[c(1,2,3,4)]) +
   tsa_theme
 ```
 
-Comment on the lines provided by the different smoothing windows. Which one do you think is the best for eliminating seasonality? What would happen if you used an even greater window?
+Moving average is only one way of smoothing. Other ways of smoothing the data to get a general idea of the trend include, for example, LOESS (locally estimated scatterplot smoothing) smoothing, where the contribution of surrounding observations is weighted, i.e. it is not the arithmetical mean for each set (window) of observations.
+
+The `geom_smooth` provides a smoothing curve using a LOESS method.
+
+```{r task-4-2-mort-MAx-scatterplot-tidy, message=FALSE, warning=FALSE}
+ggplot(mortz, mapping = aes(x = date_index, y = cases)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(se = TRUE) +
+  scale_x_yearweek(date_labels = "%Y-%W", 
+                   date_breaks = "1 year") +
+  scale_y_continuous(limits = c(0, NA)) +
+  labs(x = "Date", 
+       y = "Number of Deaths", 
+       title = "Loess smoothing") +
+  tsa_theme
+```
+
+We can change the degree of smoothing by adding a `span` option. The `span` controls the amount of smoothing for the default loess smoother; smaller numbers produce wigglier lines, and larger numbers produce smoother lines.
+
+```{r, task-4-2-mort-MAx-scatterplot-span-tidy2}
+ggplot(data = mortz, mapping = aes(x = date_index, y = cases)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(se = TRUE, span = 0.1) +
+  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
+  scale_y_continuous(limits = c(0, NA)) +
+  labs(x = "Date", y = "Number of Deaths", title = "Loess smoothing (span = 0.1)") +
+  tsa_theme
+```
+
+In ggplot(), we can also use `stat_smooth`, which provides a smoothing curve using a LOESS method, and were wee can change the degree of smoothing by adding a `span` option. The `span` controls the amount of smoothing for the default loess smoother; smaller numbers produce wigglier lines, and larger numbers produce smoother lines.
+
+```{r, task-4-2-mort-MAx-scatterplot-span-tidy}
+ggplot(data = mortz, mapping = aes(x = date_index, y = cases)) +
+  geom_point(alpha = 0.5) +
+  stat_smooth(se = TRUE, span=0.1) +
+  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
+  scale_y_continuous(limits = c(0, NA)) +
+  labs(x = "Year-Week", y = "Number of deaths", 
+    title = "Spain: number of deaths - loess smoothing (span = 0.1)") +
+  tsa_theme
+```
+
+Test different values of span. Comment on the lines provided by the different smoothing windows. Which one do you think is the best for eliminating seasonality? What would happen if you used an even greater window?
+
+## Task 4.3 {#task-4-3 .unnumbered .unnumbered}
+
+Assess statistically whether the registered number of deaths has been stable in the years available in your dataset.
 
 ## Help for Task 4.3 {#solution-4-3 .unnumbered}
 
-Using regression against time is a very simple way to look at the trends and test the slope with the Wald test provided.
+Using regression methods against the time variable is a simple and familiar way to look at trends and test the slope. The kind of regression and interpretation you will use depends on the nature of your dependent variable (outcome), in this case, the number (count) of registered deaths. Time will be represented by a variable that simply enumerates the observations; in other words, time is a variable with values from 1 (the first observation in time; here week 1, 2010) to `n` (the last observation in time; here week 52, 2019).
 
-We will use the standard `glm` function to fit a Poisson regression model.
-
-For the regression you will need to create a date variable from the year and week (consecutive number of week).
-
-```{r, task-4-3-regression-lm}
+```{r, task-4-3-regression-poi}
 mortz <-
   mortz %>%
-  ungroup() %>% 
   mutate(index = seq.int(from = 1, to = nrow(.)))
 
-mort_poissontrend <- glm(
-  formula = cases ~ index,
-  family = "poisson",
-  data = mortz
+mort_poissontrend <- glm(formula = cases ~ index,
+                          family = "poisson",
+                          data = mortz
 )
+
 ```
 
 Check model results.
@@ -339,212 +362,144 @@ Check model results.
 summary(mort_poissontrend)
 ```
 
-The `glm` function fits a linear regression model to the log of the number of deaths. You can use the `names` function to see the various components of the output of the `glm` function, as above. As mentioned in the previous session, the `str` function is also often useful for looking at the "structure" of the output of an R function.
+The `glm` function fits a linear regression model to the log of the weekly number of deaths. You can use the `names` function to see the various components of the output of the `glm` function, as above. As mentioned in the previous session, the `str` function is also often useful for looking at the "structure" of the output of an R function. Summary provides a quick function for checking the results.
 
-Variables in R models are specified using notation along the lines of `response_variable ~ explanatory_variable_1 + explanatory_variable_2` etc. Check the material from the MVA module. A more detailed explanation of how to build model formulas in R can be found in the *Details* section of the help page of the `formula` function: `?stats::formula`.
+Variables in R models are specified using notation along the lines of `response_variable ~ explanatory_variable_1 + explanatory_variable_2` etc. Check the material from the MVA module. A more detailed explanation of how to build model formulas in R can also be found in the *Details* section of the help page of the `formula` function: `?stats::formula`.
 
-`summary`, when given the results of fitting a regression model, will provide a summary of the fitted trend and associated statistics.
+`summary`, when given the results of fitting a regression model, will provide a summary of the fitted parameters (coefficients); in this case the parameter of `index` is the trend.
 
 Identify and interpret the intercept and the trend. In a Poisson model on the log(y), the coefficient needs to be exponentiated in order to interpret it for the output y (that is, the original y without the log).
 
 Plot the fitted values against the observed ones.
 
-```{r, task-4-3-regression-lm-plot-tidy}
+```{r, task-4-3-regression-glm-plot-tidy}
+colors <- c("observed"="black", "fitted"="blue")
+
 ggplot(data = mortz, mapping = aes(x = date_index)) +
-  geom_point(mapping = aes(y = cases), alpha = 0.5) +
-  geom_line(mapping = aes(y = fitted(mort_poissontrend)), colour = "green", lwd = 1.1) +
-  scale_x_yearweek(date_labels = "%Y-%W", 
-                   date_breaks = "1 year") +
+  geom_point(mapping = aes(y = cases, colour="observed"), alpha = 0.5) +
+  geom_line(mapping = aes(y = fitted(mort_poissontrend), colour = "fitted"), linewidth=1.1) +
   scale_y_continuous(limits = c(0, NA)) +
-  labs(x = "Week", y = "Number of deaths", title = "Number of deaths per week with fitted trend") +
+  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
+  labs(x = "Year-Week", y = "Number of deaths", title = "Spain: number of deaths per week with fitted trend") +
+  scale_color_manual(values = colors, name="") +
   tsa_theme
 ```
 
-## Help for Task 4.3.1 {#solution-4-3-1 .unnumbered}
+The trend as incidence rate ratio (IRR) provides the average relative change in the number of deaths from one week to the next.
+
+```{r, task-opt-4-3-IRR}
+
+# Trend in the original scale of the outcome cases (deaths) wit 95% confidence intervals. 
+IRR_trend <- exp(cbind(Estimate=mort_poissontrend$coef, confint(mort_poissontrend)))
+
+(IRR_trend['index', ] - 1) *100
+
+```
+
+The result above indicates that from one week to another, the number of deaths increases in average 0,019% per week, with a 95% confidence interval of \[0,018%; 0,020%\].
+
+Another way in R to obtain the incidence rate ratio (IRR) is:
+
+`{r: task-4-3-IRR-trend} mort_poissontrend %>%    gtsummary::tbl_regression(     exponentiate = T,     estimate_fun = ~style_number(.x, digits = 4)   )`
+
+## Task 4.4 {#task-4-4 .unnumbered .unnumbered}
+
+How could you take the changing population size of Spain into account in your analyses?
+
+## Help for Task 4.4 {#solution-4-4 .unnumbered}
 
 To take the population into account, we need to include the population in the model. This is done by adding a term called `offset()`. The parameter beta for the offset, in this case for the population, will be forced to be 1; in other words, the offset will not affect the outcome. The advantage is that we can interpret the IRR of time in terms of mortality rate = cases/population.
 
-```{r, task-opt-4-3-regression-pois}
-mort_poissontrend_pop <- glm(cases ~ index + offset(log(pop)),
-  data = mortz,
-  family = "poisson"
-)
+```{r, task-opt-4-4-regression-pois}
+mort_poissontrend_pop <- glm(cases ~  index + offset(log(pop)),
+                          data = mortz,
+                          family = "poisson"
+                        )
 
 summary(mort_poissontrend_pop)
+
+# Trend in the original scale of the outcome cases (deaths) with 95% confidence intervals. 
+IRR_trend_pop <- exp(cbind(Estimate=mort_poissontrend_pop$coef, confint(mort_poissontrend_pop)))
+
+(IRR_trend_pop['index', ] - 1) *100
+
 ```
 
-The summary() function will only provide the coefficients in the original log scale of the poisson model. Using `tbl_regression` with the argument `exponentiate = T` we get the IRR coefficient
+The summary() function will only provide the coefficients in the original log 
+scale of the poisson model. Another way of obtaining the IRR is by using `tbl_regression` with the argument 
+`exponentiate = TRUE`:
 
-```{r}
+
+```{r: task-4-4-regression-pois-pop-IRR}
 mort_poissontrend_pop %>% 
   gtsummary::tbl_regression(
-    exponentiate = T,
+    exponentiate = TRUE,
     estimate_fun = ~style_number(.x, digits = 4)
   )
 ```
 
-And plot the predicted against the original values
+plot the predicted and the original values:
 
-```{r, task-opt-4-3-regression-pois-plot-tidy}
+```{r, task-opt-4-4-regression-pois-pop_plot-tidy}
 ggplot(data = mortz, mapping = aes(x = date_index)) +
   geom_point(mapping = aes(y = cases), alpha = 0.5) +
-  geom_line(mapping = aes(y = fitted(mort_poissontrend_pop)), colour = "blue", lwd = 1.1) +
-  #scale_y_continuous(limits = c(0, NA)) +
+  geom_line(mapping = aes(y = fitted(mort_poissontrend_pop)), colour = "blue", lwd=1.1) +
+  scale_y_continuous(limits = c(0, NA)) +
   scale_x_yearweek(date_labels = "%Y-%W", 
                    date_breaks = "1 year") +
   labs(
-    x = "Time point", y = "Number of Deaths",
-    title = "Mortality with fitted trend (Poisson)"
+    x = "Week", y = "Mortality rate",
+    title = "Spain: Mortality rate per week with fitted trend"
   ) +
   tsa_theme
+
 ```
 
-## Help for Task 4.3.2 {#solution-4-3-2 .unnumbered}
 
-You can use the salmonellosis example (`dis1`) to see how an exponential trend might fit the data better than a linear one.
+Compare the trend and IRR in the models with and without population.
 
-```{r, task-opt-4-3-2-source-Rscript, echo=TRUE, eval=FALSE}
-source("src/tidyverse/session_4.R")
-```
 
-For the regression you will still need to create a date variable from the year and week (weeknumber).
+For communication, it might be better to present the results in terms of 
+number of deaths per 100.000 inhabitants (population), which would then be 
+called the mortality rate. We will now plot the same trend but as rate per 
+100.000 inhabitants. For this purpose we must adjust both the observed and the 
+fitted values by multiplying with 100.000. 
 
-```{r, task-opt-4-3-2-data}
-dis1 <- import(here("data", "tsa_practice.xlsx"), which = "dis1")
+```{r, task-opt-4-3-regression-pois-mortrate-plot-tidy}
 
-dis1 <-
-  dis1 %>%
-  mutate(date = seq.int(from = 1, to = nrow(.)))
-```
+mortz<- mortz %>%
+  mutate(
+    mortality_rate = cases/pop*100000
+  )
 
-Generate a new variable `lcases` as the natural logarithm of cases:
 
-```{r, task-opt-4-3-2-log-cases}
-salmo <- dis1
-
-salmo <-
-  salmo %>%
-  mutate(lcases = log(cases))
-
-salmoz2 <-
-  salmo %>%
-  mutate(date_index = make_yearweek(year = year, week = week)) %>%
-  as_tsibble(index = date_index)
-```
-
-Plot the logarithm of the number of cases according to the time:
-
-```{r, task-opt-4-3-2-plot-tidy}
-ggplot(data = salmoz2, mapping = aes(x = date_index)) +
-  geom_line(mapping = aes(y = lcases)) +
-  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
+ggplot(data = mortz, mapping = aes(x = date_index)) +
+  geom_point(mapping = aes(y = mortality_rate), alpha = 0.5) +
+  geom_line(mapping = aes(y = fitted(mort_poissontrend_pop)/pop*100000), colour = "blue", lwd=1.1) +
   scale_y_continuous(limits = c(0, NA)) +
-  labs(x = "Year", y = "Cases (natural log scale)", title = "Log Salmonella data") +
-  tsa_theme
-```
-
-Fit a model of `lcases` against date using linear regression.
-
-```{r, task-opt-4-3-2-log-lm}
-logmodel <- lm(lcases ~ date, data = salmoz2)
-summary(logmodel)
-```
-
-Plot the log data and the model against time. Note that fitted values cannot be created where the number of cases is missing. We will do a linear interpolation of the fitted values to fill in the gaps using the `imputeTS` package.
-
-```{r, task-opt-4-3-2-interpolate-lm}
-fitted_pois_df <-
-  enframe(fitted(logmodel), name = "date", value = "ltrend") %>%
-  mutate(date = as.integer(date))
-
-salmoz2 <-
-  salmoz2 %>%
-  left_join(
-    x = .,
-    y = fitted_pois_df,
-    by = "date"
-  ) %>%
-  mutate(ltrend = imputeTS::na_interpolation(x = ltrend, option = "linear"))
-
-
-```
-
-
-```{r, task-opt-4-3-2-interpolate-lm-plot-tidy}
-ggplot(data = salmoz2, mapping = aes(x = date_index)) +
-  geom_line(mapping = aes(y = lcases)) +
-  geom_line(mapping = aes(y = ltrend), colour = "green") +
-  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
-  scale_y_continuous(limits = c(0, NA)) +
+  scale_x_yearweek(date_labels = "%Y-%W", 
+                   date_breaks = "1 year") +
   labs(
-    x = "Time point",
-    y = "Log Salmonella cases",
-    title = "Log Salmonella data with fitted trend"
+    x = "Week", y = "Mortality rate (per 100.000 pop)",
+    title = "Spain: Mortality rate per 100.000 population per week with fitted trend"
   ) +
   tsa_theme
-```
-
-Generate a new variable (`trend`), the anti-log of the prediction (`ltrend`):
-
-```{r, task-opt-4-3-2-anti-log}
-salmoz2 <-
-  salmoz2 %>%
-  mutate(trend = exp(ltrend))
-```
-
-Plot the real data (`cases`) and this model (`trend`) according to time:
-
-```{r, task-opt-4-3-2-anti-log-plot-tidy}
-ggplot(data = salmoz2, mapping = aes(x = date_index)) +
-  geom_line(mapping = aes(y = cases)) +
-  geom_line(mapping = aes(y = trend), colour = "green") +
-  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
-  scale_y_continuous(limits = c(0, NA)) +
-  labs(
-    x = "Time point",
-    y = "Salmonella cases",
-    title = "Salmonella data with fitted trend"
-  ) +
-  tsa_theme
-```
-
-Compare the results with those you would have gotten if you had used linear regression on the original data.
-
-Alternatively, you can run a Poisson or a negative binomial regression to model the data:
-
-```{r}
-salmopoismodel <- glm(cases ~ date, data = salmoz2, family = "poisson")
-summary(salmopoismodel)
-```
-
-There is more on using Poisson regression later on.
-
-```{r, task-opt-4-3-2-regression-pois}
-fitted_pois2_df <-
-  enframe(fitted(salmopoismodel), name = "date", value = "trend2") %>%
-  mutate(date = as.integer(date))
-
-salmoz2 <-
-  salmoz2 %>%
-  left_join(
-    x = .,
-    y = fitted_pois2_df,
-    by = "date"
-  ) %>%
-  mutate(trend2 = imputeTS::na_interpolation(x = trend2, option = "linear"))
 
 ```
 
-```{r, task-opt-4-3-2-regression-pois-plot-tidy}
-ggplot(data = salmoz2, mapping = aes(x = date_index)) +
-  geom_line(mapping = aes(y = cases)) +
-  geom_line(mapping = aes(y = trend2), colour = "green") +
-  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
-  scale_y_continuous(limits = c(0, NA)) +
-  labs(
-    x = "Time point",
-    y = "Salmonella cases",
-    title = "Salmonella data with fitted trend"
-  ) +
-  tsa_theme
+How do you interpret the IRR in the model for mortality rate?
+
+
+
+## Task 4.5 (Optional) {#task-4-5 .unnumbered}
+
+Carry out the same analysis for men and women. Do you see differences between 
+the two? where? 
+
+
+
+```{r, task-4-save}
+# Save the mortagg and mortz objects.
+#save(mortagg, mortz, file = here("data", "mortagg_case_4.RData"))
+
 ```

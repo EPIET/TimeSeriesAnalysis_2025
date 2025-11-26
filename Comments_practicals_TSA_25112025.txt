@@ -22,7 +22,6 @@ PRACTICAL 6 - NA for now
 
 PRACTICAL 7
 
--I don't fully understand why we are plotting the cusum based on the mean of all fitted cases over 10 years. Can someone explain?
 - Should the last part be un-commented? It was un-commented in practical 4. 
 # save(list = ls(pattern = 'mort'), file = here("data", "mortagg2_case_7.RData"))
 #load(here("data","mortagg2_case_7.RData"))

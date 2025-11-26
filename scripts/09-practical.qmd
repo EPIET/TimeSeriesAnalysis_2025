@@ -78,18 +78,18 @@ aragonz_tmax_plot <- ggplot(data = aragonz) +
   tsa_theme
 
 # Mortality plot
-aragonz_deaths_plot <- ggplot(data = aragonz) +
+aragonz_cases_plot <- ggplot(data = aragonz) +
   geom_point(mapping = aes(x = year_week, y = cases), colour = "green", alpha = 0.5) +
   scale_y_continuous(limits = c(0, NA)) +
   scale_x_yearweek(date_labels = "%Y-%W", 
                    date_breaks = "1 year") +
   labs(x = "Week", 
-       y = "Weekly deaths counts") +
+       y = "Weekly case counts") +
   tsa_theme
 
 # Using patchwork to join the two plots
 # The "/" determines an above/below display
-aragonz_two_plot <- (aragonz_tmax_plot / aragonz_deaths_plot) 
+aragonz_two_plot <- (aragonz_tmax_plot / aragonz_cases_plot) 
 aragonz_two_plot
 ```
 
@@ -108,11 +108,7 @@ aragmodel1 <- glm(cases ~ index + sin52 + cos52,
                            family = "poisson",
                            data = aragonz)
 
-aragmodel1 %>% 
-  gtsummary::tbl_regression(
-    exponentiate = T,
-    estimate_fun = ~style_number(.x, digits = 4)
-  )
+summary(aragmodel1)
 ```
 
 Plot the predicted weekly number of deaths.
@@ -129,8 +125,8 @@ ggplot(data = aragonz) +
   scale_x_yearweek(date_labels = "%Y-%W", 
                    date_breaks = "1 year") +
   labs(x = "Week", 
-       y = "Weekly deaths counts", 
-       title = "Deaths with fitted trend and seasonality") +
+       y = "Weekly case counts", 
+       title = "Cases with fitted trend") +
   tsa_theme
 
 ```
@@ -193,7 +189,9 @@ Discuss the output of the two models. Does the interpretation change when winter
 
 ## Help for Task 9.2 {#solution-9-2 .unnumbered}
 
-You decide to check whether temperature has an effect on mortality with some lag. `stats::lag` is the default base R function to compute lags from the `stats` package. In the example below, we prefer to use one of the tidyverse package alternatives,namely `dplyr::lag`. We specify the package name here to avoid possible conflicts with other packages which have a `lag` function.
+It has been argued by experts that low temperatures in winter might be "slow killers"; that would mean that very low temperatures in winter do not result in a peak in mortality on the same day/week when they are observed, but rather after some time. On the other hand, very high temperatures in summer are fast killers; they are associated with peaks in mortality very fast, i.e. heat waves kill people fast.
+
+For this reason, you decide to check whether temperature has an effect on mortality with some lag. `stats::lag` is the default base R function to compute lags from the `stats` package. In the example below, we prefer to use one of the tidyverse package alternatives,namely `dplyr::lag`. We specify the package name here to avoid possible conflicts with other packages which have a `lag` function.
 
 We are using the `lag` function from the `dplyr` package. For a given week, the value of `tmax` is lagged by 1 in respect to the previous week's value.
 
@@ -218,7 +216,7 @@ Instead of running the model with an interaction term, you could run the analyse
 
 The interaction term was not significant, but you are still curious about the differential effect of temperatures on mortality in winter and the other seasons. You decide to split the data and run two different models for winter and non-winter mortality and temperatures, and compare them.
 
-Think carefully about how you will compare them: are the AIC criteria still valid for this task?
+Think carefully about how you will compare them: are theAIC criteria still valid for this task?
 
 ```{r, task-9-2-data-winter-nonwinter}
 ## winter subset

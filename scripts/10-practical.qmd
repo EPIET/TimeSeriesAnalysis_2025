@@ -42,9 +42,9 @@ By the end of the case study, participants will be able to:
 
 Rotavirus is a very common and potentially serious infection of the large bowel, mainly affecting young babies. Nearly every child will have at least one episode of rotavirus gastroenteritis by five years of age. People of any age can be affected, but the illness is more severe in young infants. The rotavirus immunisation programme was introduced in the UK on 1 July 2013 (week 27) with the objective of preventing a significant number of young infants from developing rotavirus infection. It may also provide some additional protection to the wider population through herd immunity. The aim of the rotavirus immunisation programme is to provide two doses of vaccine to infants from six weeks of age and before 24 weeks of age. The first dose of vaccine is offered at approximately eight weeks of age and the second dose at least four weeks after the first dose.
 
-High coverage was rapidly achieved for the first cohort of children offered rotavirus vaccine routinely in England and this has been maintained throughout the first fourteen months of the routine programme. Over this period, rotavirus vaccine coverage for children in the routine cohort averaged 93.3% for one dose and 88.3% for two doses.[More info online on the programme.](https://assets.publishing.service.gov.uk/media/5c3def9ce5274a70ca3c3d09/RotavirusGatewayFinalVersion.pdf)
+High coverage was rapidly achieved for the first cohort of children offered rotavirus vaccine routinely in England and this has been maintained throughout the first fourteen months of the routine programme. Over this period, rotavirus vaccine coverage for children in the routine cohort averaged 93.3% for one dose and 88.3% for two doses.[^10-practical-1]
 
-
+[^10-practical-1]: Rotavirus infant immunisation programme 2014/15: Vaccine uptake report for England (Published: June 2015; PHE publications gateway number: 2015141)
 
 ## Task 10.1 {#task-10-1 .unnumbered}
 
@@ -104,7 +104,7 @@ rota_lg <- rota_lg %>%
  
 ```
 
-Plot the total number of cases by age group against time. Have a look at how rotavirus infections might differ by age groups.
+Plot the total number of cases by age group against time. Note that .
 
 ```{r, task-10-1-rota-plot-tidy}
 ggplot(data = rota_lg) +
@@ -113,7 +113,7 @@ ggplot(data = rota_lg) +
              scales = "free_y") +   
   scale_y_continuous(limits = c(0, NA)) +
   scale_x_yearweek(date_labels = "%Y-%W", 
-                   date_breaks = "52 weeks") +
+                   date_breaks = "1 year") +
   labs(
     x = "Year", 
     y = "Weekly case counts",
@@ -128,7 +128,7 @@ ggplot(data = rota_lg) +
 
 We want to see whether the number of cases changed after the introduction of the vaccine.
 
-For that, first we need to state in the dataset when the vaccine was available. We are adding one new `vaccine` variable to the `rota_ts` time series. It will be 0 for weeks before week 27 2013, and 1 thereafter.
+For that, first we need to state in the dataset when the vaccine was available. Firstly, we are adding one new `vaccine` variable to the `rota_ts` time series. It will be 0 for weeks before week 27 2013, and 1 thereafter.
 
 We have also created sine and cosine variables so that we can model annual seasonality as before.
 
@@ -174,13 +174,13 @@ summary_rotamodel_prevacc_p <- rotamodel_prevacc_p %>%
 summary_rotamodel_prevacc_p
 ```
 
-**Let's reflect for a moment : Is a Poisson model the best option?**
+**Is a Poisson model the best option?**
 
 Before we have a look at the period post-vaccination, is a Poisson model really the best model to use here? We need to check whether our data exhibit **overdispersion**.
 
 Overdispersion occurs when the mean of the data is not equal to its variance, violating the fundamental assumption of the Poisson distribution. If this happens, the model underestimates the standard error of the coefficients, biasing results towards narrower confidence intervals and artifically lower p-values.
 
-Let's check for overdispersion. We can calculate an overdispersion parameter from a model as the ratio of the deviance and the residuals degrees of freedom. Also, proper statistical test are available, for example using the `AER` library and the `dispersiontest` function.
+Let's check for overdispersion. We can calculate an overdispersion parameter from a model as the ratio of the deviance and the residuals degrees of freedom. Also, proper statistical test are available, for example using the `AER` library and the `dispersiontest` function
 
 ```{r, task-10-1-rota-vacc-interv-model_nb}
 # Quick check for overdispersion: if check > 1 then use negative binomial
@@ -223,7 +223,7 @@ comparison_p_nb <- gtsummary::tbl_merge(
 comparison_p_nb
 ```
 
-The AIC comparison proves how the negative binomial model outperforms the Poisson model. Also, realize the confidence interval around the trend for the Poisson model is narrower than for the negative binomial model.
+The AIC comparison proves how the negative binomial model outperforms the Poisson model. Also, realize how the index coefficient shifted from a tiny negative to a tiny positive overal trend, and how the p-value has greatly increased (but it still significant)
 
 Let's use negative binomial models for the rest of the practical.
 
@@ -290,7 +290,7 @@ ggplot(data = rota_ts) +
             alpha = 0.7, colour = "green") +
   scale_y_continuous(limits = c(0, NA)) +
   scale_x_yearweek(date_labels = "%Y-%W", 
-                   date_breaks = "52 weeks") +
+                   date_breaks = "1 year") +
   labs(x = "Year", 
        y = "Weekly case counts",
        title = "Rotavirus cases: model with trend and intervention"
@@ -329,7 +329,7 @@ ggplot(data = rota_ts) +
             alpha = 0.7, colour = "green") +
   scale_y_continuous(limits = c(0, NA)) +
   scale_x_yearweek(date_labels = "%Y-%W", 
-                   date_breaks = "52 weeks") +
+                   date_breaks = "1 year") +
   labs(x = "Year", 
        y = "Weekly case counts",
        title = "Rotavirus cases: model with trend, seasonality, and intervention"
@@ -382,7 +382,7 @@ summary_rotamodel_full
 sjPlot::plot_model(rotamodel_full, type ="int")
 ```
 
-Let's plot the fitted full model. 
+Let's plot the full model estimate.
 
 ```{r, task-10-1-rota-vacc-interv-model5-plot-tidy}
 rota_ts <- rota_ts %>% 
@@ -394,7 +394,7 @@ ggplot(data = rota_ts) +
   geom_line(mapping = aes(x = year_week, y = fitted_full), 
             alpha = 0.7, colour = "green") +
   scale_y_continuous(limits = c(0, NA)) +
-  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "52 weeks") +
+  scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "1 year") +
   labs(x = "Year",
        y = "Weekly case counts",
        title = "Rotavirus cases: model with trend, seasonality, intervention \n and interaction terms"
@@ -417,4 +417,4 @@ comparison_all <- gtsummary::tbl_merge(
 comparison_all
 ```
 
-Now you can keep exploring the impact of vaccination: What about age? Can you see a difference in impact of vaccination depending on age category?
+What about age? Can you see a difference in impact of vaccination depending on age category?
