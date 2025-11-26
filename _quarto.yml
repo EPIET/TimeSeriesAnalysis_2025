@@ -1,6 +1,6 @@
 project:
   type: book
-  output-dir: output
+  output-dir: docs
 
 book:
   title: "Time Series Analysis Module"
@@ -9,7 +9,7 @@ book:
   sidebar:                
     style: docked
   chapters:
-    - href: index.qmd
+    - href: "index.qmd"
       text: "Welcome"
     - part: "PRACTICALS"
       chapters:

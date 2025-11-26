@@ -432,18 +432,18 @@ plot the predicted and the original values:
 
 ```{r, task-opt-4-4-regression-pois-plot-tidy}
 
-ggplot(data = mortz, mapping = aes(x = date_index)) +
-  geom_point(mapping = aes(y = mortality_rate), alpha = 0.5) +
-  geom_line(mapping = aes(y = fitted(mort_poissontrend_pop)/pop*1000), colour = "blue", lwd=1.1) +
-  scale_y_continuous(limits = c(0, NA)) +
-  scale_x_yearweek(date_labels = "%Y-%W", 
-                   date_breaks = "1 year") +
-  labs(
-    x = "Week", 
-    y = "Mortality rate (per 1000 pop)",
-    title = "Spain: Mortality rate per 1000 population per week with fitted trend"
-  ) +
-  tsa_theme
+# ggplot(data = mortz, mapping = aes(x = date_index)) +
+#   geom_point(mapping = aes(y = mortality_rate), alpha = 0.5) +
+#   geom_line(mapping = aes(y = fitted(mort_poissontrend_pop)/pop*1000), colour = "blue", lwd=1.1) +
+#   scale_y_continuous(limits = c(0, NA)) +
+#   scale_x_yearweek(date_labels = "%Y-%W", 
+#                    date_breaks = "1 year") +
+#   labs(
+#     x = "Week", 
+#     y = "Mortality rate (per 1000 pop)",
+#     title = "Spain: Mortality rate per 1000 population per week with fitted trend"
+#   ) +
+#   tsa_theme
 
 ```
 
