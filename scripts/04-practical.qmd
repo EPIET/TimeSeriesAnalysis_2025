@@ -409,6 +409,12 @@ mort_poissontrend %>%
   )
 ```
 
+This code creates a regression table using the `tbl_regression()` function from the `gtsummary` package. It has two arguments:
+- exponentiate = T (or TRUE)
+This tells R to exponentiate the coefficients. 
+- estimate_fun = ~style_number(.x, digits = 4)
+This controls how the numbers in your table are formatted. .x represents each coefficient value, and style_number() formats it to 4 decimal places. 
+
 ## Task 4.4 {#task-4-4 .unnumbered .unnumbered}
 
 How could you take the changing population size of Spain into account in your analyses?
@@ -432,18 +438,9 @@ IRR_trend_pop <- exp(cbind(Estimate=mort_poissontrend_pop$coef, confint(mort_poi
 
 ```
 
-The summary() function will only provide the coefficients in the original log 
-scale of the poisson model. Another way of obtaining the IRR is by using `tbl_regression` with the argument 
-`exponentiate = TRUE`:
+The summary() function will only provide the coefficients in the original log scale of the poisson model. Another way of obtaining the IRR is by using `tbl_regression` with the argument `exponentiate = TRUE`:
 
-
-```{r: task-4-4-regression-pois-pop-IRR}
-mort_poissontrend_pop %>% 
-  gtsummary::tbl_regression(
-    exponentiate = TRUE,
-    estimate_fun = ~style_number(.x, digits = 4)
-  )
-```
+`{r: task-4-4-regression-pois-pop-IRR} mort_poissontrend_pop %>%    gtsummary::tbl_regression(     exponentiate = TRUE,     estimate_fun = ~style_number(.x, digits = 4)   )`
 
 plot the predicted and the original values:
 
@@ -462,15 +459,9 @@ ggplot(data = mortz, mapping = aes(x = date_index)) +
 
 ```
 
-
 Compare the trend and IRR in the models with and without population.
 
-
-For communication, it might be better to present the results in terms of 
-number of deaths per 100.000 inhabitants (population), which would then be 
-called the mortality rate. We will now plot the same trend but as rate per 
-100.000 inhabitants. For this purpose we must adjust both the observed and the 
-fitted values by multiplying with 100.000. 
+For communication, it might be better to present the results in terms of number of deaths per 100.000 inhabitants (population), which would then be called the mortality rate. We will now plot the same trend but as rate per 100.000 inhabitants. For this purpose we must adjust both the observed and the fitted values by multiplying with 100.000.
 
 ```{r, task-opt-4-3-regression-pois-mortrate-plot-tidy}
 
@@ -496,14 +487,9 @@ ggplot(data = mortz, mapping = aes(x = date_index)) +
 
 How do you interpret the IRR in the model for mortality rate?
 
-
-
 ## Task 4.5 (Optional) {#task-4-5 .unnumbered}
 
-Carry out the same analysis for men and women. Do you see differences between 
-the two? where? 
-
-
+Carry out the same analysis for men and women. Do you see differences between the two? where?
 
 ```{r, task-4-save}
 # Save the mortagg and mortz objects.

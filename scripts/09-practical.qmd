@@ -163,8 +163,11 @@ We compare both model's AIC below.
 AIC(aragmodel2); AIC(aragmodel3)
 ```
 
+We can also create a fancier table using the library `gtsummary` like in practical 4. 
+We use again exponentiate = T to exponentiate coefficients and style_number() to specify the number of digits. In addition, we use one extra argument: `add_glance_table()` allows to add key parameters at the bottom of the table.
+And `table_merge()` allows to take several tables built with `tbl_regression` and put them in one big table. This makes it easy to compare models.
+
 ```{r}
-# Fancier way using the library gtsummary
 tbl_m2 <- aragmodel2 %>% 
   tbl_regression(exponentiate = TRUE,
                  estimate_fun = ~style_number(.x, digits = 4)) %>%

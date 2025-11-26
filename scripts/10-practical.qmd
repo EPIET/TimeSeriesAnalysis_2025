@@ -153,6 +153,20 @@ rota_ts <- rota_ts %>%
 
 Run first a separate model for the time before and after the introduction of the vaccine in England and Wales for all population. Can you detect any change in trend?
 
+Note in the code that we are building further on the `tbl_regression` function, adding options. 
+
+What we saw before:
+  
+- exponentiate = T to exponentiate coefficients 
+- style_number() to specify the number of digits in the estimates. 
+- `add_glance_table()` to add key parameters at the bottom of the table.
+- `table_merge()` to take several tables built with `tbl_regression` and put them in one big table. 
+
+What we are adding now:
+- `style_pvalue` to format the pvalue (here with max 3 digits)
+- `modify_caption` to add a table title
+
+
 ```{r, task-10-1-rota-vacc-interv-modelp}
 rotamodel_prevacc_p <- glm(n ~ index,
     data = rota_ts %>% filter(vaccine == 0),
