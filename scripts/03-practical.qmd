@@ -1,6 +1,10 @@
 # Practical Session 3: Managing date formats and plotting {.unnumbered}
 
-## Expected learning outcomes {#learning-3 .unnumbered}
+## Session inject {#learning-3 .unnumbered}
+
+You have been provided with one MS Excel file (`tsa_practice.xlsx`) containing 2 sheets, one for each of two different diseases (**dis1**, **dis2**); and one csv file (`tsa_pumala.csv`) about Puumala virus infections in Finland.
+
+### Expected Learning Outcomes
 
 By the end of the session, participants should be able to:
 
@@ -10,17 +14,7 @@ By the end of the session, participants should be able to:
 
 -   Plot surveillance data against time
 
-You have been provided with one MS Excel file (`tsa_practice.xlsx`) containing 2 sheets, one for each of two different diseases (**dis1**, **dis2**); and one csv file (`tsa_pumala.csv`) about Puumala virus infections in Finland.
-
-## Task 3.1
-
-Assess visually the reported number of cases of dis1 by ISO (epidemiological) week or calendar month for all the data provided ("dis2" is optional).
-
-What diseases do you think dis1 is, judging from the cases' distribution in time?
-
-## Help for Task 3.1 {#solution-3-1 .unnumbered}
-
-Required source code.
+### Source code
 
 ```{r task-3-1-source-Rscript, message=FALSE, warning=FALSE}
 # Install pacman if not installed already, and activate it
@@ -37,21 +31,24 @@ pacman::p_load(
 )
 ```
 
-Import your data to R from these Excel files and examine them using the well-known `str`, `summary` and `skim` functions
+## 3.1 - Visualization exercise
+
+-   **Objective**: to assess visually the reported number of cases of dis1 by ISO (epidemiological) week or calendar month for all the data provided. What diseases do you think dis1 is, judging from the cases' distribution in time?
+
+### Import and explore data
+
+Begin with importing your data to R from these Excel/CSV files and examine them using the well-known `str`, `summary` and `skim` functions
 
 ```{r, task-3-1-import-xls}
 dis1 <- import(here("data", "tsa_practice.xlsx"), which = "dis1")
 ```
 
-```{r, task-3-1-str-dis1}
+```{r task-3-1-str-dis1}
+#| eval: false
+#| include: false
+
 str(dis1)
-```
-
-```{r, task-3-1-summary-dis1}
 summary(dis1)
-```
-
-```{r, task-3-1-skimr-dis1, eval=knitr::is_html_output()}
 skim(dis1) %>% as_tibble()
 ```
 
@@ -67,36 +64,34 @@ janitor::tabyl(dis1$year)
 
 Each one provides different outputs and possesses unique capabilities. In general, `tabyl` should be your preferred basic function, thanks to its tidy integration and format output. It also enables some customization and data manipulation.
 
-------------------------------------------------------------------------
+### Time series data format
 
-R has a collection of packages for handling time series data.
-
-Some of these packages are part of the `tidyverse` family of packages. Particularly, it includes the `tsibble` package, which intends to create a data infrastructure for easier manipulation and handling of temporal data, and adapts the [principles of tidy data](https://tidyr.tidyverse.org/articles/tidy-data.html)).
+R has a collection of packages for handling time series data. Some of these packages are part of the `tidyverse` family of packages. Particularly, it includes the `tsibble` package, which intends to create a data infrastructure for easier manipulation and handling of temporal data, and adapts the [principles of tidy data](https://tidyr.tidyverse.org/articles/tidy-data.html)).
 
 According to the help description, a `tsibble` object is defined by
 
--   an `index`, as a variable with inherent ordering from past to present.
+-   An `index`, as a variable with inherent ordering from past to present. Mandatory for a ts object
 
--   a `key`, as a set of variables that define observational units over time.
+-   A `key`, as a set of variables that define observational units over time, i.e. region, state, age group, etc.. Optional for a ts object
 
--   uniquely identified observations by an index and a key.
+-   Uniquely identified observations by an index and a key (if defined).
 
-To convert the original `dis1` dataset to a `tsibble` object, we use the `as_tsibble` function and specify the `index`, i.e. the variable specifying the time unit of interest. In our case, this is `year` and `week` variables. Variables that are not used for index or key purposes, such as the `cases` variables, are considered as measured variables.
+To convert the original `dis1` dataset to a `tsibble` object, we use the `as_tsibble()` function and specify the `index`, i.e. the variable specifying the time unit of interest (`year` and `week` variables in our case). We are not using `key` variables for now. Variables that are not used for index or key purposes, such as the `cases` variables, are considered as measured variables.
+
+To define the index, we can make use of the `tsibble` built-in functions such as `make_yearweek` (or yearmonth, yearquarter, etc., see documentation)
 
 ```{r, task-3-1-tsibble-week-base}
-dis1z <-
-    dis1 %>%
-    mutate(date_index = make_yearweek(year = year, week = week)) %>%
-    as_tsibble(index = date_index)
+dis1_ts <- dis1 %>%
+  mutate(date_index = make_yearweek(year = year, week = week)) %>%
+  as_tsibble(index = date_index)
 
-str(dis1z)
-head(dis1z, 10)
+head(dis1_ts, 5)
 ```
 
 You can see how the number of dis1 cases is distributed in time using the `ggplot` package.
 
 ```{r, task-3-1-plot-tsibble-week-tidy}
-ggplot(data = dis1z) +
+ggplot(data = dis1_ts) +
     geom_line(mapping = aes(x = date_index, y = cases)) +
     scale_x_yearweek(date_labels = "%Y") +
     labs(x = "Date", y = "Number of Cases", title = "Disease 1 data") +
@@ -111,7 +106,11 @@ ggplot(data = dis1z) +
             legend.position = "bottom",
             panel.grid.minor = element_blank()
         )
+```
 
+**One tip**: if you design ggplot themes through more complex `theme()` customizations, you can save it in an object and later use it in your plots. This way, you only need to write the code once which helps keeping the consistency across your entire plots
+
+```{r}
 # We can save theme modifications into a single object and then use it in new plots
 tsa_theme <- theme_bw() + 
         theme(
@@ -132,32 +131,27 @@ If data points are collected at regular time interval, we can correct missing da
 
 A quick overview of implicit missing values with `tsibble` is available on `vignette("implicit-na")`.
 
-As the focus of this training is on understanding principles of time series analysis rather than visualisation of time series, we will mainly use the `ggplot` functions for the remaining exercises.
+::: callout-note
+For time series data visualization, there are specific packages and functions you can use. As the focus of this training is on understanding principles of time series analysis rather than visualisation of time series, we will mainly use the `ggplot` functions for the remaining exercises (also so you get to practise more complex plots)
+:::
 
-
---------------------------------------------------------------
+### Pumala data
 
 Let's now work with the Pumala data
 
-```{r, task-3-1-dis3-import}
+```{r task-3-1-dis3-import}
+#| include: false
 dis3 <- import(here("data", "tsa_pumala.csv"))
+view(dis3)
 ```
 
 Here you have one variable for the year, one variable for the month and one variable with the complete date in days, but in a text (`chr` class) format.
 
-```{r, task-3-1-dis3-inspect}
-str(dis3)
-head(dis3)
-summary(dis3)
-```
-
 With the complete date, you can generate ISO weeks, but first you need the date variable to be converted from text to something R recognises as a date. The `lubridate` package has a number of convenient functions for converting text strings to dates.
 
 ```{r, task-3-1-dis3-date-format-base}
-str(dis3$date_str)
-
 dis3 <- dis3 %>%
-    mutate(my_date = dmy(date_str))
+  mutate(my_date = dmy(date_str))
 
 str(dis3$my_date)
 ```
@@ -166,14 +160,15 @@ As a complementary note, check the help for `strftime` to learn about different 
 
 To convert to ISO week, we can use the `ISOweek` function from the `ISOweek` package, which creates a new variable representing the ISO week. We could then also create a new variable representing the first Monday of each ISO week. Although the popular `lubridate` package has an `isoweek` function (there is also a similar function in the `surveillance` package), we use the `ISOweek` package here as it has the `ISOweek2date` function. If epidemiological weeks are required, use the `EpiWeek` package.
 
-```{r, task-3-1-dis3-isoweek-base}
+```{r task-3-1-dis3-isoweek-base}
+#| include: false
 dis3 <- dis3 %>%
     mutate(
         date_isowk = ISOweek(my_date),
         isodate = ISOweek2date(paste(date_isowk, "-1", sep = ""))
     )
 
-head(dis3)
+view(dis3)
 ```
 
 The `paste` command concatenates text.
@@ -192,17 +187,17 @@ head(dis3_v2)
 ```
 
 ```{r, task-3-1-dis3-isoweek-plot-tidy}
-dis3z <- dis3_v2 %>%
+dis3_ts <- dis3_v2 %>%
     mutate(date_index = yearweek(x = date_isowk, week_start = 1L)) %>%
     as_tsibble(index = date_index)
 
-str(dis3z)
-head(dis3z, 10)
 
-ggplot(data = dis3z) +
+ggplot(data = dis3_ts) +
     geom_line(mapping = aes(x = date_index, y = n)) +
     scale_x_yearweek(date_labels = "%Y") +
-    labs(x = "Date", y = "Number of Cases", title = "Disease 1 data") +
+    labs(x = "Date", 
+         y = "Number of Cases", 
+         title = "Disease 1 data") +
     tsa_theme
 ```
 
@@ -212,35 +207,35 @@ Aggregating cases by month is another possibility.
 dis3_agg <- dis3 %>%
     count(year, month)
 
-dis3z_v2 <- dis3_agg %>%
+dis3_ts_v2 <- dis3_agg %>%
     mutate(date_index = make_yearmonth(year = year, month = month)) %>%
     as_tsibble(index = date_index)
 
-ggplot(data = dis3z_v2) +
+ggplot(data = dis3_ts_v2) +
     geom_line(mapping = aes(x = date_index, y = n)) +
     scale_x_yearweek(date_labels = "%Y") +
-    labs(x = "Date", y = "Number of Cases", title = "Disease 1 data") +
+    labs(x = "Date", 
+         y = "Number of Cases", 
+         title = "Disease 1 data") +
     tsa_theme
 ```
 
-## Help for Optional Task 3.1.1 {#solution-3-1-1 .unnumbered}
+## 3.2 Optional task  {#solution-3-1-1 .unnumbered}
 
 Import your data to R from the dis2 excel file.
 
 ```{r, task-3-1-opt-dis2-import}
 dis2 <- import(here("data", "tsa_practice.xlsx"), which = "dis2")
+View(dis2)
 ```
 
 Inspect the data.
 
-```{r, task-3-1-opt-dis2-inspect}
+```{r task-3-1-opt-dis2-inspect}
+#| include: false
 str(dis2)
 head(dis2)
 summary(dis2)
-```
-
-```{r, task-3-1-opt-dis2-view, eval=FALSE}
-View(dis2)
 ```
 
 You have separate columns containing the counts. To plot this data, you need to first reshape your dataset by converting it from the current wide format to a long format.
@@ -270,7 +265,9 @@ head(dis2l_agg)
 ggplot(data = dis2l_agg) +
     geom_line(mapping = aes(x = date_index, y = case)) +
     scale_x_yearweek(date_labels = "%Y") +
-    labs(x = "Date", y = "Number of Cases", title = "Disease 3 data") +
+    labs(x = "Date", 
+         y = "Number of Cases", 
+         title = "Disease 3 data") +
     tsa_theme
 ```
 

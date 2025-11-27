@@ -400,20 +400,9 @@ The result above indicates that from one week to another, the number of deaths i
 
 Another way in R to obtain the incidence rate ratio (IRR) is:
 
+`{r: task-4-3-IRR-gtsummary} mort_poissontrend %>%    gtsummary::tbl_regression(     exponentiate = T,     estimate_fun = ~style_number(.x, digits = 4)   )`
 
-```{r: task-4-3-IRR-gtsummary}
-mort_poissontrend %>% 
-  gtsummary::tbl_regression(
-    exponentiate = T,
-    estimate_fun = ~style_number(.x, digits = 4)
-  )
-```
-
-This code creates a regression table using the `tbl_regression()` function from the `gtsummary` package. It has two arguments:
-- exponentiate = T (or TRUE)
-This tells R to exponentiate the coefficients. 
-- estimate_fun = ~style_number(.x, digits = 4)
-This controls how the numbers in your table are formatted. .x represents each coefficient value, and style_number() formats it to 4 decimal places. 
+This code creates a regression table using the `tbl_regression()` function from the `gtsummary` package. It has two arguments: - exponentiate = T (or TRUE) This tells R to exponentiate the coefficients. - estimate_fun = \~style_number(.x, digits = 4) This controls how the numbers in your table are formatted. .x represents each coefficient value, and style_number() formats it to 4 decimal places.
 
 ## Task 4.4 {#task-4-4 .unnumbered .unnumbered}
 
