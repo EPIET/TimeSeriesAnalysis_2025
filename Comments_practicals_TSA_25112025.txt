@@ -9,6 +9,7 @@
 PRACTICAL 3
 -There is a whole explanation about the index and key for tsibble but then the key is never used. Can it be made explicit in the code to not confuse the fellow?
      - is the index necessary in the tsibble? /skb
+
 -Using fill_gaps: it would be nice to show how to use it here. Personally I think it’s good practice to always make sure your time series in complete.
     - inherited. I do not use it./skb
 
@@ -18,6 +19,7 @@ PRACTICAL 3
 PRACTICAL 4
 -This R script doesn't source: source("src/tidyverse/session_4.R"). But doesn't seem to be needed?
    - that should go. /skb
+
 -We need to make sure date labels are adjuste everywhere to not show "1970...". 
     - I haven't seen 1970. Where? /skb
 
@@ -27,7 +29,7 @@ PRACTICAL 4
 
 PRACTICAL 5
 -The function ts() is used. I don't think it is used anywhere else. Can we add more explanation on it, including package in which the function can be found?
-
+	- ts() formats to a time series. This is needed when applying decompose() directly after. I have added that explanation as a comment. /skb
 
 -Function cosinor(): do we need it here? I don't see the advantages of using it instead of creating the sine cosine terms, which they will have to do later on anyway. But maybe I'm missing something - please enlighten me!
     - cosinor() has been eliminated. /skb

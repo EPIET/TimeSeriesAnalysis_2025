@@ -46,7 +46,7 @@ By the end of this session, participants should be able to:
 
 ## Task 5.1 {#task-5-1 .unnumbered}
 
-Using `mortagg_case_4.RData` (created in Practical 4), visually assess the 
+Using mortz object (tibble), which is in `mortagg_case_4.RData` (created in Practical 4), visually assess the 
 existence of any periodicity in the total number of deaths (cyclical 
 patterns). What do you think the period is, if any? Discuss your results with 
 your peers. 
@@ -64,7 +64,8 @@ load(here("data", "mortagg2_case_4.RData"))
 The function decompose() decomposes the time series by applying moving averages to the series. 
 
 ```{r, task-5-1-explore}
-# format the data to a time series object using ts().
+
+# format the data to a time series object using ts(); this is needed when using decompose() directly after.
 mortz.ts  <- ts(mortz$cases, frequency=52, start=c(2010,1))
 
 plot(decompose(mortz.ts))
