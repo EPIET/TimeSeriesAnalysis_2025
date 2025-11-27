@@ -35,7 +35,7 @@ tsa_theme <- theme_bw() +
 
 ## Mortality Surveillance data in Spain {#title-4-1 .unnumbered}
 
-The number of deaths in a country can be used as a surveillance indicator. An example of such an application is EuroMOMO, which monitors number of fatalities in European countries on a weekly basis (https://www.euromomo.eu/). The weekly time series on the number of deathls are routinely used to follow seasonal infections, for example influenza and covid 19 during the winter, but also heatwaves in the summer.
+The number of deaths in a country can be used as a surveillance indicator. An example of such an application is EuroMOMO, which monitors number of fatalities in European countries on a weekly basis (https://www.euromomo.eu/). The weekly time series on the number of deathls are routinely used to follow seasonal infections, for example influenza and COVID-19 during the winter, but also heatwaves in the summer.
 
 In case studies 4 to 7, we will analyse the number of deaths retrieved from the Spanish national statistical institute (INE) (https://ine.es/). Each case study will build up from the analysis conducted in the previous case study. The data contains the number of fatalities per week for the entire country, from 2010 to 2019, and includes variables on year, week, total number of deaths (`cases`), and total population; the same data is also included for men and women.
 
