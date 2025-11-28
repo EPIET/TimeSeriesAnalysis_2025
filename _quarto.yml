@@ -4,7 +4,7 @@ project:
 
 book:
   title: "Time Series Analysis (TSA) Module for the ECDC EPIET & EUPHEM Program"
-  author: "TSA 2025 Coordination Group lead by Tanja Charles (ECDC)"
+  #author: "TSA 2025 Coordinating Group"
   page-navigation: true
   sidebar:                
     style: docked

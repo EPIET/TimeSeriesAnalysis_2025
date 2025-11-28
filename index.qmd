@@ -8,7 +8,7 @@ Here you will find the Practical Sessions 3-7, 9 and 10 of the TSA module 2025, 
 
 # Copyright and License {.unnumbered}
 
-This exercises were originally developed by
+This exercises were originally designed in 2011 for the training needs of EPIET, PAE, NorFETP and Austrian FETP fellows. Many colleagues were involved in updating and maintaining these materials through the years, credit will be displayed soon.
 
 **Revisions**:
 
