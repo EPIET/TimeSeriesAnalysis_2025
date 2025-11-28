@@ -25,7 +25,7 @@ format:
   html:
     theme: cosmo
     page-layout: full
-    code-fold: show
+    code-fold: true
     code-summary: "Show the code"
     code-tools: true
     code-copy: true
