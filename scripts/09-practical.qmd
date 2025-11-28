@@ -1,5 +1,19 @@
 # Practical Session 9: The relation between two time series {.unnumbered}
 
+## Session inject {.unnumbered}
+
+Seasonal mortality is associated with varying temperatures. To explore this relationship from a time series perspective, mortality and temperature data from Aragón, an Autonomous Community in Spain, will be employed. For this exercise, you are tasked with understanding how temperatures affect mortality, and asses whether this effect is the same across the entire year or seasonal effects can be isolated.
+
+### Expected learning outcomes {.unnumbered}
+
+By the end of this session, participants should be able to:
+
+-   Assess and interpret associations with external variables
+
+-   Identify and interpret effect modification between external variables and the outcome variable in surveillance data
+
+### Source code {.unnumbered}
+
 ```{r, knitr-global-chunk-9t, include=FALSE, cache=FALSE}
 # Install pacman if not installed already, and activate it
 if (!require("pacman")) install.packages("pacman")
@@ -32,19 +46,11 @@ tsa_theme <- theme_bw() +
 
 ```
 
-## Expected learning outcomes {#learn-9 .unnumbered}
+## 9.1 - Asses the effect of external variables {#task-9-1 .unnumbered}
 
-By the end of this session, participants should be able to:
+-   **Objective**: Using the **aragon** dataset, assess the effect of ambient temperature (using average weekly maximum temperature) on mortality in the autonomous community of Aragón. Is this effect uniform throughout the year?
 
--   assess and interpret associations with external variables
-
--   identify and interpret effect modification between external variables and the outcome variable in surveillance data
-
-## Task 9.1 {#task-9-1 .unnumbered}
-
-Using the **aragon** dataset, assess the effect of ambient temperature (using average weekly maximum temperature) on mortality in the autonomous community of Aragón. Is this effect uniform throughout the year?
-
-## Help for Task 9.1 {#solution-9-1 .unnumbered}
+### Visualize mortality and temperatures in Aragón
 
 Open the dataset `aragon.csv`. There you will find mean maximum temperature and mortality data for the autonomous community of Aragon by week.
 
@@ -52,11 +58,11 @@ Open the dataset `aragon.csv`. There you will find mean maximum temperature and 
 aragon <- import(here("data", "aragon.csv")) 
 ```
 
-Convert the data to a time series and plot both variables (weekly mean maximum temperature and mortality data).
+Convert the data to a time series object (`aragon_ts`) and plot both temperature and mortality variables using `ggplot` and `patchwork` to join both plots together
 
 ```{r, task-9-1-convert-data-ts-tidy}
 # Create ts dataframe with yearweek index
-aragonz <- aragon %>% 
+aragon_ts <- aragon %>% 
   mutate(
     year_week = make_yearweek(year = year, week = week),
     index = seq.int(from = 1, to = nrow(aragon))
@@ -64,7 +70,7 @@ aragonz <- aragon %>%
   as_tsibble(index = index)
 
 # Temperature plot   
-aragonz_tmax_plot <- ggplot(data = aragonz) +
+aragon_ts_tmax_plot <- ggplot(data = aragon_ts) +
   geom_point(mapping = aes(x = year_week, y = tmax), colour = "blue", alpha = 0.5) +
   scale_y_continuous(limits = c(0, NA)) +
   scale_x_yearweek(date_labels = "%Y-%W", 
@@ -74,7 +80,7 @@ aragonz_tmax_plot <- ggplot(data = aragonz) +
   tsa_theme
 
 # Mortality plot
-aragonz_cases_plot <- ggplot(data = aragonz) +
+aragon_ts_cases_plot <- ggplot(data = aragon_ts) +
   geom_point(mapping = aes(x = year_week, y = cases), colour = "green", alpha = 0.5) +
   scale_y_continuous(limits = c(0, NA)) +
   scale_x_yearweek(date_labels = "%Y-%W", 
@@ -85,14 +91,14 @@ aragonz_cases_plot <- ggplot(data = aragonz) +
 
 # Using patchwork to join the two plots
 # The "/" determines an above/below display
-aragonz_two_plot <- (aragonz_tmax_plot / aragonz_cases_plot) 
-aragonz_two_plot
+aragon_ts_two_plot <- (aragon_ts_tmax_plot / aragon_ts_cases_plot) 
+aragon_ts_two_plot
 ```
 
 Generate variables for sine and cosine for annual oscillation.
 
 ```{r, task-9-1-data-sin-cos}
-aragonz <- aragonz %>% 
+aragon_ts <- aragon_ts %>% 
   mutate(sin52 = sin(2 * pi * date / 52),
          cos52 = cos(2 * pi * date / 52))
 ```
@@ -102,16 +108,14 @@ Fit a poisson regression model with a simple trend to the weekly number of death
 ```{r, task-9-1-data-lm-model}
 aragmodel1 <- glm(cases ~ index + sin52 + cos52,
                            family = "poisson",
-                           data = aragonz)
-
-summary(aragmodel1)
+                           data = aragon_ts)
 ```
 
 Plot the predicted weekly number of deaths.
 
 ```{r, task-9-1-data-lm-model-plot-tidy}
 
-ggplot(data = aragonz) +
+ggplot(data = aragon_ts) +
   geom_point(mapping = aes(x = year_week, y = cases), alpha = 0.2) +
   geom_line(mapping = aes(x = year_week, y = aragmodel1$fitted.values), 
             colour = "darkorange", 
@@ -127,29 +131,35 @@ ggplot(data = aragonz) +
 
 ```
 
-Discuss how your model fits the data.
+Discuss how your base model fits the original data.
 
-**Note:** When you plotted the weekly number of deaths in Aragon, perhaps you noticed that mortality peaks in winter; however, there are smaller peaks during the summer, too. You can account for that in two different ways: a) include two sine/cosine functions in the model (one for 52-week cycles and one for 26-week cycles), or b) take into account the fact that temperature might be behaving differently as a risk factor in winter than it does in summer (sign of effect modification?).
+### Differential effect of temperatures during the year
 
-You decide to perform your analysis twice; once for winter and once for the rest of the time. You define winter as the time between weeks 49 and 8.
+When you plotted the weekly number of deaths in Aragon, perhaps you noticed that mortality peaks in winter; however, there are smaller peaks during the summer, too. You can account for that in two different ways:
+
+1.  Include two sine/cosine functions in the model (one for 52-week cycles and one for 26-week cycles)
+
+2.  Explore temperature as an explanatory variable for these two peaks. We can also take into account the fact that temperature might be behaving differently as a risk factor in winter than it does in summer (*sign of effect modification?*)
+
+First, you need to create a new winter variable, defined as the time between weeks 49 and 8:
 
 ```{r, task-9-1-data-winter}
-aragonz <- aragonz %>% 
+aragon_ts <- aragon_ts %>% 
     mutate(winter = (week >= 49 | week <= 8))
 ```
 
-First run the model including winter as a main effect, and then including an interaction term with temperature.
+Now you will run two models: one including temperature as a main effect (`aragmodel2`), and other including an interaction term with winter (`aragmodel3`). Compare them and decide which is better
 
 ```{r, task-9-1-data-winter-lm-model}
 # Model with only main effect
-aragmodel2 <- glm(cases ~ index + sin52 + cos52 + winter,
+aragmodel2 <- glm(cases ~ index + sin52 + cos52 + tmax,
                            family = "poisson",
-                           data = aragonz)
+                           data = aragon_ts)
 
 # Model with temperature interaction
 aragmodel3 <- glm(cases ~ index + sin52 + cos52 + winter * tmax,
                            family = "poisson",
-                           data = aragonz)
+                           data = aragon_ts)
 ```
 
 We compare both model's AIC below.
@@ -159,9 +169,7 @@ We compare both model's AIC below.
 AIC(aragmodel2); AIC(aragmodel3)
 ```
 
-We can also create a fancier table using the library `gtsummary` like in practical 4. 
-We use again exponentiate = T to exponentiate coefficients and style_number() to specify the number of digits. In addition, we use one extra argument: `add_glance_table()` allows to add key parameters at the bottom of the table.
-And `table_merge()` allows to take several tables built with `tbl_regression` and put them in one big table. This makes it easy to compare models.
+We can also create a fancier table using the library `gtsummary` like in practical 4. We use again exponentiate = T to exponentiate coefficients and style_number() to specify the number of digits. In addition, we use one extra argument: `add_glance_table()` allows to add key parameters at the bottom of the table. And `table_merge()` allows to take several tables built with `tbl_regression` and put them in one big table. This makes it easy to compare models.
 
 ```{r}
 tbl_m2 <- aragmodel2 %>% 
@@ -186,64 +194,72 @@ Note that `winter * tmax` tells R to include terms in the model for `winter`, `t
 
 Discuss the output of the two models. Does the interpretation change when winter is taken into account as an interaction term along with temperature?
 
-## Task 9.2 (Optional) {#task-9-2 .unnumbered}
+## 9.2 - Accounting for delayed effects (Optional) {#task-9-2 .unnumbered}
 
-It has been argued by experts that low temperatures in winter might be “slow killers”; that is, very low temperatures in winter do not result in a peak in mortality on the same day/week as they are observed, but rather after some time has elapsed. On the other hand, very high temperatures in summer are “fast killers”; they are associated with peaks in mortality very fast, i.e. heat waves kill people fast. Can you find evidence for this for Aragón?
+It has been argued by experts that low temperatures in winter might be “slow killers”; that is, very low temperatures in winter do not result in a peak in mortality on the same day/week as they are observed, but rather after some time has elapsed. On the other hand, very high temperatures in summer are “fast killers”; they are associated with peaks in mortality very fast, i.e. heat waves kill people fast. **Can you find evidence for this in Aragón?**
 
-## Help for Task 9.2 {#solution-9-2 .unnumbered}
+### Define and explore lagged temperatures on mortality
 
-It has been argued by experts that low temperatures in winter might be "slow killers"; that would mean that very low temperatures in winter do not result in a peak in mortality on the same day/week when they are observed, but rather after some time. On the other hand, very high temperatures in summer are fast killers; they are associated with peaks in mortality very fast, i.e. heat waves kill people fast.
+`stats::lag` is the default base R function to compute lags from the `stats` package. In the example below, we prefer to use one of the tidyverse package alternatives,namely `dplyr::lag`. We specify the package name here to avoid possible conflicts with other packages which have a `lag` function.
 
-For this reason, you decide to check whether temperature has an effect on mortality with some lag. `stats::lag` is the default base R function to compute lags from the `stats` package. In the example below, we prefer to use one of the tidyverse package alternatives,namely `dplyr::lag`. We specify the package name here to avoid possible conflicts with other packages which have a `lag` function.
-
-We are using the `lag` function from the `dplyr` package. For a given week, the value of `tmax` is lagged by 1 in respect to the previous week's value.
+For a given week, the value of `tmax` is lagged by 1 in respect to the previous week's value.
 
 ```{r, task-9-2-data-winter-temp-lag}
 # Create lag variable
-aragonz <- aragonz %>% 
+aragon_ts <- aragon_ts %>% 
   mutate(L1.tmax = dplyr::lag(x = tmax, n = 1))
 ```
 
-Create a new model named `aragmodel4` including the lag variable, and compare it with the previous model `aragmodel3`. What can you conclude from it?
+Create a new model named `aragmodel4` including the lag variable, and compare it with the previous model `aragmodel3`. ***What can you conclude from it?***
 
 ```{r, task-9-2-data-winter-temp-lag-lm-model}
 aragmodel4 <- glm(cases ~ index + sin52 + cos52 + winter * tmax + L1.tmax,
                            family = "poisson",
-                           data = aragonz)
+                           data = aragon_ts)
 
-summary(aragmodel4)
-AIC(aragmodel3); AIC(aragmodel4)
+tbl_m4 <- aragmodel4 %>% 
+  tbl_regression(exponentiate = TRUE,
+                 estimate_fun = ~style_number(.x, digits = 4)) %>%
+  add_glance_table(include = c(AIC, BIC, deviance))
+
+tbl_m3m4 <- 
+  tbl_merge(
+    tbls = list(tbl_m3, tbl_m4),
+    tab_spanner = c("aragmodel3", "aragmodel4")
+  )
+tbl_m3m4
 ```
 
-Instead of running the model with an interaction term, you could run the analyses for winter and the rest of your dataset separately.
+### Winter vs No-winter
 
-The interaction term was not significant, but you are still curious about the differential effect of temperatures on mortality in winter and the other seasons. You decide to split the data and run two different models for winter and non-winter mortality and temperatures, and compare them.
+The lagged effect of temperature was not signifcant in `aragmodel4` but you are still curious about the differential effect of temperatures on mortality in winter and the other seasons. Instead of running the model with another interaction term, you could run the analyses for winter and the rest of your dataset separately.
 
-Think carefully about how you will compare them: are theAIC criteria still valid for this task?
+First, create `aragon_ts.winter` and `aragon_ts.notwinter`
 
 ```{r, task-9-2-data-winter-nonwinter}
 ## winter subset
-aragonz.winter <- 
-    aragonz %>% 
+aragon_ts.winter <- 
+    aragon_ts %>% 
     filter(winter == TRUE)
 
 ## not winter subset
-aragonz.notwinter <- 
-    aragonz %>% 
+aragon_ts.notwinter <- 
+    aragon_ts %>% 
     filter(winter == FALSE)
-
 ```
+
+Now, run two new models `aragmodel5` for the winter data and `aragmodel6` for non-winter data. Think carefully about how you will compare them: ***is the AIC/BIC criteria still valid for this task***?
 
 ```{r, task-9-2-data-winter-temp-lag-lm-aragmodel5}
 # Winter model
 aragmodel5 <- glm(cases ~ index + sin52 + cos52 + L1.tmax,
                            family = "poisson",
-                           data = aragonz.winter)
+                           data = aragon_ts.winter)
 
 # Not winter model
 aragmodel6 <- glm(cases ~ index + sin52 + cos52 + L1.tmax,
                            family = "poisson",
-                           data = aragonz.notwinter)
+                           data = aragon_ts.notwinter)
 
 # Table summaries
 tbl_m5 <- aragmodel5 %>% 
