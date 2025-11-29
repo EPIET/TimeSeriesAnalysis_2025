@@ -438,7 +438,13 @@ IRR_trend_pop <- exp(cbind(Estimate=mort_poissontrend_pop$coef, confint(mort_poi
 
 The summary() function will only provide the coefficients in the original log scale of the poisson model. Another way of obtaining the IRR is by using `tbl_regression` with the argument `exponentiate = TRUE`:
 
-`{r: task-4-4-regression-pois-pop-IRR} mort_poissontrend_pop %>%    gtsummary::tbl_regression(     exponentiate = TRUE,     estimate_fun = ~style_number(.x, digits = 4)   )`
+```{r: task-4-4-regression-pois-pop-IRR} 
+mort_poissontrend_pop %>%    
+    gtsummary::tbl_regression(     
+        exponentiate = TRUE,     
+        estimate_fun = ~style_number(.x, digits = 4)   
+    )
+```
 
 plot the predicted and the original values:
 
