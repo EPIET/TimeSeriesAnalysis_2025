@@ -50,17 +50,8 @@ Start by reading the data and re-running the last acceptable model.
 
 
 ```{r, task-7-1-read-data, cache=FALSE}
-# Prepare ts data
-load(here("data", "mortagg2_case_6.Rdata"))
 
-mortz <-
-    mortagg %>%
-    mutate(year_week = make_yearweek(year = year, week = week),
-           index = seq.int(from = 1, to = nrow(mortagg)),
-           sin52 = sin(2 * pi * week / 52), 
-           cos52 = cos(2 * pi * week / 52),
-           sin26 = sin(2 * pi * week / 26), 
-           cos26 = cos(2 * pi * week / 26)) 
+load(here("data", "mortagg2_case_6.Rdata"))
 
 # Model with trend and seasonality
 mort_trendsin2cos2 <- glm(cases ~ index + sin52 + cos52 + sin26 + cos26,
@@ -123,8 +114,8 @@ Predict and plot the expected number of deaths per week for 2020 with prediction
 # https://en.wikipedia.org/wiki/Bootstrapping_(statistics)
 # nSims indicates how many random draws should be carried out; more is better, but be aware that it also takes more time. Usually 500 to 1000 is enough.
 
-# set a random seed with set.seed() with any number you choose. By using the 
-# same number as here, you will get the exact same results as the others.
+# set a random seed with set.seed() with any number you choose. Here, use the 
+# same number as 12589 to get the same exact results as shown.
  
 set.seed(12589) 
 
@@ -161,7 +152,7 @@ ggplot(data = pred.mort) +
     
 ```
 
-*Calculate the total number of expected deaths in 2020 in Spain.*
+*Calculate the total number of expected deaths in 2020 in Spain, including the 95% prediction interval.*
 
 ```{r, task-7-1-prediction-interval-total-tidy}
 # Total predicted cases in 2020, with lPI and uPI
@@ -174,13 +165,13 @@ pred.mort %>%
 
 ```
 
-*Compare the number of deaths in 2020 with those in 2018 and 2019.* 
+*Interpret the values.*
 
 
 ## Task 7.2  {#task-7-2 .unnumbered}
 
 The committee assigned to evaluate the effects of the pandemic, wishes to 
-know during which periods of 2020 did Spain experience excess deaths. 
+know during which periods of 2020 did Spain experience excess deaths (more deaths than what was expected). 
 
 Plot the actual number of deaths and compare with the predictions from the model based on 2010-2019.
 
@@ -213,6 +204,7 @@ ggplot(data = pred.mort) +
         alpha = 0.7,
         lwd = 1.2
     ) +
+    scale_y_continuous(limits = c(0, NA)) +
     scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "4 weeks") +
     labs(x = "Year Week", y = "Predicted weekly cases") +
     tsa_theme + 
@@ -220,12 +212,15 @@ ggplot(data = pred.mort) +
     
 ```
 
+*During which periods was there an excess when comparing to the upper prediction interval*
+
+
+*Calculate the total excess number of deaths per week, and plot the accumulated 
+number by week.* 
+
 Excess deaths can be calculated as the difference of the actual number of 
 fatalities per week and the predicted mean, or the predicted upper 95% PI. We 
 use cumsum() to accumulate the number of deaths over the year. 
-
-*Calculate the excess number of deaths per week, and plot the accumulated 
-number by week.* 
 
 ```{r-task-7-2-excess-deaths-plot-tidy}
 
@@ -258,10 +253,95 @@ ggplot(data = pred.mort) +
 
 ```
 
-*Plot the entire series of observed data from 2010 to 2020, and the fitted 
-number from the model.* 
+*Interpret the plot.*
 
-## Task 7.3 (Optional)  {#task-7-3 .unnumbered}
+
+## Task 7.4 (Optional)  {#task-7-4 .unnumbered}
+
+*Plot the entire series of observed data from 2010 to 2023, and the fitted 
+number from the model based on 2010-2019. Visually, do you think the mortality pattern has gone back to the same pattern as in 2010-2019?* 
+
+```{r-task-7-3-deaths-plot-2010-2020}
+
+load(here("data", "mortagg2010_2023.Rdata"))
+# mort2010_2023
+
+mort_2010_2023 <- mort2010_2023 %>%
+                mutate(
+                year_week = make_yearweek(year = year, week = week))
+
+# how many weeks in each year:
+num_weeks <- table(mort2010_2023$year)
+num_weeks
+
+pred.df_2020_2023 <-
+    tibble(
+        year=c(rep(2020, each=53), rep(2021:2023, each=52)),
+        week  = c(1:53, rep(1:52, 3)), 
+        index = 521 + (1:sum(num_weeks[c('2020', '2021', '2022','2023')])), # continue numbering from 2019 w52
+        year_week = make_yearweek(year = year, week = week),
+        sin52 = sin(2 * pi * week / 52),
+        cos52 = cos(2 * pi * week / 52),
+        sin26 = sin(2 * pi * week / 26),
+        cos26 = cos(2 * pi * week / 26)
+        )
+        
+
+set.seed(12589) 
+
+pred.mort_2020_2023 <- ciTools::add_ci(pred.df_2020_2023, 
+                                mort_trendsin2cos2,
+                                names=c("lPI", "uPI"),
+                                yhatName="pred_cases",
+                                response=TRUE,
+                                type="boot",
+                                nSims=1000)
+
+
+ggplot(data = mort_2010_2023) +
+    geom_line(
+        mapping = aes(x = year_week, y = cases),
+        colour = "black",
+        alpha = 0.7
+    ) +
+    geom_line(data=mortz,
+        mapping = aes(x = year_week, y = fitted(mort_trendsin2cos2)),
+        colour = "blue",
+        lwd=1.0,
+        alpha = 0.7
+    ) +
+
+    geom_line(data=pred.mort_2020_2023,
+        mapping = aes(x = year_week, y = pred_cases),
+        colour = "red",
+        lwd=1.0,
+        alpha = 0.7
+    ) +
+    geom_ribbon(data=pred.mort_2020_2023,
+        mapping = aes(x = year_week, ymin = lPI, ymax = uPI),
+        fill = "red",
+        alpha = 0.1
+    ) +
+    scale_y_continuous(limits = c(0, NA)) +
+    scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "26 weeks") +
+    labs(x = "Year Week", y = "Fitted and predicted weekly deaths",
+        title = "Regression model: prediction trend, sin52, cos52, sin26, cos26 terms") +
+    tsa_theme + 
+    theme(axis.text.x = element_text(angle = 30, hjust = 1)) 
+
+
+```
+
+
+
+
+## Task 7.5 (Optional)  {#task-7-5 .unnumbered}
+
+Compare the excess number of deaths in 2020  with those in 2018 and 2019.
+
+
+
+## Task 7.6 (Optional)  {#task-7-6 .unnumbered}
 
 Carry out the sam analysis for men and women. What was the total number of 
 excess deaths for men and women? 
@@ -270,7 +350,11 @@ If you already have the model for each group from a previous practice, use
 that. If you did not do it before, you can assume the same model as here. 
 
 
+## Save (not necessary)
+
+
 ```{r, task-7-save}
+
 # save(list = ls(pattern = 'mort'), file = here("data", "mortagg2_case_7.RData"))
 #load(here("data","mortagg2_case_7.RData"))
 ```
