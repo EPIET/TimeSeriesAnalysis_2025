@@ -403,7 +403,13 @@ The result above indicates that from one week to another, the number of deaths i
 
 Another way in R to obtain the incidence rate ratio (IRR) is:
 
-`{r: task-4-3-IRR-gtsummary} mort_poissontrend %>%    gtsummary::tbl_regression(     exponentiate = T,     estimate_fun = ~style_number(.x, digits = 4)   )`
+```{r: task-4-3-IRR-gtsummary} 
+mort_poissontrend %>%    
+    gtsummary::tbl_regression(     
+                    exponentiate = T,     
+                    estimate_fun = ~style_number(.x, digits = 4)   
+                    )
+```
 
 This code creates a regression table using the `tbl_regression()` function from the `gtsummary` package. It has two arguments: - exponentiate = T (or TRUE) This tells R to exponentiate the coefficients. - estimate_fun = \~style_number(.x, digits = 4) This controls how the numbers in your table are formatted. .x represents each coefficient value, and style_number() formats it to 4 decimal places.
 
@@ -438,8 +444,8 @@ plot the predicted and the original values:
 
 ```{r, task-opt-4-4-regression-pois-pop_plot-tidy}
 ggplot(data = mortz, mapping = aes(x = date_index)) +
-  geom_point(mapping = aes(y = cases), alpha = 0.5) +
-  geom_line(mapping = aes(y = fitted(mort_poissontrend_pop)), colour = "blue", lwd=1.1) +
+  geom_point(mapping = aes(y = cases/pop), alpha = 0.5) +
+  geom_line(mapping = aes(y = fitted(mort_poissontrend_pop)/pop), colour = "blue", lwd=1.1) +
   scale_y_continuous(limits = c(0, NA)) +
   scale_x_yearweek(date_labels = "%Y-%W", 
                    date_breaks = "1 year") +
@@ -482,6 +488,10 @@ How do you interpret the IRR in the model for mortality rate?
 ## Task 4.5 (Optional) {#task-4-5 .unnumbered}
 
 Carry out the same analysis for men and women. Do you see differences between the two? where?
+
+
+## Save
+Save mortagg to be used in the next practical.
 
 ```{r, task-4-save}
 # Save the mortagg and mortz objects.
