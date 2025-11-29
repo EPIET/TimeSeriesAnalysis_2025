@@ -236,7 +236,8 @@ mortzma2 <-
       .i = date_index,
       .f = mean,
       na.rm = TRUE,
-      .before = 24,
+      .before = 12,
+      .after = 12,
       .complete = TRUE
     ),
     MA51 = slide_index_dbl(
@@ -244,7 +245,8 @@ mortzma2 <-
       .i = date_index,
       .f = mean,
       na.rm = TRUE,
-      .before = 50,
+      .before = 25,
+      .after=25
       .complete = TRUE
     ),
     MA103 = slide_index_dbl(
@@ -252,7 +254,8 @@ mortzma2 <-
       .i = date_index,
       .f = mean,
       na.rm = TRUE,
-      .before = 102,
+      .before = 51,
+      .after = 51,
       .complete = TRUE
     )
   )
