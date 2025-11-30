@@ -133,3 +133,7 @@ In case you have troubles accessing Github check below
 3.  Install all dependencies for the SignalDetectionTool by running and filling in your path to the stored .tar.gz with the command `remotes::install_deps("your_path_to_signal-detection-tool-0.8.0.tar.gz"`
 
 4.  Install the SignalDetectionTool by running `install.packages("your_path_to_signal-detection-tool-0.8.0.tar.gz", repos = NULL, type = "source")`
+
+## Data 
+
+To download all neccessary datasets and files for this practicals, click in [this link](https://github.com/EPIET/TimeSeriesAnalysis_2025/raw/refs/heads/main/download%20folder/_all_data_2025.zip) and then save the zip file in the data folder of your project
