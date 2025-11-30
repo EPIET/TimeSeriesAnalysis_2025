@@ -21,21 +21,21 @@ PRACTICAL 3
 
 PRACTICAL 4
 -This R script doesn't source: source("src/tidyverse/session_4.R"). But doesn't seem to be needed?
-   - that should go. /skb
+   - that should go. /skb DONE
 
 -We need to make sure date labels are adjuste everywhere to not show "1970...". 
     - I haven't seen 1970. Where? /skb
 
 -"Practicals 4-7 and 11 use data from this mortality surveillance system. Session 10 uses data from the same system, but for only one autonomous community in Spain (Aragón)." - Please double check as it is not correct for Session 10.
-     - I can update that. /skb	
+     - I can update that. /skb	 DONE.
 
 
 PRACTICAL 5
 -The function ts() is used. I don't think it is used anywhere else. Can we add more explanation on it, including package in which the function can be found?
-	- ts() formats to a time series. This is needed when applying decompose() directly after. I have added that explanation as a comment. /skb
+	- ts() formats to a time series. This is needed when applying decompose() directly after. I have added that explanation as a comment. /skb DONE
 
 -Function cosinor(): do we need it here? I don't see the advantages of using it instead of creating the sine cosine terms, which they will have to do later on anyway. But maybe I'm missing something - please enlighten me!
-    - cosinor() has been eliminated. /skb
+    - cosinor() has been eliminated. /skb DONE
 
 PRACTICAL 6 - NA for now
 

@@ -41,17 +41,19 @@ By the end of this session, participants should be able to:
 
 ## Task 6.1 {#task-6-1 .unnumbered .unnumbered}
 
-*Start by fitting the model with trend and two cosines and two sines.* *Assuming you are happy with that Poisson regression model from the previous session, check whether this regression model was appropriate in this case.*
+*Start by fitting the model with trend and two cosines and two sines.* 
+
+*Assuming you are happy with that Poisson regression model from the previous session, check whether this regression model was appropriate in this case.*
 
 ```{r, task-6-1-source-Rscript}
 load(here("data","mortagg2_case_5.RData"))
 ```
 
-*Start by fitting the model with trend and two cosines and two sines.*
+*Start by fitting the model with trend and two cosines and two sines (same as in practical 5).*
 
 *Then, assuming you are happy with that model, check whether this regression model was appropriate in this case.*
 
-*Plot the residuals from the model in case study 5 that included a trend, 52-week periodicity and 26-week periodicity.*
+*Plot the residuals from the model.*
 
 ```{r, task-6-2-calculate-residuals}
 
@@ -232,9 +234,10 @@ lrtest(mort_trendsin2cos2_removeNA, mort_trendsin2cos2_ac)
 
 *As a sensitivity analysis, add yet one more lag (not significant in the acf) to the last model. Does that lag improve the model?*
 
+
 ## Task 6.4 (Optional) {#task-6-4 .unnumbered}
 
-Carry out similar analyzes for men and for women.
+*Carry out similar analyzes for men and for women.*
 
 ```{r, task-6-save}
 #save(mortagg, mortz, file = here("data", "mortagg2_case_6.RData"))
