@@ -324,8 +324,57 @@ lrtest(mort_trendsin52cos52, mort_trendsin2cos2)
 contribution to your model?* 
 
 
+## Task 5.3 {#task-5-3 .unnumbered}
 
-## Task 5.3 (Optional) {#task-5-3 .unnumbered}
+*Fit the final model as a negative binomial instead. Plot the Poisson and the negbin. Which do you think fits best? Compare AIC for both models.*
+
+The code for a negbin glm is very simular as the glm(). It is glm.nb() found in the MASS library.
+
+```{r, task-5-3-sin2-cos2-trend_nbin}
+
+mort_trendsin2cos2_nbin <- glm.nb(cases ~ index + sin52 + cos52 + sin26 + cos26, 
+                           data = mortz)
+                           
+summary(mort_trendsin2cos2_nbin)
+
+aic_nbin <- AIC(mort_trendsin2cos2_nbin)
+
+aic_poi  <- AIC(mort_trendsin2cos2)
+
+```
+
+When fitting a negbin, see to it that the theta estimate or its standard 
+error do not have exaggerated values; that might be a sign that the model did 
+not converge and therefore negbin is not a model for the data. 
+
+AIC is the Akaike information criteria, a summary that can be used to compare 
+different models, even when they are different types or are not nested. The 
+lower the value of AIC, the better the model. 
+
+*Which model has best fit?*
+
+*Compare also the trends (as IRR), and the coefficients of the different seasonal components.*
+
+```{r, task-5-3-comapre_estimates}
+
+# estimates nbin model; it is a matrix
+exp.nbin <- exp(confint(mort_trendsin2cos2_nbin))
+
+# width of 95% confidence interval
+exp.nbin <-  cbind(exp.nbin, exp.nbin[,'97.5 %'] - exp.nbin[,'2.5 %'])
+                
+                
+# estimates in poisson model; it is a matrix
+exp.poi <- exp(confint(mort_trendsin2cos2))
+
+# width of 95% confidence interval
+exp.poi <-  cbind(exp.poi, exp.poi[,'97.5 %'] - exp.poi[,'2.5 %'])
+
+```
+*Are the estimates and confidence intervals similar between the fitted poisson and the fitted negbin models?*
+
+
+## Task 5.4 (Optional) {#task-5-4 .unnumbered}
 
 *Carry out the same analysis for men and women. Do you see differences between 
 the two? Where?* 
