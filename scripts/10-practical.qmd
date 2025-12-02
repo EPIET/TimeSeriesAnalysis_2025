@@ -67,7 +67,7 @@ As the data in `rota` shows above, this dataset is structured in a "wide" format
 
 In order to use ggplot2, remember that the data should be organised in a long format.
 
-The function `as_tsibble()` is what indicates to R that the data is a time series. **index** represents the time variable and **key** represents the outcome studied.
+The function `as_tsibble()` is what indicates to R that the data is a time series. **index** represents the time variable and **key** represents any categorical variable that splits the data into several time series (eg: location, age group...). 
 
 ```{r, task-10-1-rota}
 ## convert to long format
@@ -90,13 +90,15 @@ rota_lg <- rota_lg %>%
     TRUE ~ NA_character_
     ))
 
-## turn into ts format
+## turn into ts format and make sure the data is complete
 rota_lg <- rota_lg %>%
   mutate(year_week = make_yearweek(year = year, week = week)) %>%
   group_by(cases_cat) %>%
   mutate(index = seq.int(from = 1, to = length(unique(year_week)))) %>%
   ungroup() %>%
-  as_tsibble(index = year_week, key = cases_cat)
+  as_tsibble(index = year_week, key = cases_cat) %>%
+  complete(index, cases_cat, fill=list(n = 0))
+  
  
 ```
 
@@ -104,7 +106,7 @@ Plot the total number of cases by age group against time. Note that .
 
 ```{r, task-10-1-rota-plot-tidy}
 ggplot(data = rota_lg) +
-  geom_point(mapping = aes(x = year_week, y = n), alpha = 0.3) +
+  geom_line (mapping = aes(x = year_week, y = n), alpha = 0.3) +
   facet_wrap(facets = vars(cases_cat), 
              scales = "free_y") +   
   scale_y_continuous(limits = c(0, NA)) +
