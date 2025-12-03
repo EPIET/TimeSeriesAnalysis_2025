@@ -98,7 +98,8 @@ view(pred.df)
 
 *Calculate the expected values and 95% prediction intervals for each week of 2020 assuming the same Poisson regression model as before.*
 
-Predict and plot the expected number of deaths per week for 2020 with prediction intervals:
+Predict and plot the expected number of deaths per week for 2020 with 
+prediction intervals: 
 
 Apply mort_trendsin2cos2 to new data and predict cases with C.I. using bootstrapping.
 
@@ -123,7 +124,8 @@ pred.mort <- ciTools::add_pi(pred.df,
 head(pred.mort, 5)
 ```
 
-Plot the forecasted values for the weekly deaths in 2020, and include the predictive intervals.
+Plot the forecasted values for the weekly deaths in 2020, and include the 
+predictive intervals. 
 
 ```{r, task-7-1-prediction-interval-plot-tidy}
 ggplot(data = pred.mort) +
@@ -147,7 +149,8 @@ ggplot(data = pred.mort) +
     
 ```
 
-*Calculate the total number of expected deaths in 2020 in Spain, including the 95% prediction interval.*
+*Calculate the total number of expected deaths in 2020 in Spain, including 
+the 95% prediction interval.* 
 
 ```{r, task-7-1-prediction-interval-total-tidy}
 # Total predicted cases in 2020, with lPI and uPI
@@ -164,7 +167,7 @@ pred.mort %>%
 
 ## Task 7.2 {#task-7-2 .unnumbered}
 
-The committee assigned to evaluate the effects of the pandemic, wishes to know during which periods of 2020 did Spain experience excess deaths (more deaths than what was expected).
+## Task 7.2  {#task-7-2 .unnumbered}
 
 *Plot the actual number of deaths and compare with the predictions from the model based on 2010-2019.*
 
@@ -211,7 +214,7 @@ ggplot(data = pred.mort) +
 
 Excess deaths can be calculated as the difference of the actual number of fatalities per week and the predicted mean, or the predicted upper 95% PI. We use cumsum() to accumulate the number of deaths over the year.
 
-```{r-task-7-2-excess-deaths-plot-tidy}
+```{r, task-7-2-excess-deaths-plot-tidy}
 
 pred.mort <- pred.mort %>%
   mutate(
@@ -252,7 +255,7 @@ ggplot(data = pred.mort) +
 
 *How would you determine if the model for 2010-2019 fits well 2021-2023?*
 
-```{r-task-7-3-deaths-plot-2010-2020}
+```{r, task-7-3-deaths-plot-2010-2020}
 # mort2010_2023
 load(here("data", "mortagg2010_2023.Rdata"))
 
@@ -333,7 +336,6 @@ ggplot(data = mort_2010_2023) +
 
 Compare the excess number of deaths in 2020 with those in 2018 and 2019.
 
-## Task 7.6 (Optional) {#task-7-6 .unnumbered}
 
 Carry out the same analysis for men and women. What was the total number of excess deaths for men and women?
 
