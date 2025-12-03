@@ -85,6 +85,7 @@ pred.df <-
         week  = 1:53,  # add 53 weeks
         index = 521:(521+53-1), # continues the numeration of the dataset up to 2019 w52
         date_index = make_yearweek(year = year, week = week),
+        cases = 0,
         sin52 = sin(2 * pi * week / 52),
         cos52 = cos(2 * pi * week / 52),
         sin26 = sin(2 * pi * week / 26),
@@ -95,24 +96,24 @@ pred.df <-
 view(pred.df)
 ```
 
-Calculate the expected values and 95% prediction intervals for each week of 2020 assuming the same Poisson regression model as before.
+*Calculate the expected values and 95% prediction intervals for each week of 2020 assuming the same Poisson regression model as before.*
 
 Predict and plot the expected number of deaths per week for 2020 with prediction intervals:
 
+Apply mort_trendsin2cos2 to new data and predict cases with C.I. using bootstrapping.
+
+Bootstrapping is a statistical method where you draw random samples from your data, and analyze each of this samples.
+
+https://en.wikipedia.org/wiki/Bootstrapping\_(statistics)
+
+nSims indicates how many random draws should be carried out; more is better, but be aware that it also takes more time. Usually 500 to 1000 is enough.
+
+Set a random seed with set.seed() with any number you choose. Here, use the same number as 12589 to get the same exact results as shown.
+
 ```{r, task-7-1-prediction-interval}
-
-# apply mort_trendsin2cos2 to new data and predict cases with C.I. using bootstrapping.
-# bootstrapping is a statistical method where you draw random samples from your data, 
-# and analyze each of this samples.
-# https://en.wikipedia.org/wiki/Bootstrapping_(statistics)
-# nSims indicates how many random draws should be carried out; more is better, but be aware that it also takes more time. Usually 500 to 1000 is enough.
-
-# set a random seed with set.seed() with any number you choose. Here, use the 
-# same number as 12589 to get the same exact results as shown.
- 
 set.seed(12589) 
 
-pred.mort <- ciTools::add_ci(pred.df, 
+pred.mort <- ciTools::add_pi(pred.df, 
                                 mort_trendsin2cos2,
                                 names=c("lPI", "uPI"),
                                 yhatName="pred_cases",
@@ -165,7 +166,7 @@ pred.mort %>%
 
 The committee assigned to evaluate the effects of the pandemic, wishes to know during which periods of 2020 did Spain experience excess deaths (more deaths than what was expected).
 
-Plot the actual number of deaths and compare with the predictions from the model based on 2010-2019.
+*Plot the actual number of deaths and compare with the predictions from the model based on 2010-2019.*
 
 ```{r, task-7-2-diff-obs-predict-plot-tidy}
 # load number of weekly deaths during 2020; the data.frame is mort2020.
@@ -174,7 +175,7 @@ load(here("data", "mortagg2020.Rdata"))
 # make sure that  mort2020 from week 1 to week 53, same as in pred.mort
 mort2020 <- mort2020 %>% arrange(week)
 
-# add actual deaths from 2020 in pred.mort
+# add actual deaths from 2020 to pred.mort
 pred.mort <- pred.mort %>% 
   mutate(cases = mort2020$cases)
 
@@ -241,16 +242,19 @@ ggplot(data = pred.mort) +
 
 ```
 
-*Interpret the plot.*
+*Interpret the plot. When did the excess number of deaths increase most? What does negative excess number of deaths mean?*
 
 ## Task 7.4 (Optional) {#task-7-4 .unnumbered}
 
-*Plot the entire series of observed data from 2010 to 2023, and the fitted number from the model based on 2010-2019. Visually, do you think the mortality pattern has gone back to the same pattern as in 2010-2019?*
+*Plot the entire series of observed data from 2010 to 2023, and the fitted number from the model based on 2010-2019.*
+
+*Visually, do you think the mortality pattern has gone back to the same pattern as in 2010-2019?*
+
+*How would you determine if the model for 2010-2019 fits well 2021-2023?*
 
 ```{r-task-7-3-deaths-plot-2010-2020}
-
-load(here("data", "mortagg2010_2023.Rdata"))
 # mort2010_2023
+load(here("data", "mortagg2010_2023.Rdata"))
 
 mort_2010_2023 <- mort2010_2023 %>%
                 mutate(
@@ -259,6 +263,13 @@ mort_2010_2023 <- mort2010_2023 %>%
 # how many weeks in each year:
 num_weeks <- table(mort2010_2023$year)
 num_weeks
+
+mortz <- mortz %>%
+                mutate(
+                year_week = make_yearweek(year = year, week = week))
+
+
+
 
 pred.df_2020_2023 <-
     tibble(
@@ -296,7 +307,6 @@ ggplot(data = mort_2010_2023) +
         lwd=1.0,
         alpha = 0.7
     ) +
-
     geom_line(data=pred.mort_2020_2023,
         mapping = aes(x = date_index, y = pred_cases),
         colour = "red",
@@ -310,7 +320,8 @@ ggplot(data = mort_2010_2023) +
     ) +
     scale_y_continuous(limits = c(0, NA)) +
     scale_x_yearweek(date_labels = "%Y-%W", date_breaks = "26 weeks") +
-    labs(x = "Year Week", y = "Fitted and predicted weekly deaths",
+    labs(x = "Year Week", 
+         y = "Fitted and predicted weekly deaths",
         title = "Regression model: prediction trend, sin52, cos52, sin26, cos26 terms") +
     tsa_theme + 
     theme(axis.text.x = element_text(angle = 30, hjust = 1)) 
@@ -324,7 +335,9 @@ Compare the excess number of deaths in 2020 with those in 2018 and 2019.
 
 ## Task 7.6 (Optional) {#task-7-6 .unnumbered}
 
-Carry out the sam analysis for men and women. What was the total number of excess deaths for men and women?
+Carry out the same analysis for men and women. What was the total number of excess deaths for men and women?
+
+If you already have the model for each group from a previous practice, use that. If you did not do it before, you can assume the same model as here.
 
 If you already have the model for each group from a previous practice, use that. If you did not do it before, you can assume the same model as here.
 
