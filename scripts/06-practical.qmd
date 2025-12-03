@@ -41,7 +41,7 @@ By the end of this session, participants should be able to:
 
 ## Task 6.1 {#task-6-1 .unnumbered .unnumbered}
 
-*Start by fitting the model with trend and two cosines and two sines.* 
+*Start by fitting the model with trend and two cosines and two sines.*
 
 *Assuming you are happy with that Poisson regression model from the previous session, check whether this regression model was appropriate in this case.*
 
@@ -165,14 +165,14 @@ In the acf plot, the first 7 lags where statistically significant. We will add t
 mortz <-
     mortz %>%
     mutate(
-        lag1 =  Hmisc::Lag(cases, shift=1),   
-        lag2 =  Hmisc::Lag(cases, shift=2),   
-        lag3 =  Hmisc::Lag(cases, shift=3),   
-        lag4 =  Hmisc::Lag(cases, shift=4),   
-        lag5 =  Hmisc::Lag(cases, shift=5),
-        lag6 =  Hmisc::Lag(cases, shift=6),    
-        lag7 =  Hmisc::Lag(cases, shift=7), 
-        lag8 =  Hmisc::Lag(cases, shift=8)  
+        lag1 =  dplyr::lag(cases, n=1),   
+        lag2 =  dplyr::lag(cases, n=2),   
+        lag3 =  dplyr::lag(cases, n=3),   
+        lag4 =  dplyr::lag(cases, n=4),   
+        lag5 =  dplyr::lag(cases, n=5),
+        lag6 =  dplyr::lag(cases, n=6),    
+        lag7 =  dplyr::lag(cases, n=7), 
+        lag8 =  dplyr::lag(cases, n=8)  
 
    )
    
@@ -233,7 +233,6 @@ lrtest(mort_trendsin2cos2_removeNA, mort_trendsin2cos2_ac)
 ## Task 6.3 (Optional) {#task-6-3 .unnumbered}
 
 *As a sensitivity analysis, add yet one more lag (not significant in the acf) to the last model. Does that lag improve the model?*
-
 
 ## Task 6.4 (Optional) {#task-6-4 .unnumbered}
 

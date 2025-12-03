@@ -220,7 +220,7 @@ ggplot(data = dis3_ts_v2) +
     tsa_theme
 ```
 
-## 3.2 Optional task  {#solution-3-1-1 .unnumbered}
+## 3.2 Optional task {#solution-3-1-1 .unnumbered}
 
 Import your data to R from the dis2 excel file.
 
